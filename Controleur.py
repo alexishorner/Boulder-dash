@@ -16,9 +16,18 @@ class Bloc(sprite.Sprite):
         self.ecran = ecran
         self.rect = self.image.get_rect()
 
+    def update(self):
+        pass
+
     @classmethod
     def chemin_image(cls):
         return DOSSIER_IMAGES + cls.NOM_IMAGE
+
+    def blocs_collisiones(self, groupe):
+        blocs = sprite.spritecollide(self, groupe, dokill=False)
+        if self in blocs:
+            blocs.remove(self)
+        return blocs
 
     def collision(self, groupe):
         pass
@@ -34,10 +43,29 @@ class Personnage(Bloc):
     NOM_IMAGE = "personnage.png"
 
     def collision(self, groupe):
+        blocs = self.blocs_collisiones(groupe)
+        for bloc in blocs:
+            type_de_bloc = bloc.__class__
+            if type_de_bloc == Caillou:
+                if bloc.tombe:
+                    self.tuer()
+                else:
+                    pass
+            elif type_de_bloc == Terre:
+                self.creuser_terre(bloc)
+            elif type_de_bloc == Mur:
+                pass
+
+    def creuser_terre(self, terre):
         pass
+
 
 class Caillou(Bloc):
     NOM_IMAGE = "caillou.jpg"
+
+    def __init__(self, ecran):
+        Bloc.__init__(self, ecran)
+        self.tombe = False
 
 
 class Terre(Bloc):
