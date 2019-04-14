@@ -1,4 +1,4 @@
-from pygame import sprite, image
+from pygame import sprite, image, display
 
 DOSSIER_IMAGES = "img/"
 
