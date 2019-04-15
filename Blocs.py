@@ -77,6 +77,21 @@ class Caillou(Bloc):
 class Terre(Bloc):
     NOM_IMAGE = "terre.PNG"
 
+class Diamant(Bloc):
+    NOM_IMAGE = "diamant.jpg"
+
 
 class Mur(Bloc):
     NOM_IMAGE = "mur.png"
+
+
+class Porte(Bloc):
+    NOM_IMAGE = "porte.png"
+
+
+class Entree(Porte):
+    pass
+
+
+class Sortie(Porte):
+    pass
