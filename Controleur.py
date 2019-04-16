@@ -1,8 +1,13 @@
-from Blocs import *
+"""
+Module gerant la logique du jeu
+"""
 
-LARGEUR = 500
-HAUTEUR = 500
-ecran = display.set_mode((LARGEUR, HAUTEUR))
+from Blocs import *
+from pygame import display
+
+LARGEUR = 1920
+HAUTEUR = 1080
+ecran = display.set_mode((LARGEUR, HAUTEUR), RESIZABLE)
 
 
 def enlever_extremite(chaine, gauche=True, caracteres_a_enlever=("\n", " ")):

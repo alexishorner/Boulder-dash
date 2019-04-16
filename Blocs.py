@@ -1,4 +1,9 @@
-from pygame import sprite, image, display
+"""
+Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
+"""
+
+from pygame import sprite, image, transform
+from pygame.locals import *
 
 DOSSIER_IMAGES = "img/"
 
@@ -7,15 +12,16 @@ class Bloc(sprite.Sprite):
     """
     Classe de base pour tous les blocs.
     """
-    TAILLE = 10
+    TAILLE = 100
     NOM_IMAGE = "mono-unknown.png"
 
     def __init__(self, x, y):
         sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
         self.image = image.load(self.chemin_image()).convert_alpha()
         self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.x = x*self.TAILLE
+        self.rect.y = y*self.TAILLE
+        self.image = transform.scale(self.image, (self.TAILLE, self.TAILLE))
 
     def update(self):
         pass
