@@ -70,8 +70,8 @@ class Personnage(Bloc):
 class Caillou(Bloc):
     NOM_IMAGE = "caillou.jpg"
 
-    def __init__(self):
-        Bloc.__init__(self)
+    def __init__(self, x, y):
+        Bloc.__init__(self, x, y)
         self.tombe = False
 
 
