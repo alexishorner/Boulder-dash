@@ -12,7 +12,7 @@ class Bloc(sprite.Sprite):
     """
     Classe de base pour tous les blocs.
     """
-    TAILLE = 100
+    TAILLE = 75
     NOM_IMAGE = "mono-unknown.png"
 
     def __init__(self, x, y):
