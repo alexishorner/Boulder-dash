@@ -41,10 +41,20 @@ class Carte:
                        "P": Personnage,  # "P" comme "Personnage"
                        "[": Entree,      # Forme rectangulaire comme une porte. Crochet ouvrant -> entree
                        "]": Sortie,      # Forme rectangulaire comme une porte. Crochet fermant -> sortie
-                       "*": Terre,       # Ressemble aux points dans Packman et est centre, contrairement au point "."
+                       "*": Terre,       # Ressemble aux points dans Packman et est centre verticalement, contrairement au point "."
                        "$": Diamant}     # Dollar fait penser a argent -> diamant
 
     def __init__(self, niveau):
+        self.blocs = self.niveau_vers_blocs(niveau)
+
+    @classmethod
+    def niveau_vers_blocs(cls, niveau):
+        """
+        Prend en entree un niveau et cree un groupe de blocs ayant chacun le type et la position dictee par le niveau.
+
+        :param niveau: niveau a interpreter
+        :return: groupe de blocs initialises avec la bonne position et le bon type
+        """
         if niveau.__class__ == Niveau:
             niveau_ascii = niveau.ascii
         elif niveau.__class__ == str:
@@ -53,10 +63,12 @@ class Carte:
             raise TypeError("Erreur, le niveau doit etre de type \"Niveau\" ou \"str\"")
 
         niveau_ascii = enlever_extremites(niveau_ascii)
-        self.blocs = sprite.Group()
+        blocs = sprite.Group()
         for y, ligne_ascii in enumerate(niveau_ascii.split("\n")):
             for x, bloc_ascii in enumerate(ligne_ascii):
-                self.blocs.add(self.ASCII_VERS_BLOC[bloc_ascii]())
+                bloc = cls.ASCII_VERS_BLOC[bloc_ascii](x, y)
+                blocs.add(bloc)
+        return blocs
 
     def dessiner(self):
         self.blocs.draw(ecran)

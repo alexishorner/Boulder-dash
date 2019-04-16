@@ -10,11 +10,12 @@ class Bloc(sprite.Sprite):
     TAILLE = 10
     NOM_IMAGE = "mono-unknown.png"
 
-    def __init__(self, ecran):
+    def __init__(self, x, y):
         sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
         self.image = image.load(self.chemin_image()).convert_alpha()
-        self.ecran = ecran
         self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
 
     def update(self):
         pass
@@ -69,13 +70,14 @@ class Personnage(Bloc):
 class Caillou(Bloc):
     NOM_IMAGE = "caillou.jpg"
 
-    def __init__(self, ecran):
-        Bloc.__init__(self, ecran)
+    def __init__(self):
+        Bloc.__init__(self)
         self.tombe = False
 
 
 class Terre(Bloc):
     NOM_IMAGE = "terre.PNG"
+
 
 class Diamant(Bloc):
     NOM_IMAGE = "diamant.jpg"
