@@ -1,21 +1,21 @@
 """
-Module de test pour le module "Controleur"
+Module de test pour le module "modele"
 """
 
-import Controleur
+import modele
 import os
 
-path = os.path.dirname(Controleur.__file__)  # On recupere le chemin du module a tester
+path = os.path.dirname(modele.__file__)  # On recupere le chemin du module a tester
 os.chdir(path)  # On change de repertoire pour pouvoir utiliser des chemins relatifs
 
 
 def test_enlever_extremites():
-    assert(Controleur.enlever_extremites("    \nabcd \nefg hi  \n  ") == "abcd \nefg hi")
-    assert(Controleur.enlever_extremites("sbdufgidu5661 549d86gsd4654\n4d7") == "sbdufgidu5661 549d86gsd4654\n4d7")
+    assert(modele.enlever_extremites("    \nabcd \nefg hi  \n  ") == "abcd \nefg hi")
+    assert(modele.enlever_extremites("sbdufgidu5661 549d86gsd4654\n4d7") == "sbdufgidu5661 549d86gsd4654\n4d7")
 
 
 def test_niveau_vers_blocs():
-    niveau = Controleur.Niveau("""
+    niveau = modele.Niveau("""
                     ############
                     #***O***O*$#
                     #***OOP**[##
@@ -28,17 +28,17 @@ def test_niveau_vers_blocs():
                     #**********#
                     ############
                     """)
-    nombre_de_blocs_par_sorte = dict.fromkeys(Controleur.Carte.ASCII_VERS_BLOC.values(), 0)
+    nombre_de_blocs_par_sorte = dict.fromkeys(modele.Carte.ASCII_VERS_BLOC.values(), 0)
     for c in niveau.ascii:
-        for cle, sorte in Controleur.Carte.ASCII_VERS_BLOC.iteritems():
+        for cle, sorte in modele.Carte.ASCII_VERS_BLOC.iteritems():
             if c == cle:
                 nombre_de_blocs_par_sorte[sorte] += 1
 
-    blocs = Controleur.Carte.niveau_vers_blocs(niveau)
+    blocs = modele.Carte.niveau_vers_blocs(niveau)
 
-    nombre_de_blocs_par_sorte_2 = dict.fromkeys(Controleur.Carte.ASCII_VERS_BLOC.values(), 0)
+    nombre_de_blocs_par_sorte_2 = dict.fromkeys(modele.Carte.ASCII_VERS_BLOC.values(), 0)
     for bloc in blocs:
-        for cle, sorte in Controleur.Carte.ASCII_VERS_BLOC.iteritems():
+        for cle, sorte in modele.Carte.ASCII_VERS_BLOC.iteritems():
             if bloc.__class__ == sorte:
                 nombre_de_blocs_par_sorte_2[sorte] += 1
 

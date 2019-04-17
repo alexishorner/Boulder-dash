@@ -3,9 +3,15 @@ Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
 
 from pygame import sprite, image, transform
-from pygame.locals import *
+from numpy import array
+from enum import IntEnum, unique
 
 DOSSIER_IMAGES = "img/"
+
+
+@unique
+class Orientation(IntEnum):
+    GAUCHE, DROITE, HAUT, BAS = range(4)
 
 
 class Bloc(sprite.Sprite):
@@ -49,6 +55,11 @@ class Bloc(sprite.Sprite):
 class Personnage(Bloc):
     NOM_IMAGE = "personnage.png"
 
+    def __init__(self, x, y):
+        Bloc.__init__(self, x, y)
+        self.orientation = Orientation.DROITE
+        self.ancien_rect = self.rect
+
     def collision(self, groupe):
         blocs = self.blocs_collisiones(groupe)
         for bloc in blocs:
@@ -64,13 +75,35 @@ class Personnage(Bloc):
     def creuser_terre(self, terre):
         pass
 
+    def avancer(self, direction):
+        """
+        Fait avancer le personnage dans la direction "direction".
+
+        :param direction: direction dans laquelle avancer
+        :return: "None"
+        """
+        self.orientation = direction
+        if direction == Orientation.DROITE:
+            vecteur = array([1, 0])
+        elif direction == Orientation.GAUCHE:
+            vecteur = array([-1, 0])
+        elif direction == Orientation.HAUT:
+            vecteur = array([0, -1])
+        elif direction == Orientation.BAS:
+            vecteur = array([0, 1])
+        else:
+            raise ValueError("L'orientation est invalide")
+        vecteur *= self.TAILLE
+        self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
+        self.rect = self.rect.move(*vecteur)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
+
     def revenir(self):
         """
         Annule le dernier mouvement du personnage.
 
         :return: "None"
         """
-        pass
+        self.rect = self.ancien_rect
 
 
 class Caillou(Bloc):

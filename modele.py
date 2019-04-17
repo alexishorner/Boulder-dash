@@ -1,13 +1,8 @@
 """
-Module gerant la logique du jeu
+Module stockant les donnees du jeu.
 """
 
-from Blocs import *
-from pygame import display
-
-LARGEUR = 1920
-HAUTEUR = 1080
-ecran = display.set_mode((LARGEUR, HAUTEUR), RESIZABLE)
+from blocs import *
 
 
 def enlever_extremite(chaine, gauche=True, caracteres_a_enlever=("\n", " ")):
@@ -51,6 +46,16 @@ class Carte:
 
     def __init__(self, niveau):
         self.blocs = self.niveau_vers_blocs(niveau)
+        self.personnage = self.trouver_personnage(self.blocs)
+        if self.personnage is None:
+            raise LookupError("Pas de personnage trouve.")
+
+    @staticmethod
+    def trouver_personnage(blocs):
+        for bloc in blocs:
+            if bloc.__class__ == Personnage:
+                personnage = bloc
+                return personnage
 
     @classmethod
     def niveau_vers_blocs(cls, niveau):
@@ -75,5 +80,26 @@ class Carte:
                 blocs.add(bloc)
         return blocs
 
-    def dessiner(self):
+    def dessiner(self, ecran):
+        self.blocs.remove(self.personnage)
         self.blocs.draw(ecran)
+        self.blocs.add(self.personnage)
+        ecran.blit(self.personnage.image, self.personnage.rect)
+
+
+class Constantes:
+    LARGEUR_ECRAN = 1920
+    HAUTEUR_ECRAN = 1080
+    NIVEAUX = (Niveau("""
+                        ############
+                        #***O***O*$#
+                        #***OOP**[##
+                        #$$$#******#
+                        #OOOO*$]***#
+                        #**********#
+                        #**********#
+                        #**********#
+                        #**********#
+                        #**********#
+                        ############
+                                    """, 1),)
