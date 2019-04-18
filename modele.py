@@ -82,9 +82,9 @@ class Carte:
 
     def dessiner(self, ecran):
         self.blocs.remove(self.personnage)
-        self.blocs.draw(ecran)
-        self.blocs.add(self.personnage)
-        ecran.blit(self.personnage.image, self.personnage.rect)
+        self.blocs.draw(ecran)  # Dessine les blocs autres que le personnage en premier
+        self.blocs.add(self.personnage)  # TODO: Tout dessiner en meme temps, le personnage n'a pas besoin d'etre au premier plan
+        ecran.blit(self.personnage.image, self.personnage.rect)  # Dessine le personnage en dernier pour qu'il soit au premier plan
 
 
 class Constantes:
