@@ -5,13 +5,30 @@ Module stockant les donnees du jeu.
 from blocs import *
 
 
-def enlever_extremite(chaine, gauche=True, caracteres_a_enlever=("\n", " ")):
-    if gauche:
-        debut = 0
-        increment = 1
+def enlever_extremite(chaine, extremite_gauche=True, caracteres_a_enlever=("\n", " ")):
+    """
+    Enleve des caracteres se trouvant a une extremite d'une chaine de caracteres.
+
+    Exemple :
+    extremite_gauche = False
+    caracteres_a_enlever == ("\n", "_")
+    chaine == "_\n__\n_\nCeci_est\n_une_chaine\n_d'exemple__\n\n____\n"
+              |gauche    |            milieu             |      droite|
+              ^----------------chaine de caracteres-------------------^
+
+    retour == "_\n__\n_\nCeci_est\n_une_chaine\n_d'exemple"
+
+    :param chaine: chaine de caracteres a traiter
+    :param extremite_gauche: determine si il faut enlever les caracteres a l'extremite gauche ou droite de la chaine
+    :param caracteres_a_enlever: iterable contenant les caracteres devant etre enleves
+    :return: chaine de caracteres apres avoir enleve les caracteres specifies a l'extremite demandee
+    """
+    if extremite_gauche:
+        debut = 0  # On commence a gauche (i.e. au caractere 0) de la chaine de caracteres
+        increment = 1  # On lit de gauche a droite
     else:
-        debut = len(chaine)-1
-        increment = -1
+        debut = len(chaine)-1  # On commence a droite (i.e. au dernier caractere) de la chaine de caracteres
+        increment = -1  # On lit de droite a gauche
 
     i = debut
     while 0 <= i < len(chaine):
@@ -19,14 +36,14 @@ def enlever_extremite(chaine, gauche=True, caracteres_a_enlever=("\n", " ")):
             break
         i += increment
 
-    if gauche:
+    if extremite_gauche:
         return chaine[i:]
     return chaine[:i+1]
 
 
 def enlever_extremites(chaine, caracteres_a_enlever=("\n", " ")):
-    temp = enlever_extremite(chaine, gauche=True, caracteres_a_enlever=caracteres_a_enlever)
-    return enlever_extremite(temp, gauche=False, caracteres_a_enlever=caracteres_a_enlever)
+    temp = enlever_extremite(chaine, extremite_gauche=True, caracteres_a_enlever=caracteres_a_enlever)
+    return enlever_extremite(temp, extremite_gauche=False, caracteres_a_enlever=caracteres_a_enlever)
 
 
 class Niveau:
