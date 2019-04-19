@@ -7,6 +7,12 @@ from pygame.locals import *
 from modele import *
 import time
 import math
+# import ctypes
+
+# ctypes.windll.user32.SetProcessDPIAware()
+# vraie_resolution = (ctypes.windll.user32.GetSystemMetrics(0),ctypes.windll.user32.GetSystemMetrics(1))
+# info = pygame.display.Info()
+# vraie_resolution = (info.current_w, info.current_h)
 
 
 def modulo(num, div):
@@ -187,7 +193,7 @@ class Jeu:
     """
     def __init__(self):
         pygame.init()
-        self.ecran = pygame.display.set_mode((Constantes.LARGEUR_ECRAN, Constantes.HAUTEUR_ECRAN), RESIZABLE)
+        self.ecran = pygame.display.set_mode((Constantes.LARGEUR_ECRAN, Constantes.HAUTEUR_ECRAN), RESIZABLE)  # TODO : permettre le mode plein ecran
         self.arriere_plan = pygame.Surface((Constantes.LARGEUR_ECRAN, Constantes.HAUTEUR_ECRAN))
         self.arriere_plan.fill((0, 0, 0))
         self.carte = Carte(Constantes.NIVEAUX[0])

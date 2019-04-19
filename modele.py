@@ -137,7 +137,7 @@ class Constantes:
     """
     Classe permettant d'encapsuler les differentes constantes du jeu.
     """
-    LARGEUR_ECRAN = 1920
+    LARGEUR_ECRAN = 1920  # TODO : adapter resolution a chaque ecran
     HAUTEUR_ECRAN = 1080
     NIVEAUX = (Niveau("""
                         ############
