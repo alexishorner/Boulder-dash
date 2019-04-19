@@ -4,6 +4,13 @@ Module de test du module "controleur"
 from controleur import *
 
 
+def test_modulo():
+    assert(abs(modulo(97.05, 0.1) - 0.05) < 1e-13)
+    assert(abs(modulo(7.499999, 0.5) - 0.499999) < 1e-13)
+    assert(abs(modulo(7.500001, 0.5) - 0.000001) < 1e-13)
+    assert(abs(modulo(8.0, 0.000049) - 0.000015) < 1e-13)
+
+
 def test_booleens_vers_indexes():
     booleens = [False]*GestionnaireTouches.nombre_de_touches()
     booleens[K_LEFT] = True
@@ -39,7 +46,7 @@ def test_actualiser_touches():
 if __name__ == "__main__":
     pygame.init()
     pygame.display.set_mode((0, 0))
-    tests = (test_booleens_vers_indexes, test_indexes_vers_booleens, test_changement_touches,
+    tests = (test_modulo, test_booleens_vers_indexes, test_indexes_vers_booleens, test_changement_touches,
              test_actualiser_touches)  # On cree un tuple avec toutes les fonctions de test
     for test in tests:
         print("")

@@ -82,10 +82,23 @@ class GestionnaireTouches:
 
     @staticmethod
     def booleens_vers_indexes(booleens):
+        """
+        Retourne les indexes des touches pressees a partir d'une liste de booleens.
+
+        :param booleens: liste de booleens determinant pour chaque touche si elle est pressee
+        :return: liste contenant l'index de chaque touche pressee
+        """
         return [index for index, booleen in enumerate(booleens) if booleen]
 
     @staticmethod
     def indexes_vers_booleens(indexes):
+        """
+        Retourne une liste de booleens determinant pour chaque touche si elle est pressee a partir de l'index de chaque
+        touche pressee.
+
+        :param indexes: liste contenant l'index de chaque touche pressee
+        :return: liste de booleens determinant pour chaque touche si elle est pressee
+        """
         booleens = [False]*GestionnaireTouches.nombre_de_touches()
         for index in indexes:
             booleens[index] = True
@@ -93,12 +106,28 @@ class GestionnaireTouches:
 
     @staticmethod
     def nombre_de_touches():
+        """
+        Retourne le nombre total de touches.
+
+        :return: nombre total de touches
+        """
         return len(pygame.key.get_pressed())
 
 
 class Minuteur:
+    """
+    Classe permettant de simuler un minuteur. Le minuteur se remet a zero a intervalles fixes dont la duree est
+    determinee par "self._periode". La remise a zero est une illusion externe qui n'a jamais rellement lieu en interne ;
+    au lieu de cela le temps ecoule est reduit modulo "self._periode".
+    """
     def __init__(self, periode, tic):
-        self.periode = periode
+        """
+        Constructeur de la classe "Minuteur".
+
+        :param periode: duree entre chaque remise a zero du minuteur
+        :param tic: plus petite unite de temps du minuteur
+        """
+        self._periode = periode
         self.tic = tic
         self.debut = time.time()
 
@@ -109,7 +138,7 @@ class Minuteur:
         :return: nombre representant le temps ecoule depuis la derniere fin de periode
         """
         ecoule = time.time() - self.debut
-        return modulo(ecoule, self.periode)
+        return modulo(ecoule, self._periode)
 
     def reinitialiser(self):
         """
@@ -120,7 +149,12 @@ class Minuteur:
         self.debut = time.time()
 
     def numero_periode_actuelle(self):
-        return int(self.temps_ecoule() / self.periode)
+        """
+        Determine le numero de la periode actuelle, i.e. le nombre de fois que la periode s'est ecoulee moins 1.
+
+        :return: numero de la periode actuelle
+        """
+        return int(self.temps_ecoule() / self._periode)
 
     def attendre_fin(self, numero_periode=None):
         """
@@ -135,7 +169,7 @@ class Minuteur:
             ecart = numero_periode_actuelle - numero_periode
         else:
             return
-        temps = ecart * self.periode + (self.periode - self.temps_ecoule())
+        temps = ecart * self._periode + (self._periode - self.temps_ecoule())
         time.sleep(temps)
 
     def tics_restants(self):
@@ -144,7 +178,7 @@ class Minuteur:
 
         :return: nombre de tics restant avant la fin de la periode
         """
-        return (self.periode - self.temps_ecoule()) / self.tic
+        return (self._periode - self.temps_ecoule()) / self.tic
 
 
 class Jeu:
