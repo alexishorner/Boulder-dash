@@ -99,7 +99,7 @@ class Niveau:
 
 class Carte:
     """
-    Classe permettant de representer une carte.
+    Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, niveau):
         self.blocs = niveau.vers_blocs()
@@ -109,6 +109,12 @@ class Carte:
 
     @staticmethod
     def trouver_personnage(blocs):
+        """
+        Cherche dans une liste de blocs la premiere occurrence d'un bloc de type "Personnage".
+
+        :param blocs: Blocs dans lesquels chercher
+        :return: Premiere occurence d'un bloc de type "Personnage"
+        """
         for bloc in blocs:
             if bloc.__class__ == Personnage:
                 personnage = bloc
