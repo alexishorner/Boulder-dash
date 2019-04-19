@@ -5,18 +5,25 @@ Module stockant les donnees du jeu.
 from blocs import *
 
 
-def enlever_extremite(chaine, extremite_gauche=True, caracteres_a_enlever=("\n", " ")):
+def _enlever_extremite(chaine, extremite_gauche=True, caracteres_a_enlever=("\n", " ")):
     """
     Enleve des caracteres se trouvant a une extremite d'une chaine de caracteres.
 
     Exemple :
-    extremite_gauche = False
+    extremite_gauche == False
     caracteres_a_enlever == ("\n", "_")
     chaine == "_\n__\n_\nCeci_est\n_une_chaine\n_d'exemple__\n\n____\n"
-              |gauche    |            milieu             |      droite|
-              ^----------------chaine de caracteres-------------------^
+              ^--gauche-^------------milieu--------------^---droite--^
 
     retour == "_\n__\n_\nCeci_est\n_une_chaine\n_d'exemple"
+
+
+    Cette fonction n'est pas utile en soit, mais permet de simplifier la fonction
+    "enlever_extremites(chaine, caracteres_a_enlever)".
+
+    Le tiret bas "_" au debut du nom de la fonction ci-presente indique qu'elle est destinee a un usage interne
+    uniquement (cela empeche par exemple son importation avec un "from modele import *") et sert a empecher la confusion
+    de cette fonction avec "enlever_extremites(chaine, caracteres_a_enlever)", dont le nom est tres proche.
 
     :param chaine: chaine de caracteres a traiter
     :param extremite_gauche: determine si il faut enlever les caracteres a l'extremite gauche ou droite de la chaine
@@ -42,17 +49,25 @@ def enlever_extremite(chaine, extremite_gauche=True, caracteres_a_enlever=("\n",
 
 
 def enlever_extremites(chaine, caracteres_a_enlever=("\n", " ")):
-    temp = enlever_extremite(chaine, extremite_gauche=True, caracteres_a_enlever=caracteres_a_enlever)
-    return enlever_extremite(temp, extremite_gauche=False, caracteres_a_enlever=caracteres_a_enlever)
+    """
+    Enleve certains caracteres a chacune des extremites d'une chaine de caracteres.
+
+    :param chaine: chaine de caracteres a traiter
+    :param caracteres_a_enlever: iterable contenant les caracteres devant etre enleves
+    :return: chaine de caracteres apres avoir enleve les caracteres specifies a chacune des extremites.
+    """
+    temp = _enlever_extremite(chaine, extremite_gauche=True, caracteres_a_enlever=caracteres_a_enlever)  # enleve l'extremite gauche
+    return _enlever_extremite(temp, extremite_gauche=False, caracteres_a_enlever=caracteres_a_enlever)  # enleve l'extremite droite
 
 
 class Niveau:
-    def __init__(self, ascii, numero=None):
-        self.numero = numero
-        self.ascii = ascii
+    """
+    Classe permettant de representer un niveau.
+    Un niveau est un schema decrivant la position initiale de blocs de types divers.
 
-
-class Carte:
+    Cette classe utilise une chaine de caractere pour stocker le niveau et offre la possibilite de specifier le numero
+    du niveau.
+    """
     ASCII_VERS_BLOC = {"O": Caillou,     # Ressemble a un caillou
                        "#": Mur,         # Ressemble a une barriere -> mur
                        "P": Personnage,  # "P" comme "Personnage"
@@ -61,8 +76,33 @@ class Carte:
                        "*": Terre,       # Ressemble aux points dans Packman et est centre verticalement, contrairement au point "."
                        "$": Diamant}     # Dollar fait penser a argent -> diamant
 
+    def __init__(self, ascii, numero=None):
+        self.numero = numero
+        self.ascii = ascii
+
+    def vers_blocs(self):
+        """
+        Prend en entree un niveau et cree un groupe de blocs ayant chacun le type et la position dictee par le niveau.
+
+        :param niveau: niveau a interpreter
+        :return: groupe de blocs initialises avec la bonne position et le bon type
+        """
+        niveau_ascii = self.ascii
+        niveau_ascii = enlever_extremites(niveau_ascii).replace(" ", "")
+        blocs = sprite.Group()
+        for y, ligne_ascii in enumerate(niveau_ascii.split("\n")):
+            for x, bloc_ascii in enumerate(ligne_ascii):
+                bloc = self.ASCII_VERS_BLOC[bloc_ascii](x, y)
+                blocs.add(bloc)
+        return blocs
+
+
+class Carte:
+    """
+    Classe permettant de representer une carte.
+    """
     def __init__(self, niveau):
-        self.blocs = self.niveau_vers_blocs(niveau)
+        self.blocs = niveau.vers_blocs()
         self.personnage = self.trouver_personnage(self.blocs)
         if self.personnage is None:
             raise LookupError("Pas de personnage trouve.")
@@ -73,29 +113,6 @@ class Carte:
             if bloc.__class__ == Personnage:
                 personnage = bloc
                 return personnage
-
-    @classmethod
-    def niveau_vers_blocs(cls, niveau):
-        """
-        Prend en entree un niveau et cree un groupe de blocs ayant chacun le type et la position dictee par le niveau.
-
-        :param niveau: niveau a interpreter
-        :return: groupe de blocs initialises avec la bonne position et le bon type
-        """
-        if niveau.__class__ == Niveau:
-            niveau_ascii = niveau.ascii
-        elif niveau.__class__ == str:
-            niveau_ascii = niveau
-        else:
-            raise TypeError("Erreur, le niveau doit etre de type \"Niveau\" ou \"str\"")
-
-        niveau_ascii = enlever_extremites(niveau_ascii).replace(" ", "")
-        blocs = sprite.Group()
-        for y, ligne_ascii in enumerate(niveau_ascii.split("\n")):
-            for x, bloc_ascii in enumerate(ligne_ascii):
-                bloc = cls.ASCII_VERS_BLOC[bloc_ascii](x, y)
-                blocs.add(bloc)
-        return blocs
 
     def dessiner(self, ecran):
         self.blocs.remove(self.personnage)

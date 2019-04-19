@@ -2,7 +2,7 @@
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
 
-from pygame import sprite, image, transform
+from pygame import sprite, image, transform, error
 from numpy import array
 from enum import IntEnum, unique
 
