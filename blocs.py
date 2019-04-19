@@ -11,6 +11,9 @@ DOSSIER_IMAGES = "img/"
 
 @unique
 class Orientation(IntEnum):
+    """
+    Classe permettant de definir des orientations comme des nombres entiers.
+    """
     GAUCHE, DROITE, HAUT, BAS = range(4)
 
 
@@ -34,9 +37,20 @@ class Bloc(sprite.Sprite):
 
     @classmethod
     def chemin_image(cls):
+        """
+        Methode renvoyant le chemin de l'image du bloc.
+
+        :return: chemin de l'image du bloc
+        """
         return DOSSIER_IMAGES + cls.NOM_IMAGE
 
     def blocs_collisiones(self, groupe):
+        """
+        Renvoie les blocs collisiones par le bloc.
+
+        :param groupe: groupe de blocs contre lequel verifier les collisions
+        :return: blocs collisiones
+        """
         blocs = sprite.spritecollide(self, groupe, dokill=False)
         if self in blocs:
             blocs.remove(self)
@@ -53,6 +67,9 @@ class Bloc(sprite.Sprite):
 
 
 class Personnage(Bloc):
+    """
+    Classe permettant de representer un personnage.
+    """
     NOM_IMAGE = "personnage.png"
 
     def __init__(self, x, y):
@@ -61,6 +78,12 @@ class Personnage(Bloc):
         self.ancien_rect = self.rect
 
     def collision(self, groupe):
+        """
+        Methode gerant les collisions entre le personnage et les autres blocs.
+
+        :param groupe: groupe de blocs potentiellement collisionnes
+        :return: "None"
+        """
         blocs = self.blocs_collisiones(groupe)
         for bloc in blocs:
             type_de_bloc = bloc.__class__
@@ -107,6 +130,9 @@ class Personnage(Bloc):
 
 
 class Caillou(Bloc):
+    """
+    Classe permettant de representer un caillou.
+    """
     NOM_IMAGE = "caillou.jpg"
 
     def __init__(self, x, y):
@@ -115,24 +141,42 @@ class Caillou(Bloc):
 
 
 class Terre(Bloc):
+    """
+    Classe permettant de representer de la terre.
+    """
     NOM_IMAGE = "terre.PNG"
 
 
 class Diamant(Bloc):
+    """
+    Classe permettant de representer un diamant.
+    """
     NOM_IMAGE = "diamant.jpg"
 
 
 class Mur(Bloc):
+    """
+    Classe permetant de representer un bout de mur.
+    """
     NOM_IMAGE = "mur.png"
 
 
 class Porte(Bloc):
+    """
+    Classe permettant de representer une porte de maniere generique.
+    """
     NOM_IMAGE = "porte.png"
 
 
 class Entree(Porte):
+    """
+    Classe permettant de representer une porte d'entree.
+    """
     pass
 
 
 class Sortie(Porte):
+    """
+    Classe permettant de representer une porte de sortie.
+    """
     pass

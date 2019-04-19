@@ -113,7 +113,7 @@ class Carte:
         Cherche dans une liste de blocs la premiere occurrence d'un bloc de type "Personnage".
 
         :param blocs: Blocs dans lesquels chercher
-        :return: Premiere occurence d'un bloc de type "Personnage"
+        :return: Premiere occurrence d'un bloc de type "Personnage"
         """
         for bloc in blocs:
             if bloc.__class__ == Personnage:
@@ -121,6 +121,12 @@ class Carte:
                 return personnage
 
     def dessiner(self, ecran):
+        """
+        Affiche les blocs sur l'ecran.
+
+        :param ecran: Ecran sur lequel dessiner les blocs.
+        :return: "None"
+        """
         self.blocs.remove(self.personnage)
         self.blocs.draw(ecran)  # Dessine les blocs autres que le personnage en premier
         self.blocs.add(self.personnage)  # TODO: Tout dessiner en meme temps, le personnage n'a pas besoin d'etre au premier plan
@@ -128,6 +134,9 @@ class Carte:
 
 
 class Constantes:
+    """
+    Classe permettant d'encapsuler les differentes constantes du jeu.
+    """
     LARGEUR_ECRAN = 1920
     HAUTEUR_ECRAN = 1080
     NIVEAUX = (Niveau("""
