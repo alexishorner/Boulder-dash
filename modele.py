@@ -3,6 +3,7 @@ Module stockant les donnees du jeu.
 """
 
 from blocs import *
+from pygame.locals import *
 
 
 def _enlever_extremite(chaine, extremite_gauche=True, caracteres_a_enlever=("\n", " ")):
@@ -139,6 +140,11 @@ class Constantes:
     """
     LARGEUR_ECRAN = 1920  # TODO : adapter resolution a chaque ecran
     HAUTEUR_ECRAN = 1080
+    TOUCHES_MOUVEMENT = (K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d)
+    TOUCHES_HAUT = (K_UP, K_w)
+    TOUCHES_BAS = (K_DOWN, K_s)
+    TOUCHES_GAUCHE = (K_LEFT, K_a)
+    TOUCHES_DROITE = (K_RIGHT, K_d)
     NIVEAUX = (Niveau("""
                         ############
                         #***O***O*$#

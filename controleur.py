@@ -138,6 +138,20 @@ class Minuteur:
         self.debut = time.time()
         self.numero_periode = None
 
+    @property
+    def periode(self):
+        return self._periode
+
+    @periode.setter
+    def periode(self, nouvelle):
+        self._periode = nouvelle
+        self.reinitialiser()
+
+    @periode.deleter
+    def periode(self):
+        raise AttributeError("La classe \"{0}\" ne peut pas fonctionner "
+                             "sans l'attribut \"_periode\"".format(self.__class__.__name__))
+
     def temps_ecoule(self):
         return time.time() - self.debut
 
@@ -148,7 +162,7 @@ class Minuteur:
         :return: nombre representant le temps ecoule depuis la derniere fin de periode
         """
         ecoule = self.temps_ecoule()
-        return modulo(ecoule, self._periode)
+        return modulo(ecoule, self.periode)
 
     def reinitialiser(self):
         """
@@ -171,7 +185,7 @@ class Minuteur:
 
         :return: numero de la periode actuelle
         """
-        return int(self.temps_ecoule() / self._periode)
+        return int(self.temps_ecoule() / self.periode)
 
     def attendre_un_tic(self):
         time.sleep(self.tic)
@@ -189,7 +203,7 @@ class Minuteur:
             ecart = numero_periode_actuelle - self.numero_periode
         else:
             return
-        temps = ecart * self._periode + (self._periode - self.temps_ecoule_periode_actuelle())
+        temps = ecart * self.periode + (self.periode - self.temps_ecoule_periode_actuelle())
         time.sleep(temps)
 
     def tics_restants(self):
@@ -203,7 +217,7 @@ class Minuteur:
         else:
             ecart = self.numero_periode - self.numero_periode_actuelle()
         if ecart >= 0:
-            return (ecart * self._periode + self._periode - self.temps_ecoule_periode_actuelle()) / self.tic
+            return (ecart * self.periode + self.periode - self.temps_ecoule_periode_actuelle()) / self.tic
         else:
             return 0
 
@@ -221,10 +235,32 @@ class Jeu:
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.2, 0.01)
-        self.mouvement_deja_traite = False
-        self.mouvement_detecte = False
+        self.mouvement_en_cours = None
+        self.etait_en_mouvement = False
+
+    @property
+    def mouvement_detecte(self):
+        """
+        Determine si un mouvement a ete detecte.
+
+        :return: booleen indiquant si un mouvement a ete detecte
+        """
+        return self.mouvement_en_cours is not None
+
+    @mouvement_detecte.setter
+    def mouvement_detecte(self, nouveau):
+        raise AttributeError("La propriete ne peut pas etre modifiee.")
+
+    @mouvement_detecte.deleter
+    def mouvement_detecte(self):
+        raise AttributeError("La propriete ne peut pas etre supprimee.")
 
     def quitter(self):
+        """
+        Quitte le jeu apres confirmation de l'utilisateur.
+
+        :return: "None"
+        """
         exit()  # TODO : ajouter confirmation
 
     def commencer(self):
@@ -237,17 +273,19 @@ class Jeu:
         self.minuteur.reinitialiser()
         while 1:  # FIXME : quand la fenetre est bougee le code est mis en pause
             self.minuteur.passage()
-            self.mouvement_deja_traite = False
             debut = time.time()
             while self.minuteur.tics_restants() > 1:    # Verifie les evenements a intervalles regulier pour eviter de
                                                         # rater des evenements
                 self.gerer_evenements()  # Gere les evenements autres que les mouvements
-                if self.mouvement_detecte:  # Si un mouvement a ete effectue on actualise l'ecran
-                    self.actualiser_ecran()
-                    self.mouvement_detecte = False
 
                 if self.minuteur.tics_restants() > 1:  # S'il reste de quoi attendre un tic
                     self.minuteur.attendre_un_tic()
+            if self.mouvement_detecte:  # Si un mouvement a ete detecte, on l'effectue et on actualise l'ecran
+                self.effectuer_mouvement()
+                self.actualiser_ecran()
+            else:
+                self.etait_en_mouvement = False
+
             if self.minuteur.tics_restants() > 0:  # Si la periode n'est pas finie
                 self.minuteur.attendre_fin()
 
@@ -272,34 +310,36 @@ class Jeu:
         for evenement in pygame.event.get():
             if evenement.type == QUIT:
                 self.quitter()
-            elif evenement.type == KEYDOWN:
-                self.gerer_mouvement()
-            elif evenement.type == KEYUP:
-                self.gerer_mouvement()
+        self.gerer_mouvement()  # Pas besoin de verifier un KEYDOWN grace au gestionnaire de touches
+                                # KEYDOWN n'est parfois pas present alors qu'il devrait
 
     def gerer_mouvement(self):
-        if not self.mouvement_deja_traite:  # Verifie qu'il n'y a pas plus d'un mouvement par periode
-                    self.mouvement_detecte = self.sur_touche_mouvement_pressee()
-                    self.mouvement_deja_traite = self.mouvement_detecte
-
-    def sur_touche_mouvement_pressee(self):
         """
         S'occuppe des evenements correspondants a l'appui sur une touche.
 
         :return: Booleen informant si une touche a provoque une action dans le jeu
         """
         self.gestionnaire_touches.actualiser_touches(pygame.key.get_pressed())
-        derniere_touche_pressee = self.gestionnaire_touches.derniere_touche()
-        if derniere_touche_pressee in (K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d):
-            if derniere_touche_pressee == K_UP or derniere_touche_pressee == K_w:
-                self.carte.personnage.avancer(Orientation.HAUT)
-            elif derniere_touche_pressee == K_DOWN or derniere_touche_pressee == K_s:
-                self.carte.personnage.avancer(Orientation.BAS)
-            elif derniere_touche_pressee == K_LEFT or derniere_touche_pressee == K_a:
-                self.carte.personnage.avancer(Orientation.GAUCHE)
-            elif derniere_touche_pressee == K_RIGHT or derniere_touche_pressee == K_d:
-                self.carte.personnage.avancer(Orientation.DROITE)
-            return True
-        else:
-            return False
+        moitie_periode_depassee = self.minuteur.temps_ecoule_periode_actuelle() > self.minuteur.periode / 2.0
+        if not self.etait_en_mouvement or moitie_periode_depassee:
+            derniere_touche_pressee = self.gestionnaire_touches.derniere_touche()
+            if derniere_touche_pressee in Constantes.TOUCHES_MOUVEMENT:
+                if derniere_touche_pressee in Constantes.TOUCHES_HAUT:
+                    self.mouvement_en_cours = Orientation.HAUT
+                elif derniere_touche_pressee in Constantes.TOUCHES_BAS:
+                    self.mouvement_en_cours = Orientation.BAS
+                elif derniere_touche_pressee in Constantes.TOUCHES_GAUCHE:
+                    self.mouvement_en_cours = Orientation.GAUCHE
+                elif derniere_touche_pressee in Constantes.TOUCHES_DROITE:
+                    self.mouvement_en_cours = Orientation.DROITE
 
+    def effectuer_mouvement(self):
+        """
+        Fait bouger les differents blocs.
+
+        :return: "None"
+        """
+        if self.mouvement_detecte:
+            self.carte.personnage.avancer(self.mouvement_en_cours)
+            self.etait_en_mouvement = True
+            self.mouvement_en_cours = None
