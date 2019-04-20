@@ -2,7 +2,7 @@
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
 
-from pygame import sprite, image, transform, error
+from pygame import sprite, image, transform, sprite
 from numpy import array
 from enum import IntEnum, unique
 
@@ -30,6 +30,8 @@ class Bloc(sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x*self.TAILLE
         self.rect.y = y*self.TAILLE
+        self.rect.width = self.TAILLE
+        self.rect.height = self.TAILLE
         self.image = transform.scale(self.image, (self.TAILLE, self.TAILLE))
 
     def update(self):
@@ -97,7 +99,7 @@ class Personnage(Bloc):
                 self.revenir()
 
     def creuser_terre(self, terre):
-        pass
+        terre.kill()
 
     def avancer(self, direction):
         """
