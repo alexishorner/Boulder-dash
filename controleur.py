@@ -136,14 +136,18 @@ class Minuteur:
         self._periode = periode
         self.tic = tic
         self.debut = time.time()
+        self.numero_periode = None
 
     def temps_ecoule(self):
+        return time.time() - self.debut
+
+    def temps_ecoule_periode_actuelle(self):
         """
         Retourne le temps ecoule depuis la derniere fin de periode.
 
         :return: nombre representant le temps ecoule depuis la derniere fin de periode
         """
-        ecoule = time.time() - self.debut
+        ecoule = self.temps_ecoule()
         return modulo(ecoule, self._periode)
 
     def reinitialiser(self):
@@ -153,6 +157,13 @@ class Minuteur:
         :return: "None"
         """
         self.debut = time.time()
+        self.numero_periode = None
+
+    def passage(self):
+        if self.numero_periode is None or self.numero_periode != self.numero_periode_actuelle():
+            self.numero_periode = self.numero_periode_actuelle()
+        else:
+            self.numero_periode += 1
 
     def numero_periode_actuelle(self):
         """
@@ -162,20 +173,23 @@ class Minuteur:
         """
         return int(self.temps_ecoule() / self._periode)
 
-    def attendre_fin(self, numero_periode=None):
+    def attendre_un_tic(self):
+        time.sleep(self.tic)
+
+    def attendre_fin(self):
         """
-        Attend jusqu'a la fin de la periode specifiee, par defaut la periode actuelle.
+        Attend jusqu'a la fin de la periode specifiee, "None" attend jusqu'a la fin de la periode actuelle.
 
         :return: "None"
         """
         numero_periode_actuelle = self.numero_periode_actuelle()
-        if numero_periode is None:
+        if self.numero_periode is None:
             ecart = 0
-        elif numero_periode >= numero_periode_actuelle:
-            ecart = numero_periode_actuelle - numero_periode
+        elif self.numero_periode >= numero_periode_actuelle:
+            ecart = numero_periode_actuelle - self.numero_periode
         else:
             return
-        temps = ecart * self._periode + (self._periode - self.temps_ecoule())
+        temps = ecart * self._periode + (self._periode - self.temps_ecoule_periode_actuelle())
         time.sleep(temps)
 
     def tics_restants(self):
@@ -184,7 +198,14 @@ class Minuteur:
 
         :return: nombre de tics restant avant la fin de la periode
         """
-        return (self._periode - self.temps_ecoule()) / self.tic
+        if self.numero_periode is None:
+            ecart = 0
+        else:
+            ecart = self.numero_periode - self.numero_periode_actuelle()
+        if ecart >= 0:
+            return (ecart * self._periode + self._periode - self.temps_ecoule_periode_actuelle()) / self.tic
+        else:
+            return 0
 
 
 class Jeu:
@@ -197,12 +218,14 @@ class Jeu:
         self.arriere_plan = pygame.Surface((Constantes.LARGEUR_ECRAN, Constantes.HAUTEUR_ECRAN))
         self.arriere_plan.fill((0, 0, 0))
         self.carte = Carte(Constantes.NIVEAUX[0])
-        self.continuer = False
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
-        self.minuteur = Minuteur(0.5, 0.05)
-        self.temps_entre_coups = 0.5
-        self.periode_actualisation = 0.05
+        self.minuteur = Minuteur(0.2, 0.01)
+        self.mouvement_deja_traite = False
+        self.mouvement_detecte = False
+
+    def quitter(self):
+        exit()  # TODO : ajouter confirmation
 
     def commencer(self):
         """
@@ -212,18 +235,20 @@ class Jeu:
         """
         self.actualiser_ecran()
         self.minuteur.reinitialiser()
-        self.continuer = True
-        while self.continuer:
-            deja_traite = False
+        while 1:  # FIXME : quand la fenetre est bougee le code est mis en pause
+            self.minuteur.passage()
+            self.mouvement_deja_traite = False
             debut = time.time()
-            while self.minuteur.tics_restants() > 1:  # FIXME : quand la fenetre est bougee le code est mis en pause
-                if not deja_traite:
-                    deja_traite = self.gerer_evenements()
-                    if deja_traite:
-                        self.actualiser_ecran()
-                if self.minuteur.tics_restants() > 1:
-                    time.sleep(0.05)
-            if self.minuteur.tics_restants() > 0:
+            while self.minuteur.tics_restants() > 1:    # Verifie les evenements a intervalles regulier pour eviter de
+                                                        # rater des evenements
+                self.gerer_evenements()  # Gere les evenements autres que les mouvements
+                if self.mouvement_detecte:  # Si un mouvement a ete effectue on actualise l'ecran
+                    self.actualiser_ecran()
+                    self.mouvement_detecte = False
+
+                if self.minuteur.tics_restants() > 1:  # S'il reste de quoi attendre un tic
+                    self.minuteur.attendre_un_tic()
+            if self.minuteur.tics_restants() > 0:  # Si la periode n'est pas finie
                 self.minuteur.attendre_fin()
 
             print(time.time() - debut)
@@ -246,11 +271,18 @@ class Jeu:
         """
         for evenement in pygame.event.get():
             if evenement.type == QUIT:
-                self.continuer = False
+                self.quitter()
             elif evenement.type == KEYDOWN:
-                return self.sur_touche_pressee()
+                self.gerer_mouvement()
+            elif evenement.type == KEYUP:
+                self.gerer_mouvement()
 
-    def sur_touche_pressee(self):
+    def gerer_mouvement(self):
+        if not self.mouvement_deja_traite:  # Verifie qu'il n'y a pas plus d'un mouvement par periode
+                    self.mouvement_detecte = self.sur_touche_mouvement_pressee()
+                    self.mouvement_deja_traite = self.mouvement_detecte
+
+    def sur_touche_mouvement_pressee(self):
         """
         S'occuppe des evenements correspondants a l'appui sur une touche.
 
