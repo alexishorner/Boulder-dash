@@ -1,7 +1,7 @@
 """
 Module de test pour le module "blocs"
 """
-import pygame
+import tests
 from blocs import *
 
 
@@ -18,6 +18,7 @@ def test_adjacents():
 
 
 if __name__ == "__main__":
+    tests.init()
     tests = (test_adjacents,)  # On cree un tuple avec toutes les fonctions de test
     for test in tests:
         print("")

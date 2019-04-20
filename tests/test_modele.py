@@ -1,13 +1,8 @@
 """
 Module de test pour le module "modele"
 """
-
-import pygame
+import tests
 import modele
-import os
-
-path = os.path.dirname(modele.__file__)  # On recupere le chemin du module a tester
-os.chdir(path)  # On change de repertoire pour pouvoir utiliser des chemins relatifs
 
 
 def test_enlever_extremites():
@@ -47,8 +42,7 @@ def test_vers_blocs():
 
 
 if __name__ == "__main__":
-    pygame.init()
-    pygame.display.set_mode((0,0))
+    tests.init()
     tests = (test_enlever_extremites, test_vers_blocs)  # On cree un tuple avec toutes les fonctions de test
     for test in tests:
         print("")
