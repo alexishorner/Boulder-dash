@@ -232,7 +232,7 @@ class Jeu:
         self.arriere_plan = pygame.Surface((Constantes.LARGEUR_ECRAN, Constantes.HAUTEUR_ECRAN))
         self.arriere_plan.fill((0, 0, 0))
         self.carte = Carte(Constantes.NIVEAUX[0])
-        self.personnage = self.personnage
+        self.personnage = self.carte.personnage
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.2, 0.01)
@@ -343,3 +343,5 @@ class Jeu:
             self.personnage.avancer(self.mouvement_en_cours)
             self.personnage.etait_en_mouvement = True
             self.mouvement_en_cours = None
+        for bloc in self.carte.blocs:
+            bloc.collision(self.carte.blocs)
