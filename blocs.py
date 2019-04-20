@@ -2,7 +2,7 @@
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
 
-from pygame import sprite, image, transform, sprite
+from pygame import sprite, image, transform
 from numpy import array
 from enum import IntEnum, unique
 
@@ -34,8 +34,15 @@ class Bloc(sprite.Sprite):
         self.rect.height = self.TAILLE
         self.image = transform.scale(self.image, (self.TAILLE, self.TAILLE))
 
-    def update(self):
+    def actualiser(self, groupe):
         pass
+
+    def blocs_adjacents(self, groupe):
+        rect = self.rect.inflate(3, 3)
+        adjacents = []
+        for bloc in groupe:
+            if rect.collidepoint(bloc.rect.center):
+                adjacents.append(bloc)
 
     @classmethod
     def chemin_image(cls):
@@ -79,6 +86,8 @@ class Personnage(Bloc):
         self.orientation = Orientation.DROITE
         self.ancien_rect = self.rect
         self.etait_en_mouvement = False
+        self.diamants_ramasses = 0
+        self.terre_creusee = 0
 
     def collision(self, groupe):
         """
@@ -97,9 +106,16 @@ class Personnage(Bloc):
                 self.creuser_terre(bloc)
             elif type_de_bloc == Mur:
                 self.revenir()
+            elif type_de_bloc == Diamant:
+                self.ramasser_diamant(bloc)
 
     def creuser_terre(self, terre):
         terre.kill()
+        self.terre_creusee += 1
+
+    def ramasser_diamant(self, diamant):
+        diamant.kill()
+        self.diamants_ramasses += 1
 
     def avancer(self, direction):
         """
@@ -141,6 +157,9 @@ class Caillou(Bloc):
     def __init__(self, x, y):
         Bloc.__init__(self, x, y)
         self.tombe = False
+
+    def actualiser(self, groupe):
+        pass
 
 
 class Terre(Bloc):

@@ -1,7 +1,6 @@
 """
 Module stockant les donnees du jeu.
 """
-
 from blocs import *
 from pygame.locals import *
 
