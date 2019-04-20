@@ -76,6 +76,7 @@ class Personnage(Bloc):
         Bloc.__init__(self, x, y)
         self.orientation = Orientation.DROITE
         self.ancien_rect = self.rect
+        self.etait_en_mouvement = False
 
     def collision(self, groupe):
         """

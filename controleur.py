@@ -232,11 +232,11 @@ class Jeu:
         self.arriere_plan = pygame.Surface((Constantes.LARGEUR_ECRAN, Constantes.HAUTEUR_ECRAN))
         self.arriere_plan.fill((0, 0, 0))
         self.carte = Carte(Constantes.NIVEAUX[0])
+        self.personnage = self.personnage
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.2, 0.01)
         self.mouvement_en_cours = None
-        self.etait_en_mouvement = False
 
     @property
     def mouvement_detecte(self):
@@ -284,7 +284,7 @@ class Jeu:
                 self.effectuer_mouvement()
                 self.actualiser_ecran()
             else:
-                self.etait_en_mouvement = False
+                self.personnage.etait_en_mouvement = False
 
             if self.minuteur.tics_restants() > 0:  # Si la periode n'est pas finie
                 self.minuteur.attendre_fin()
@@ -321,7 +321,7 @@ class Jeu:
         """
         self.gestionnaire_touches.actualiser_touches(pygame.key.get_pressed())
         moitie_periode_depassee = self.minuteur.temps_ecoule_periode_actuelle() > self.minuteur.periode / 2.0
-        if not self.etait_en_mouvement or moitie_periode_depassee:
+        if not self.personnage.etait_en_mouvement or moitie_periode_depassee:
             derniere_touche_pressee = self.gestionnaire_touches.derniere_touche()
             if derniere_touche_pressee in Constantes.TOUCHES_MOUVEMENT:
                 if derniere_touche_pressee in Constantes.TOUCHES_HAUT:
@@ -340,6 +340,6 @@ class Jeu:
         :return: "None"
         """
         if self.mouvement_detecte:
-            self.carte.personnage.avancer(self.mouvement_en_cours)
-            self.etait_en_mouvement = True
+            self.personnage.avancer(self.mouvement_en_cours)
+            self.personnage.etait_en_mouvement = True
             self.mouvement_en_cours = None

@@ -12,7 +12,7 @@ def test_modulo():
 
 
 def test_booleens_vers_indexes():
-    booleens = [False]*GestionnaireTouches.nombre_de_touches()
+    booleens = [False] * GestionnaireTouches.nombre_de_touches()
     booleens[K_LEFT] = True
     booleens[K_UP] = True
     booleens[K_w] = True
@@ -21,7 +21,7 @@ def test_booleens_vers_indexes():
 
 def test_indexes_vers_booleens():
     indexes = (K_LEFT, K_UP, K_w)
-    booleens_attendus = [False]*GestionnaireTouches.nombre_de_touches()
+    booleens_attendus = [False] * GestionnaireTouches.nombre_de_touches()
     booleens_attendus[K_LEFT] = True
     booleens_attendus[K_UP] = True
     booleens_attendus[K_w] = True
