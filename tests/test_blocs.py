@@ -6,7 +6,7 @@ from blocs import *
 
 
 def test_adjacents():
-    nombre_de_blocs_cote = 10
+    nombre_de_blocs_cote = 5
     milieu = int(nombre_de_blocs_cote**2 / 2.0)
     blocs = []
     for x in range(nombre_de_blocs_cote):
@@ -14,7 +14,9 @@ def test_adjacents():
             bloc = Bloc(x, y)
             blocs.append(bloc)
     bloc_milieu = blocs[milieu]
-    assert(len(bloc_milieu.blocs_adjacents(blocs)) == 8)
+    blocs_adjacents = bloc_milieu.blocs_adjacents(blocs)
+    print(len(blocs_adjacents))
+    assert(len(blocs_adjacents) == 8)
 
 
 if __name__ == "__main__":

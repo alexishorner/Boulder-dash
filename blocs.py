@@ -38,11 +38,19 @@ class Bloc(sprite.Sprite):
         pass
 
     def blocs_adjacents(self, groupe):
-        rect = self.rect.inflate(3, 3)
+        rect = self.rect.copy()
+        facteur = 3
+        centre_x = rect.centerx
+        centre_y = rect.centery
+        rect.width *= facteur
+        rect.height *= facteur
+        rect.x *= facteur / 2.0
+        rect.y *= facteur / 2.0
         adjacents = []
         for bloc in groupe:
             if rect.collidepoint(bloc.rect.center):
                 adjacents.append(bloc)
+        return adjacents
 
     @classmethod
     def chemin_image(cls):

@@ -174,12 +174,12 @@ class Minuteur:
         self.numero_periode = None
 
     def passage(self):
-        if self.numero_periode is None or self.numero_periode != self.numero_periode_actuelle():
-            self.numero_periode = self.numero_periode_actuelle()
+        if self.numero_periode is None or self.numero_periode != self.nombre_periodes_ecoulees():
+            self.numero_periode = self.nombre_periodes_ecoulees()
         else:
             self.numero_periode += 1
 
-    def numero_periode_actuelle(self):
+    def nombre_periodes_ecoulees(self):
         """
         Determine le numero de la periode actuelle, i.e. le nombre de fois que la periode s'est ecoulee moins 1.
 
@@ -196,11 +196,11 @@ class Minuteur:
 
         :return: "None"
         """
-        numero_periode_actuelle = self.numero_periode_actuelle()
+        nombre_periodes_ecoulees = self.nombre_periodes_ecoulees()
         if self.numero_periode is None:
             ecart = 0
-        elif self.numero_periode >= numero_periode_actuelle:
-            ecart = numero_periode_actuelle - self.numero_periode
+        elif self.numero_periode >= nombre_periodes_ecoulees:  # FIXME : condition peut-etre fausse
+            ecart = self.numero_periode - nombre_periodes_ecoulees
         else:
             return
         temps = ecart * self.periode + (self.periode - self.temps_ecoule_periode_actuelle())
@@ -215,7 +215,7 @@ class Minuteur:
         if self.numero_periode is None:
             ecart = 0
         else:
-            ecart = self.numero_periode - self.numero_periode_actuelle()
+            ecart = self.numero_periode - self.nombre_periodes_ecoulees()
         if ecart >= 0:
             return (ecart * self.periode + self.periode - self.temps_ecoule_periode_actuelle()) / self.tic
         else:
@@ -320,8 +320,8 @@ class Jeu:
         :return: Booleen informant si une touche a provoque une action dans le jeu
         """
         self.gestionnaire_touches.actualiser_touches(pygame.key.get_pressed())
-        moitie_periode_depassee = self.minuteur.temps_ecoule_periode_actuelle() > self.minuteur.periode / 2.0
-        if not self.personnage.etait_en_mouvement or moitie_periode_depassee:
+        moitie_periode_est_depassee = self.minuteur.temps_ecoule_periode_actuelle() > self.minuteur.periode / 2.0
+        if not self.personnage.etait_en_mouvement or moitie_periode_est_depassee:
             derniere_touche_pressee = self.gestionnaire_touches.derniere_touche()
             if derniere_touche_pressee in Constantes.TOUCHES_MOUVEMENT:
                 if derniere_touche_pressee in Constantes.TOUCHES_HAUT:
