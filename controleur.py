@@ -31,22 +31,27 @@ def modulo(num, div):
     :param div: diviseur
     :return: reste de la division de "num" par "div"
     """
-    a = float(num)
+    a = float(num)  # Assure que la division sera flottante
     b = float(div)
-    facteur = int(1e14)
+    facteur = int(1e14)  # Facteur de precision
     return (a / b - int(math.ceil(a / b * facteur) / facteur)) * b
 
 
 class GestionnaireTouches:
     """
     Classe permettant de gerer les evenements de pression des touches.
+
+    Dans pygame, si nous voulons savoir les touches pressees il faut appeler "pygame.key.get_pressed()", cette methode
+    renvoie une liste de booleens indiquant pour chaque touche possible si elle est pressee. Pour ordonner les touches
+    pressees dans l'ordre de pressage il est plus simple de conserver une liste des indexes des touches pressees, ce qui
+    est a l'origine des differentes conversions presentes dans les methode de cette classe.
     """
     def __init__(self, touches_pressees_booleens=None):
         if touches_pressees_booleens is None:
             touches_pressees_indexes = []
         else:
             touches_pressees_indexes = self.booleens_vers_indexes(touches_pressees_booleens)
-        self.indexes_ordonnes = touches_pressees_indexes
+        self.indexes_ordonnes = touches_pressees_indexes  # indexes des touches dans leur ordre de pressage
 
     def actualiser_touches(self, touches_pressees_booleens):
         """
@@ -55,10 +60,11 @@ class GestionnaireTouches:
         :param touches_pressees_booleens: liste de booleens indiquant pour chaque touche si elle est pressee
         :return: "None"
         """
-        ajoutees, enlevees = self.changements_touches(touches_pressees_booleens)
+        ajoutees, enlevees = self.changements_touches(touches_pressees_booleens)  # Regarde les touches nouvellement
+                                                                        # pressees et les touches n'etant plus pressees
         for touche in enlevees:
             self.indexes_ordonnes.remove(touche)
-        self.indexes_ordonnes.extend(ajoutees)
+        self.indexes_ordonnes.extend(ajoutees)  # Ajoute a la fin de la liste les touches nouvellement pressees
 
     def changements_touches(self, touches_pressees_booleens):
         """
