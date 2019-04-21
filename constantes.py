@@ -7,13 +7,19 @@ from pygame.locals import *
 from enum import IntEnum, unique
 import os
 
-pygame.init()
-pygame.display.set_mode((0, 0))
-chemin = os.path.dirname(__file__)
-os.chdir(chemin)
+pygame.init()  # obligatoire pour utiliser une grande partie de pygame
+pygame.display.set_mode((0, 0))  # obligatoire pour pouvoir charger des images
+chemin = os.path.dirname(__file__)  # on recupere le chemin du module ci-present
+os.chdir(chemin)  # on change de repertoire pour pouvoir utiliser des chemins relatifs
 
 
 def charger(image):
+    """
+    Charge une image.
+
+    :param image: chemin de l'image a charger
+    :return: image chargee
+    """
     return pygame.image.load(image).convert_alpha()
 
 
@@ -22,10 +28,12 @@ IMAGES = {"Bloc": "mono-unknown.png", "Personnage": "personnage.png",
           "Diamant": "diamant.jpg", "Terre": "terre.PNG", "Mur": "mur.png", "Caillou": "caillou.jpg"}
 
 for classe, chemin in IMAGES.iteritems():
-    IMAGES[classe] = charger(CHEMIN_IMAGES + chemin)
+    IMAGES[classe] = charger(CHEMIN_IMAGES + chemin)  # on charge les images
 
-image_porte = charger(CHEMIN_IMAGES + "porte.png")
-IMAGES.update({"Porte": image_porte, "Entree": image_porte, "Sortie": image_porte})
+image_porte = charger(CHEMIN_IMAGES + "porte.png")  # on s'occupe de la porte separement pour ne pas la charger trois
+                                                    # fois au lieu d'une
+IMAGES.update({"Porte": image_porte, "Entree": image_porte, "Sortie": image_porte})     # on ajoute l'image de porte aux
+                                                                                        # autres images
 
 
 @unique
