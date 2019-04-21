@@ -102,7 +102,7 @@ class Personnage(Bloc):
         :param groupe: groupe de blocs potentiellement collisionnes
         :return: "None"
         """
-        blocs = self.blocs_collisiones(groupe)
+        blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le personnage
         for bloc in blocs:
             type_de_bloc = bloc.__class__
             if type_de_bloc == Caillou:
