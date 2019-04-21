@@ -1,6 +1,22 @@
 """
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
+# TODO :
+#   - tomber
+#   - collisions
+#   - pousser pierres
+#   - porte
+#   - animations
+#   - son
+#   - menu
+#   - score
+#   - temps limite
+#   - niveaux predefinis
+#   - editeur de niveaux
+#   - generateur de niveaux automatique
+#   - mechants
+
+
 from constantes import *
 from numpy import array
 
