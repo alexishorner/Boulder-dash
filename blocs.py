@@ -75,11 +75,16 @@ class Bloc(pygame.sprite.Sprite):
     def collision(self, groupe):
         pass
 
-    def bouger(self):
+    def bouger(self, direction):
         pass
 
     def tuer(self):
-        pass
+        """
+        Methode appelee lorsque le bloc se fait tuer.
+
+        :return: "None"
+        """
+        self.kill()  # TODO : ajouter une animation pour chaque type de bloc
 
 
 class Personnage(Bloc):
@@ -116,16 +121,16 @@ class Personnage(Bloc):
                 self.ramasser_diamant(bloc)
 
     def creuser_terre(self, terre):
-        terre.kill()
+        terre.tuer()
         self.terre_creusee += 1
 
     def ramasser_diamant(self, diamant):
-        diamant.kill()
+        diamant.tuer()
         self.diamants_ramasses += 1
 
-    def avancer(self, direction):
+    def bouger(self, direction):
         """
-        Fait avancer le personnage dans la direction "direction".
+        Fait bouger le personnage dans la direction "direction".
 
         :param direction: direction dans laquelle avancer
         :return: "None"

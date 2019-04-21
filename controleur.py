@@ -373,7 +373,7 @@ class Jeu:
         :return: "None"
         """
         if self.mouvement_detecte:  # Si un mouvement doit etre effectue
-            self.personnage.avancer(self.mouvement_en_cours)  # On fait avancer le personnage
+            self.personnage.bouger(self.mouvement_en_cours)  # On fait avancer le personnage
             self.personnage.etait_en_mouvement = True
             self.mouvement_en_cours = None
         for bloc in self.carte.blocs:
