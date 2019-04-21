@@ -39,7 +39,6 @@ class Bloc(pygame.sprite.Sprite, object):
 
     def actualiser(self, groupe):
         self.a_bouge = False
-        pass
     # TODO : gerer les autres actions (comme tomber)
 
     @staticmethod
@@ -223,9 +222,7 @@ class Caillou(Bloc):
         :return: "None"
         """
         blocs = self.blocs_collisiones(groupe)  # cherche les blocs qui sont en collision avec le personnage
-        if blocs == []:
-            pass
-        else:
+        if blocs:
             self.revenir()
 
     def actualiser(self, groupe):
