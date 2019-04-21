@@ -35,8 +35,10 @@ class Bloc(pygame.sprite.Sprite, object):
         self.rect.x = x*self.TAILLE
         self.rect.y = y*self.TAILLE
         self.ancien_rect = self.rect
+        self.a_bouge = False
 
     def actualiser(self, groupe):
+        self.a_bouge = False
         pass
     # TODO : gerer les autres actions (comme tomber)
 
@@ -114,6 +116,7 @@ class Bloc(pygame.sprite.Sprite, object):
         vecteur *= self.TAILLE
         self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
         self.rect = self.rect.move(*vecteur)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
+        self.a_bouge = True
         self.collision(groupe, direction)
 
     def revenir(self):
@@ -123,6 +126,7 @@ class Bloc(pygame.sprite.Sprite, object):
         :return: "None"
         """
         self.rect = self.ancien_rect
+        self.a_bouge = False
 
     def tuer(self):
         """
@@ -159,6 +163,7 @@ class Personnage(Bloc):
                 if bloc.tombe:
                     self.tuer()
                 else:  # TODO : corriger
+                    # self.action_a_effectuer = {"methode": self.pousser_caillou, "args": (bloc, direction, groupe)}
                     self.pousser_caillou(bloc, direction, groupe)
             elif type_de_bloc == Terre:
                 self.creuser_terre(bloc)
@@ -177,8 +182,8 @@ class Personnage(Bloc):
 
     def pousser_caillou(self, caillou, direction, groupe):
         caillou.etre_pousse(direction, groupe)
-        caillou.collision(groupe, direction)
-
+        if not caillou.a_bouge:
+            self.revenir()
 
     def bouger(self, direction, groupe):
         Bloc.bouger(self, direction, groupe)
