@@ -109,13 +109,13 @@ class Niveau:
         return cls(NIVEAUX[numero-1], numero)
 
 
-class Carte:
+class Carte(object):
     """
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, niveau):
-        self.blocs_uniques = []
-        self.nombre_diamants = None
+        self.blocs_uniques = dict()
+        self.nombre_diamants = 0
         self.niveau = niveau
         self.personnage = self.blocs_uniques[Personnage]
         self.sortie = self.blocs_uniques[Sortie]

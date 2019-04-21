@@ -21,7 +21,7 @@ from constantes import *
 from numpy import array
 
 
-class Bloc(pygame.sprite.Sprite):
+class Bloc(pygame.sprite.Sprite, object):
     """
     Classe de base pour tous les blocs.
     """
@@ -262,6 +262,10 @@ class Porte(Bloc):
 
     @est_activee.setter
     def est_activee(self, activee):
+        try:
+            self._est_activee
+        except AttributeError:
+            self._est_activee = False
         activation = not self._est_activee and activee
         desactivation = self._est_activee and not activee
         self._est_activee = activee
