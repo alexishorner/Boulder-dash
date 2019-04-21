@@ -89,7 +89,7 @@ class Bloc(pygame.sprite.Sprite, object):
             blocs.remove(self)
         return blocs
 
-    def collision(self, groupe):
+    def collision(self, groupe, direction):
         pass
 
     def bouger(self, direction, groupe):
@@ -177,7 +177,7 @@ class Personnage(Bloc):
 
     def pousser_caillou(self, caillou, direction):
         self.revenir()
-        caillou.etre_pousse(self, caillou, direction)
+        caillou.etre_pousse(direction, pygame.sprite.Group(self))
         caillou.collision()
 
 
@@ -203,18 +203,18 @@ class Caillou(Bloc):
         Bloc.__init__(self, x, y)
         self.tombe = False
 
-    def bouger(self, direction):
+    def bouger(self, direction, groupe):
        pass
 
-    def etre_pousse(self, direction):
+    def etre_pousse(self, direction, groupe):
         """
         gere le mouvement du caillou lorsqu'il est pousse
         :param direction: direction dans laquelle le caillou est pousse (=vecteur direction personnage)
         :return: "None"
         """
-        self.move(direction)
+        self.bouger(direction, groupe)
 
-    def collision(self, groupe):
+    def collision(self, groupe, direction):
         """
         Methode gerant les collisions entre un caillou et les autres blocs.
 
