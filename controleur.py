@@ -377,4 +377,4 @@ class Jeu:
             self.personnage.etait_en_mouvement = True
             self.mouvement_en_cours = None
         for bloc in self.carte.blocs:
-            bloc.collision(self.carte.blocs)  # On gere les collisions entre les blocs
+            bloc.actualiser(self.carte.blocs)  # On gere les collisions entre les blocs

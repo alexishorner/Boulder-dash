@@ -20,7 +20,8 @@ class Bloc(pygame.sprite.Sprite):
         self.rect.y = y*self.TAILLE
 
     def actualiser(self, groupe):
-        pass
+        self.collision(groupe)
+        # TODO : gerer les autres actions (comme tomber)
 
     @staticmethod
     def homotetie(rectangle, facteur):
