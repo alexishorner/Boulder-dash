@@ -34,6 +34,7 @@ class Bloc(pygame.sprite.Sprite, object):
         self.rect = self.image.get_rect()
         self.rect.x = x*self.TAILLE
         self.rect.y = y*self.TAILLE
+        self.ancien_rect = self.rect
 
     def actualiser(self, groupe):
         pass
@@ -140,7 +141,6 @@ class Personnage(Bloc):
     def __init__(self, x, y):
         Bloc.__init__(self, x, y)
         self.orientation = ORIENTATION.DROITE
-        self.ancien_rect = self.rect
         self.etait_en_mouvement = False
         self.diamants_ramasses = 0
         self.terre_creusee = 0
@@ -158,8 +158,8 @@ class Personnage(Bloc):
             if type_de_bloc == Caillou:
                 if bloc.tombe:
                     self.tuer()
-                else:
-                    self.pousser_caillou(bloc, direction)
+                else:  # TODO : corriger
+                    self.pousser_caillou(bloc, direction, groupe)
             elif type_de_bloc == Terre:
                 self.creuser_terre(bloc)
             elif type_de_bloc == Mur:
@@ -175,17 +175,13 @@ class Personnage(Bloc):
         diamant.tuer()
         self.diamants_ramasses += 1
 
-    def pousser_caillou(self, caillou, direction):
-        self.revenir()
-        caillou.etre_pousse(direction, pygame.sprite.Group(self))
-        caillou.collision()
+    def pousser_caillou(self, caillou, direction, groupe):
+        caillou.etre_pousse(direction, groupe)
+        caillou.collision(groupe, direction)
 
 
     def bouger(self, direction, groupe):
         Bloc.bouger(self, direction, groupe)
-
-    def revenir(self):
-        pass
 
 
 class Terre(Bloc):
@@ -204,7 +200,7 @@ class Caillou(Bloc):
         self.tombe = False
 
     def bouger(self, direction, groupe):
-       pass
+       Bloc.bouger(self, direction, groupe)
 
     def etre_pousse(self, direction, groupe):
         """
