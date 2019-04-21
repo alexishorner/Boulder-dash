@@ -113,7 +113,7 @@ class Bloc(pygame.sprite.Sprite, object):
         vecteur *= self.TAILLE
         self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
         self.rect = self.rect.move(*vecteur)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
-        self.collision(groupe)
+        self.collision(groupe, direction)
 
     def revenir(self):
         """
@@ -145,7 +145,7 @@ class Personnage(Bloc):
         self.diamants_ramasses = 0
         self.terre_creusee = 0
 
-    def collision(self, groupe):
+    def collision(self, groupe, direction):
         """
         Methode gerant les collisions entre le personnage et les autres blocs.
 
@@ -159,7 +159,7 @@ class Personnage(Bloc):
                 if bloc.tombe:
                     self.tuer()
                 else:
-                    self.pousser_caillou(bloc)
+                    self.pousser_caillou(bloc, direction)
             elif type_de_bloc == Terre:
                 self.creuser_terre(bloc)
             elif type_de_bloc == Mur:
