@@ -2,7 +2,6 @@
 Module stockant les donnees du jeu.
 """
 from blocs import *
-from pygame.locals import *
 
 
 def _enlever_extremite(chaine, extremite_gauche=True, caracteres_a_enlever=("\n", " ")):
@@ -89,12 +88,16 @@ class Niveau:
         """
         niveau_ascii = self.ascii
         niveau_ascii = enlever_extremites(niveau_ascii).replace(" ", "")
-        blocs = sprite.Group()
+        blocs = pygame.sprite.Group()
         for y, ligne_ascii in enumerate(niveau_ascii.split("\n")):
             for x, bloc_ascii in enumerate(ligne_ascii):
                 bloc = self.ASCII_VERS_BLOC[bloc_ascii](x, y)
                 blocs.add(bloc)
         return blocs
+
+    @classmethod
+    def niveau(cls, numero):
+        return cls(NIVEAUX[numero-1], numero)
 
 
 class Carte:
@@ -131,29 +134,3 @@ class Carte:
         self.blocs.draw(ecran)  # Dessine les blocs autres que le personnage en premier
         self.blocs.add(self.personnage)
         ecran.blit(self.personnage.image, self.personnage.rect)  # Dessine le personnage en dernier pour qu'il soit au premier plan
-
-
-class Constantes:
-    """
-    Classe permettant d'encapsuler les differentes constantes du jeu.
-    """
-    LARGEUR_ECRAN = 1920  # TODO : adapter resolution a chaque ecran
-    HAUTEUR_ECRAN = 1080
-    TOUCHES_MOUVEMENT = (K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d)
-    TOUCHES_HAUT = (K_UP, K_w)
-    TOUCHES_BAS = (K_DOWN, K_s)
-    TOUCHES_GAUCHE = (K_LEFT, K_a)
-    TOUCHES_DROITE = (K_RIGHT, K_d)
-    NIVEAUX = (Niveau("""
-                        ############
-                        #***O***O*$#
-                        #***OOP**[##
-                        #$$$#******#
-                        #OOOO*$]***#
-                        #**********#
-                        #**********#
-                        #**********#
-                        #**********#
-                        #**********#
-                        ############
-                                    """, 1),)

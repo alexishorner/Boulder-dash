@@ -1,7 +1,6 @@
 """
 Module de test pour le module "modele"
 """
-import tests
 import modele
 
 
@@ -42,7 +41,6 @@ def test_vers_blocs():
 
 
 if __name__ == "__main__":
-    tests.init()
     tests = (test_enlever_extremites, test_vers_blocs)  # On cree un tuple avec toutes les fonctions de test
     for test in tests:
         print("")

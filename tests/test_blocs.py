@@ -1,7 +1,6 @@
 """
 Module de test pour le module "blocs"
 """
-import tests
 from blocs import *
 
 
@@ -15,12 +14,10 @@ def test_adjacents():
             blocs.append(bloc)
     bloc_milieu = blocs[milieu]
     blocs_adjacents = bloc_milieu.blocs_adjacents(blocs)
-    print(len(blocs_adjacents))
     assert(len(blocs_adjacents) == 8)
 
 
 if __name__ == "__main__":
-    tests.init()
     tests = (test_adjacents,)  # On cree un tuple avec toutes les fonctions de test
     for test in tests:
         print("")

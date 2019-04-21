@@ -1,9 +1,6 @@
 """
 Module gerant la logique du jeu.
 """
-
-import pygame
-from pygame.locals import *
 from modele import *
 import time
 import math
@@ -228,10 +225,10 @@ class Jeu:
     """
     def __init__(self):
         pygame.init()
-        self.ecran = pygame.display.set_mode((Constantes.LARGEUR_ECRAN, Constantes.HAUTEUR_ECRAN), RESIZABLE)  # TODO : permettre le mode plein ecran
-        self.arriere_plan = pygame.Surface((Constantes.LARGEUR_ECRAN, Constantes.HAUTEUR_ECRAN))
+        self.ecran = pygame.display.set_mode((ECRAN.LARGEUR, ECRAN.HAUTEUR), RESIZABLE)  # TODO : permettre le mode plein ecran
+        self.arriere_plan = pygame.Surface((ECRAN.LARGEUR, ECRAN.HAUTEUR))
         self.arriere_plan.fill((0, 0, 0))
-        self.carte = Carte(Constantes.NIVEAUX[0])
+        self.carte = Carte(Niveau.niveau(1))
         self.personnage = self.carte.personnage
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
@@ -323,14 +320,14 @@ class Jeu:
         moitie_periode_est_depassee = self.minuteur.temps_ecoule_periode_actuelle() > self.minuteur.periode / 2.0
         if not self.personnage.etait_en_mouvement or moitie_periode_est_depassee:
             derniere_touche_pressee = self.gestionnaire_touches.derniere_touche()
-            if derniere_touche_pressee in Constantes.TOUCHES_MOUVEMENT:
-                if derniere_touche_pressee in Constantes.TOUCHES_HAUT:
+            if derniere_touche_pressee in TOUCHES.MOUVEMENT:
+                if derniere_touche_pressee in TOUCHES.HAUT:
                     self.mouvement_en_cours = Orientation.HAUT
-                elif derniere_touche_pressee in Constantes.TOUCHES_BAS:
+                elif derniere_touche_pressee in TOUCHES.BAS:
                     self.mouvement_en_cours = Orientation.BAS
-                elif derniere_touche_pressee in Constantes.TOUCHES_GAUCHE:
+                elif derniere_touche_pressee in TOUCHES.GAUCHE:
                     self.mouvement_en_cours = Orientation.GAUCHE
-                elif derniere_touche_pressee in Constantes.TOUCHES_DROITE:
+                elif derniere_touche_pressee in TOUCHES.DROITE:
                     self.mouvement_en_cours = Orientation.DROITE
 
     def effectuer_mouvement(self):

@@ -1,12 +1,9 @@
 """
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
-
-from pygame import sprite, image, transform
+from constantes import *
 from numpy import array
 from enum import IntEnum, unique
-
-DOSSIER_IMAGES = "img/"
 
 
 @unique
@@ -17,49 +14,60 @@ class Orientation(IntEnum):
     GAUCHE, DROITE, HAUT, BAS = range(4)
 
 
-class Bloc(sprite.Sprite):
+class Bloc(pygame.sprite.Sprite):
     """
     Classe de base pour tous les blocs.
     """
     TAILLE = 75
-    NOM_IMAGE = "mono-unknown.png"
 
     def __init__(self, x, y):
-        sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
-        self.image = image.load(self.chemin_image()).convert_alpha()
+        pygame.sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
+        image = IMAGES[self.__class__.__name__]
+        self.image = pygame.transform.scale(image, (self.TAILLE, self.TAILLE))
         self.rect = self.image.get_rect()
         self.rect.x = x*self.TAILLE
         self.rect.y = y*self.TAILLE
-        self.rect.width = self.TAILLE
-        self.rect.height = self.TAILLE
-        self.image = transform.scale(self.image, (self.TAILLE, self.TAILLE))
 
     def actualiser(self, groupe):
         pass
 
-    def blocs_adjacents(self, groupe):
-        rect = self.rect.copy()
-        facteur = 3
-        centre_x = rect.centerx
+    @staticmethod
+    def homotetie(rectangle, facteur):
+        """
+        Renvoie une copie d'un rectangle avec des dimensions multipliees par un certain facteur. Conserve la position du
+        centre du rectangle.
+
+        :param rectangle: rectangle a agrandir
+        :param facteur: nombre par lequel les cotes du rectangle sont multiplies
+        :return:
+        """
+        rect = rectangle.copy()  # Cree une copie du rectangle de base pour eviter de modifier ses dimensions
+        centre_x = rect.centerx  # Enregistre la position du centre
         centre_y = rect.centery
-        rect.width *= facteur
+        rect.width *= facteur  # Multiplie les cotes par le facteur
         rect.height *= facteur
-        rect.x *= facteur / 2.0
-        rect.y *= facteur / 2.0
+        depl_x = rect.centerx - centre_x  # Calcule de combien le centre a ete deplace
+        depl_y = rect.centery - centre_y
+        rect.x -= depl_x  # Deplace le rectangle pour remettre le centre a sa position initiale
+        rect.y -= depl_y
+        return rect
+
+    def blocs_adjacents(self, groupe):
+        """
+        Renvoie un groupe contenant les blocs adjacents a "self".
+
+        :param groupe: groupe de blocs a tester pour voir s'ils sont adjacents a "self"
+        :return: groupe de blocs adjacents a "self"
+        """
+        rect = self.homotetie(self.rect, 3)
         adjacents = []
-        for bloc in groupe:
+        groupe_ = groupe
+        if self in groupe_:
+            groupe_.remove(self)
+        for bloc in groupe_:
             if rect.collidepoint(bloc.rect.center):
                 adjacents.append(bloc)
         return adjacents
-
-    @classmethod
-    def chemin_image(cls):
-        """
-        Methode renvoyant le chemin de l'image du bloc.
-
-        :return: chemin de l'image du bloc
-        """
-        return DOSSIER_IMAGES + cls.NOM_IMAGE
 
     def blocs_collisiones(self, groupe):
         """
@@ -68,7 +76,7 @@ class Bloc(sprite.Sprite):
         :param groupe: groupe de blocs contre lequel verifier les collisions
         :return: blocs collisiones
         """
-        blocs = sprite.spritecollide(self, groupe, dokill=False)
+        blocs = pygame.sprite.spritecollide(self, groupe, dokill=False)
         if self in blocs:
             blocs.remove(self)
         return blocs
@@ -87,7 +95,6 @@ class Personnage(Bloc):
     """
     Classe permettant de representer un personnage.
     """
-    NOM_IMAGE = "personnage.png"
 
     def __init__(self, x, y):
         Bloc.__init__(self, x, y)
@@ -160,7 +167,6 @@ class Caillou(Bloc):
     """
     Classe permettant de representer un caillou.
     """
-    NOM_IMAGE = "caillou.jpg"
 
     def __init__(self, x, y):
         Bloc.__init__(self, x, y)
@@ -174,28 +180,24 @@ class Terre(Bloc):
     """
     Classe permettant de representer de la terre.
     """
-    NOM_IMAGE = "terre.PNG"
 
 
 class Diamant(Bloc):
     """
     Classe permettant de representer un diamant.
     """
-    NOM_IMAGE = "diamant.jpg"
 
 
 class Mur(Bloc):
     """
     Classe permetant de representer un bout de mur.
     """
-    NOM_IMAGE = "mur.png"
 
 
 class Porte(Bloc):
     """
     Classe permettant de representer une porte de maniere generique.
     """
-    NOM_IMAGE = "porte.png"
 
 
 class Entree(Porte):

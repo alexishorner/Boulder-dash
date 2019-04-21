@@ -1,7 +1,6 @@
 """
 Module de test du module "controleur"
 """
-import tests
 from controleur import *
 
 
@@ -45,7 +44,6 @@ def test_actualiser_touches():
     assert(set(gestionnaire.indexes_ordonnes) == {K_LEFT, K_DOWN, K_w})
 
 if __name__ == "__main__":
-    tests.init()
     tests = (test_modulo, test_booleens_vers_indexes, test_indexes_vers_booleens, test_changement_touches,
              test_actualiser_touches)  # On cree un tuple avec toutes les fonctions de test
     for test in tests:
