@@ -3,15 +3,6 @@ Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
 from constantes import *
 from numpy import array
-from enum import IntEnum, unique
-
-
-@unique
-class Orientation(IntEnum):
-    """
-    Classe permettant de definir des orientations comme des nombres entiers.
-    """
-    GAUCHE, DROITE, HAUT, BAS = range(4)
 
 
 class Bloc(pygame.sprite.Sprite):
@@ -98,7 +89,7 @@ class Personnage(Bloc):
 
     def __init__(self, x, y):
         Bloc.__init__(self, x, y)
-        self.orientation = Orientation.DROITE
+        self.orientation = ORIENTATION.DROITE
         self.ancien_rect = self.rect
         self.etait_en_mouvement = False
         self.diamants_ramasses = 0
@@ -140,13 +131,13 @@ class Personnage(Bloc):
         :return: "None"
         """
         self.orientation = direction
-        if direction == Orientation.DROITE:
+        if direction == ORIENTATION.DROITE:
             vecteur = array([1, 0])
-        elif direction == Orientation.GAUCHE:
+        elif direction == ORIENTATION.GAUCHE:
             vecteur = array([-1, 0])
-        elif direction == Orientation.HAUT:
+        elif direction == ORIENTATION.HAUT:
             vecteur = array([0, -1])
-        elif direction == Orientation.BAS:
+        elif direction == ORIENTATION.BAS:
             vecteur = array([0, 1])
         else:
             raise ValueError("L'orientation est invalide")

@@ -1,5 +1,10 @@
+"""
+Module contenant toutes les constantes. Si des variables ne doivent pas etre importees avec le module, il faut commencer
+leur nom par un tiret bas ("_").
+"""
 import pygame
 from pygame.locals import *
+from enum import IntEnum, unique
 import os
 
 pygame.init()
@@ -21,6 +26,14 @@ for classe, chemin in IMAGES.iteritems():
 
 image_porte = charger(CHEMIN_IMAGES + "porte.png")
 IMAGES.update({"Porte": image_porte, "Entree": image_porte, "Sortie": image_porte})
+
+
+@unique
+class ORIENTATION(IntEnum):
+    """
+    Classe permettant de definir des orientations comme des nombres entiers.
+    """
+    GAUCHE, DROITE, HAUT, BAS = range(4)
 
 
 class ECRAN:

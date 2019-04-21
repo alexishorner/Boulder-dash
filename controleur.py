@@ -346,18 +346,25 @@ class Jeu:
         :return: Booleen informant si une touche a provoque une action dans le jeu
         """
         self.gestionnaire_touches.actualiser_touches(pygame.key.get_pressed())
+
+        # On regarde si plus de la moitie de la periode est ecoulee (sert a ameliorer l'experience utilisateur)
         moitie_periode_est_depassee = self.minuteur.temps_ecoule_periode_actuelle() > self.minuteur.periode / 2.0
-        if not self.personnage.etait_en_mouvement or moitie_periode_est_depassee:
+
+        if not self.personnage.etait_en_mouvement or moitie_periode_est_depassee:   # Si le personnage est deja en train
+                                                                                    # de bouger ou que plus de la moitie
+                                                                                    # de la periode est ecoulee
             derniere_touche_pressee = self.gestionnaire_touches.derniere_touche()
-            if derniere_touche_pressee in TOUCHES.MOUVEMENT:
+            if derniere_touche_pressee in TOUCHES.MOUVEMENT:  # Si on presse une touche de mouvement
+
+                # On regarde quelle touche est pressee et on stocke le mouvement en consequence
                 if derniere_touche_pressee in TOUCHES.HAUT:
-                    self.mouvement_en_cours = Orientation.HAUT
+                    self.mouvement_en_cours = ORIENTATION.HAUT
                 elif derniere_touche_pressee in TOUCHES.BAS:
-                    self.mouvement_en_cours = Orientation.BAS
+                    self.mouvement_en_cours = ORIENTATION.BAS
                 elif derniere_touche_pressee in TOUCHES.GAUCHE:
-                    self.mouvement_en_cours = Orientation.GAUCHE
+                    self.mouvement_en_cours = ORIENTATION.GAUCHE
                 elif derniere_touche_pressee in TOUCHES.DROITE:
-                    self.mouvement_en_cours = Orientation.DROITE
+                    self.mouvement_en_cours = ORIENTATION.DROITE
 
     def effectuer_mouvement(self):
         """
@@ -365,9 +372,9 @@ class Jeu:
 
         :return: "None"
         """
-        if self.mouvement_detecte:
-            self.personnage.avancer(self.mouvement_en_cours)
+        if self.mouvement_detecte:  # Si un mouvement doit etre effectue
+            self.personnage.avancer(self.mouvement_en_cours)  # On fait avancer le personnage
             self.personnage.etait_en_mouvement = True
             self.mouvement_en_cours = None
         for bloc in self.carte.blocs:
-            bloc.collision(self.carte.blocs)
+            bloc.collision(self.carte.blocs)  # On gere les collisions entre les blocs
