@@ -89,7 +89,7 @@ class Bloc(pygame.sprite.Sprite, object):
             blocs.remove(self)
         return blocs
 
-    def collision(self, groupe):
+    def collision(self, groupe, direction):
         pass
 
     def bouger(self, direction, groupe):
@@ -177,7 +177,7 @@ class Personnage(Bloc):
 
     def pousser_caillou(self, caillou, direction):
         self.revenir()
-        caillou.etre_pousse(self, caillou, direction)
+        caillou.etre_pousse(self, direction)
         caillou.collision()
 
 
