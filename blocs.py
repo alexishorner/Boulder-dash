@@ -160,6 +160,12 @@ class Personnage(Bloc):
         self.rect = self.ancien_rect
 
 
+class Terre(Bloc):
+    """
+    Classe permettant de representer de la terre.
+    """
+
+# TODO : creer une classe englobant les caracteristiques communes a la classe "Caillou" et "Diamant", comme tomber
 class Caillou(Bloc):
     """
     Classe permettant de representer un caillou.
@@ -171,12 +177,6 @@ class Caillou(Bloc):
 
     def actualiser(self, groupe):
         pass
-
-
-class Terre(Bloc):
-    """
-    Classe permettant de representer de la terre.
-    """
 
 
 class Diamant(Bloc):
@@ -201,11 +201,9 @@ class Entree(Porte):
     """
     Classe permettant de representer une porte d'entree.
     """
-    pass
 
 
 class Sortie(Porte):
     """
     Classe permettant de representer une porte de sortie.
     """
-    pass
