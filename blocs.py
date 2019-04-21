@@ -247,15 +247,60 @@ class Porte(Bloc):
     """
     Classe permettant de representer une porte de maniere generique.
     """
+    def __init__(self, x, y):
+        Bloc.__init__(self, x, y)
+        self.est_activee = False
+
+    @property
+    def est_activee(self):
+        """
+        Propriete permettant de savoir si la porte est activee.
+
+        :return: booleen indiquant si la porte est activee
+        """
+        return self._est_activee
+
+    @est_activee.setter
+    def est_activee(self, activee):
+        activation = not self._est_activee and activee
+        desactivation = self._est_activee and not activee
+        self._est_activee = activee
+        if activation:
+            pass
+        elif desactivation:
+            pass
+        # TODO : ajouter animation de changement d'etat
+
+    def activer(self):
+        """
+        Methode de convenance permettant d'activer la porte.
+
+        :return: "None"
+        """
+        self.est_activee = True
+
+    def desctiver(self):
+        """
+        Methode de convenance permettant de desactiver la porte.
+
+        :return: "None"
+        """
+        self.est_activee = False
 
 
 class Entree(Porte):
     """
     Classe permettant de representer une porte d'entree.
     """
+    def __init__(self, x, y):
+        Bloc.__init__(self, x, y)
+        self.est_activee = True
 
 
 class Sortie(Porte):
     """
     Classe permettant de representer une porte de sortie.
     """
+    def __init__(self, x, y):
+        Bloc.__init__(self, x, y)
+        self.est_activee = False

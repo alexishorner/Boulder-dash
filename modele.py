@@ -114,23 +114,78 @@ class Carte:
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, niveau):
-        self.blocs = niveau.vers_blocs()
-        self.personnage = self.trouver_personnage(self.blocs)
+        self.blocs_uniques = []
+        self.nombre_diamants = None
+        self.niveau = niveau
+        self.personnage = self.blocs_uniques[Personnage]
+        self.sortie = self.blocs_uniques[Sortie]
         if self.personnage is None:  # On oblige la presence d'un personnage, car on ne peut pas jouer sans
             raise LookupError("Pas de personnage trouve.")
 
+    @property
+    def niveau(self):
+        """
+        Propriete permettant d'acceder au niveau.
+
+        :return: niveau
+        """
+        return self._niveau
+
+    @niveau.setter
+    def niveau(self, nouveau):
+        self._niveau = nouveau
+        self.blocs = nouveau.vers_blocs()
+
+    @niveau.deleter
+    def niveau(self):
+        raise AttributeError("La propriete ne peut pas etre supprimee.")
+
+    @property
+    def blocs(self):
+        """
+        Propriete permettant d'acceder aux blocs.
+
+        :return: blocs
+        """
+        return self._blocs
+
+    @blocs.setter
+    def blocs(self, nouveaux):
+        self._blocs = nouveaux
+        self.blocs_uniques = self.trouver_blocs_uniques(nouveaux)
+        self.nombre_diamants = self.compter_diamants(nouveaux)
+
+    @blocs.deleter
+    def blocs(self):
+        raise AttributeError("La propriete ne peut pas etre supprimee.")
+
     @staticmethod
-    def trouver_personnage(blocs):
+    def trouver_blocs_uniques(blocs):
         """
         Cherche dans une liste de blocs la premiere occurrence d'un bloc de type "Personnage".
 
         :param blocs: Blocs dans lesquels chercher
         :return: Premiere occurrence d'un bloc de type "Personnage"
         """
+        blocs_uniques = {Personnage: None, Entree: None, Sortie: None}
         for bloc in blocs:
-            if bloc.__class__ == Personnage:
-                personnage = bloc
-                return personnage
+            if bloc.__class__ in blocs_uniques.keys():
+                blocs_uniques[bloc.__class__] = bloc
+        return blocs_uniques
+
+    @staticmethod
+    def compter_diamants(blocs):
+        """
+        Compte le nombre de diamants dans un ensemble de blocs.
+
+        :param blocs: blocs dans lesquels chercher les diamants
+        :return: nombre de diamants
+        """
+        nombre = 0
+        for bloc in blocs:
+            if bloc.__class__ == Diamant:
+                nombre += 1
+        return nombre
 
     def dessiner(self, ecran):
         """

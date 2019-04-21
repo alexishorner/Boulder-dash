@@ -308,6 +308,8 @@ class Jeu:
                     self.minuteur.attendre_un_tic()
             if self.mouvement_detecte:  # Si un mouvement a ete detecte, on l'effectue et on actualise l'ecran
                 self.effectuer_mouvement()
+                if self.carte.nombre_diamants == self.personnage.diamants_ramasses:
+                    self.carte.sortie.activer()
                 self.actualiser_ecran()
             else:
                 self.personnage.etait_en_mouvement = False
