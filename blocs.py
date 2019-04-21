@@ -93,7 +93,34 @@ class Bloc(pygame.sprite.Sprite):
         pass
 
     def bouger(self, direction):
-        pass
+        """
+            Fait bouger le personnage dans la direction "direction".
+
+            :param direction: direction dans laquelle avancer
+            :return: "None"
+            """
+        self.orientation = direction
+        if direction == ORIENTATION.DROITE:
+            vecteur = array([1, 0])
+        elif direction == ORIENTATION.GAUCHE:
+            vecteur = array([-1, 0])
+        elif direction == ORIENTATION.HAUT:
+            vecteur = array([0, -1])
+        elif direction == ORIENTATION.BAS:
+            vecteur = array([0, 1])
+        else:
+            raise ValueError("L'orientation est invalide")
+        vecteur *= self.TAILLE
+        self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
+        self.rect = self.rect.move(*vecteur)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
+
+    def revenir(self):
+        """
+        Annule le dernier mouvement du personnage.
+
+        :return: "None"
+        """
+        self.rect = self.ancien_rect
 
     def tuer(self):
         """
@@ -130,6 +157,8 @@ class Personnage(Bloc):
             if type_de_bloc == Caillou:
                 if bloc.tombe:
                     self.tuer()
+                else:
+                    self.pousser_caillou(bloc)
             elif type_de_bloc == Terre:
                 self.creuser_terre(bloc)
             elif type_de_bloc == Mur:
@@ -145,35 +174,17 @@ class Personnage(Bloc):
         diamant.tuer()
         self.diamants_ramasses += 1
 
-    def bouger(self, direction):
-        """
-        Fait bouger le personnage dans la direction "direction".
+    def pousser_caillou(self, caillou):
+        self.revenir()
+        caillou.etre_pousse
+        caillou.collision()
 
-        :param direction: direction dans laquelle avancer
-        :return: "None"
-        """
-        self.orientation = direction
-        if direction == ORIENTATION.DROITE:
-            vecteur = array([1, 0])
-        elif direction == ORIENTATION.GAUCHE:
-            vecteur = array([-1, 0])
-        elif direction == ORIENTATION.HAUT:
-            vecteur = array([0, -1])
-        elif direction == ORIENTATION.BAS:
-            vecteur = array([0, 1])
-        else:
-            raise ValueError("L'orientation est invalide")
-        vecteur *= self.TAILLE
-        self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
-        self.rect = self.rect.move(*vecteur)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
+
+    def bouger(self, direction):
+        Bloc.bouger(self, direction)
 
     def revenir(self):
-        """
-        Annule le dernier mouvement du personnage.
-
-        :return: "None"
-        """
-        self.rect = self.ancien_rect
+        pass
 
 
 class Terre(Bloc):
@@ -190,6 +201,30 @@ class Caillou(Bloc):
     def __init__(self, x, y):
         Bloc.__init__(self, x, y)
         self.tombe = False
+
+    def bouger(self, direction):
+       pass
+
+    def etre_pousse(self, direction):
+        """
+        gere le mouvement du caillou lorsqu'il est pousse
+        :param direction: direction dans laquelle le caillou est pousse (=vecteur direction personnage)
+        :return: "None"
+        """
+        self.move(direction)
+
+    def collision(self, groupe):
+        """
+        Methode gerant les collisions entre un caillou et les autres blocs.
+
+        :param groupe: groupe de blocs potentiellement collisionnes
+        :return: "None"
+        """
+        blocs = self.blocs_collisiones(groupe)  # cherche les blocs qui sont en collision avec le personnage
+        if blocs == []:
+            pass
+        else:
+            self.revenir()
 
     def actualiser(self, groupe):
         pass

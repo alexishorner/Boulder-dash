@@ -25,7 +25,7 @@ def modulo(num, div):
     Verification:
     7.5 = 150.0 * 0.05 + 0.0
 
-    Le desavantage de cette fonction est qu'elle pert un peu de precision pour parer aux erreurs d'arrondi.
+    Le desavantage de cette fonction est qu'elle perd un peu de precision pour parer aux erreurs d'arrondi.
 
     :param num: numerateur
     :param div: diviseur
