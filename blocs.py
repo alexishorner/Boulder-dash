@@ -36,7 +36,7 @@ class Bloc(pygame.sprite.Sprite):
         self.rect.y = y*self.TAILLE
 
     def actualiser(self, groupe):
-        self.collision(groupe)
+
         # TODO : gerer les autres actions (comme tomber)
 
     @staticmethod
@@ -92,7 +92,7 @@ class Bloc(pygame.sprite.Sprite):
     def collision(self, groupe):
         pass
 
-    def bouger(self, direction):
+    def bouger(self, direction, groupe):
         """
             Fait bouger le personnage dans la direction "direction".
 
@@ -113,6 +113,7 @@ class Bloc(pygame.sprite.Sprite):
         vecteur *= self.TAILLE
         self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
         self.rect = self.rect.move(*vecteur)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
+        self.collision(groupe)
 
     def revenir(self):
         """
@@ -174,14 +175,14 @@ class Personnage(Bloc):
         diamant.tuer()
         self.diamants_ramasses += 1
 
-    def pousser_caillou(self, caillou):
+    def pousser_caillou(self, caillou, direction):
         self.revenir()
-        caillou.etre_pousse
+        caillou.etre_pousse(self, caillou, direction)
         caillou.collision()
 
 
-    def bouger(self, direction):
-        Bloc.bouger(self, direction)
+    def bouger(self, direction, groupe):
+        Bloc.bouger(self, direction, groupe)
 
     def revenir(self):
         pass
