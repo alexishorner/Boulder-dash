@@ -73,7 +73,8 @@ class GestionnaireTouches:
         :param touches_pressees_booleens: touches pressees dans l'etat actuel
         :return: instances de "list", l'une contenant les touches ajoutees, l'autre les touches enlevees
         """
-        touches_pressees_indexes = self.booleens_vers_indexes(touches_pressees_booleens)
+        touches_pressees_indexes = self.booleens_vers_indexes(touches_pressees_booleens)    # Recupere l'index des
+                                                                                            # touches pressees
         ajoutees = [touche for touche in touches_pressees_indexes if touche not in self.indexes_ordonnes]
         enlevees = [touche for touche in self.indexes_ordonnes if touche not in touches_pressees_indexes]
         return ajoutees, enlevees
@@ -108,7 +109,7 @@ class GestionnaireTouches:
         :param indexes: liste contenant l'index de chaque touche pressee
         :return: liste de booleens determinant pour chaque touche si elle est pressee
         """
-        booleens = [False]*GestionnaireTouches.nombre_de_touches()
+        booleens = [False] * GestionnaireTouches.nombre_de_touches()
         for index in indexes:
             booleens[index] = True
         return booleens
@@ -156,6 +157,11 @@ class Minuteur:
                              "sans l'attribut \"_periode\"".format(self.__class__.__name__))
 
     def temps_ecoule(self):
+        """
+        Retourne le temps ecoule depuis la derniere reinitialisation du minuteur.
+
+        :return: temps ecoule
+        """
         return time.time() - self.debut
 
     def temps_ecoule_periode_actuelle(self):
@@ -177,20 +183,33 @@ class Minuteur:
         self.numero_periode = None
 
     def passage(self):
-        if self.numero_periode is None or self.numero_periode != self.nombre_periodes_ecoulees():
-            self.numero_periode = self.nombre_periodes_ecoulees()
-        else:
-            self.numero_periode += 1
+        """
+        Methode appelee a chaque fin de boucle des evenements pour indiquer au minuteur qu'il peut commencer une
+        nouvelle periode.
+
+        :return: "None"
+        """
+        est_premier_tour = self.numero_periode is None
+        if est_premier_tour or self.numero_periode != self.nombre_periodes_ecoulees():
+            self.numero_periode = self.nombre_periodes_ecoulees()   # On actualise le numero de la periode en fonction
+                                                                    # du temps ecoule
+        else:  # Si la periode n'est tout juste pas finie (a cause de l'imprecision de la fonction "time.sleep")
+            self.numero_periode += 1  # On augmente quand meme le numero de la periode, car elle est censee etre finie
 
     def nombre_periodes_ecoulees(self):
         """
-        Determine le numero de la periode actuelle, i.e. le nombre de fois que la periode s'est ecoulee moins 1.
+        Determine le nombre de fois qu'une periode s'est ecoulee.
 
         :return: numero de la periode actuelle
         """
         return int(self.temps_ecoule() / self.periode)
 
     def attendre_un_tic(self):
+        """
+        Attends le temps d'un tic.
+
+        :return: "None"
+        """
         time.sleep(self.tic)
 
     def attendre_fin(self):
@@ -199,15 +218,19 @@ class Minuteur:
 
         :return: "None"
         """
-        nombre_periodes_ecoulees = self.nombre_periodes_ecoulees()
-        if self.numero_periode is None:
+        nombre_periodes_ecoulees = self.nombre_periodes_ecoulees()  # On stocke le nombre de periode ecoulees, car il
+                                                                    # varie en fonction du temps
+        if self.numero_periode is None:  # Si on est au premier tour apres la reinitialisation
             ecart = 0
-        elif self.numero_periode >= nombre_periodes_ecoulees:  # FIXME : condition peut-etre fausse
+        elif self.numero_periode >= nombre_periodes_ecoulees:   # Dans l'eventualite ou le numero de la periode est
+                                                                # superieur au nombre de periodes ecoulees (peut arriver
+                                                                # si la methode "self.passage" appelee deux fois de
+                                                                # suite sans attendre)
             ecart = self.numero_periode - nombre_periodes_ecoulees
         else:
             return
         temps = ecart * self.periode + (self.periode - self.temps_ecoule_periode_actuelle())
-        time.sleep(temps)
+        time.sleep(temps)  # On attend la fin de la periode numero "self.numero_periode"
 
     def tics_restants(self):
         """
