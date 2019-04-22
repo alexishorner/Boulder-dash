@@ -245,6 +245,8 @@ class Caillou(Bloc):
                 self.revenir()
             elif type_de_bloc == Mur:
                 self.revenir()
+            elif type_de_bloc == Personnage:
+                self.revenir()
             else:
                 pass
 
