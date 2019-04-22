@@ -259,6 +259,7 @@ class Jeu:
         self.arriere_plan.fill((0, 0, 0))
         self.carte = Carte(Niveau.niveau(1))
         self.personnage = self.carte.personnage
+
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.2, 0.01)
