@@ -222,7 +222,6 @@ class BlocTombant(Bloc):
         self.tombe = False
 
     def collision(self, groupe):
-        self.tombe = True
         blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le caillou
         for bloc in blocs:
             type_de_bloc = bloc.__class__
@@ -231,10 +230,12 @@ class BlocTombant(Bloc):
                 if type_de_bloc in (Caillou, Diamant, Entree, Sortie):
                     pass
                     # TODO: regarder en diagonales
-            if type_de_bloc == Personnage:
+            elif type_de_bloc == Personnage:
                 if self.tombe:
                     bloc.tuer()
                 self.revenir()
+        if len(blocs) == 0:
+            self.tombe = True
 
     def tomber(self, groupe):
         Bloc.bouger(self, ORIENTATION.BAS, groupe)
