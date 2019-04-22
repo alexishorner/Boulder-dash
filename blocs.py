@@ -36,6 +36,7 @@ class Bloc(pygame.sprite.Sprite, object):
         self.rect.y = y*self.TAILLE
         self.ancien_rect = self.rect
         self.a_bouge = False
+        self.orientation = ORIENTATION.DROITE
 
     def actualiser(self, groupe):
         self.a_bouge = False
@@ -91,7 +92,7 @@ class Bloc(pygame.sprite.Sprite, object):
             blocs.remove(self)
         return blocs
 
-    def collision(self, groupe, direction):
+    def collision(self, groupe):
         pass
 
     def bouger(self, direction, groupe):
@@ -116,7 +117,7 @@ class Bloc(pygame.sprite.Sprite, object):
         self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
         self.rect = self.rect.move(*vecteur)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
         self.a_bouge = True
-        self.collision(groupe, direction)
+        self.collision(groupe)
 
     def revenir(self):
         """
@@ -142,12 +143,13 @@ class Personnage(Bloc):
 
     def __init__(self, x, y):
         Bloc.__init__(self, x, y)
+        self.est_mort = False
         self.orientation = ORIENTATION.DROITE
         self.etait_en_mouvement = False
         self.diamants_ramasses = 0
         self.terre_creusee = 0
 
-    def collision(self, groupe, direction):
+    def collision(self, groupe):
         """
         Methode gerant les collisions entre le personnage et les autres blocs.
 
@@ -160,9 +162,9 @@ class Personnage(Bloc):
             if type_de_bloc == Caillou:
                 if bloc.tombe:
                     self.tuer()
-                else:  # TODO : corriger
+                else:
                     # self.action_a_effectuer = {"methode": self.pousser_caillou, "args": (bloc, direction, groupe)}
-                    self.pousser_caillou(bloc, direction, groupe)
+                    self.pousser_caillou(bloc, groupe)
             elif type_de_bloc == Terre:
                 self.creuser_terre(bloc)
             elif type_de_bloc == Mur:
@@ -178,13 +180,16 @@ class Personnage(Bloc):
         diamant.tuer()
         self.diamants_ramasses += 1
 
-    def pousser_caillou(self, caillou, direction, groupe):
-        caillou.etre_pousse(direction, groupe)
+    def pousser_caillou(self, caillou, groupe):
+        caillou.etre_pousse(self.orientation, groupe)
         if not caillou.a_bouge:
             self.revenir()
 
     def bouger(self, direction, groupe):
         Bloc.bouger(self, direction, groupe)
+
+    def tuer(self):
+        self.est_mort = True
 
 
 class Terre(Bloc):
@@ -192,6 +197,8 @@ class Terre(Bloc):
     Classe permettant de representer de la terre.
     """
 
+
+# TODO : creer une classe englobant les caracteristiques communes a la classe "Caillou" et "Diamant", comme tomber
 class BlocTombant(Bloc):
     """
     Classe permettant de gerer les blocs qui tombent (caillou et diamant)
@@ -231,7 +238,7 @@ class Caillou(BlocTombant):
 
 
     def bouger(self, direction, groupe):
-       Bloc.bouger(self, direction, groupe)
+        Bloc.bouger(self, direction, groupe)
 
     def etre_pousse(self, direction, groupe):
         """
@@ -239,12 +246,10 @@ class Caillou(BlocTombant):
         :param direction: direction dans laquelle le caillou est pousse (=vecteur direction personnage)
         :return: "None"
         """
-        if direction != ORIENTATION.HAUT:
+        if direction in (ORIENTATION.GAUCHE, ORIENTATION.DROITE):
             self.bouger(direction, groupe)
-        else:
-            pass
 
-    def collision(self, groupe, direction):
+    def collision(self, groupe):
         """
         Methode gerant les collisions entre un caillou et les autres blocs.
 
@@ -266,6 +271,14 @@ class Diamant(BlocTombant):
     def __init__(self, x, y):
         BlocTombant.__init__(self, x, y)
 
+    def collision(self, groupe):
+        BlocTombant.collision(self, groupe)
+        blocs = self.blocs_collisiones(groupe)
+        for bloc in blocs:
+            type_de_bloc = bloc.__class__
+            if type_de_bloc == Personnage:
+                bloc.ramaser_diamant(self)
+
 class Mur(Bloc):
     """
     Classe permetant de representer un bout de mur.
@@ -278,7 +291,7 @@ class Porte(Bloc):
     """
     def __init__(self, x, y):
         Bloc.__init__(self, x, y)
-        self.est_activee = False
+        self._est_activee = False
 
     @property
     def est_activee(self):
@@ -291,10 +304,6 @@ class Porte(Bloc):
 
     @est_activee.setter
     def est_activee(self, activee):
-        try:
-            self._est_activee
-        except AttributeError:
-            self._est_activee = False
         activation = not self._est_activee and activee
         desactivation = self._est_activee and not activee
         self._est_activee = activee
@@ -326,7 +335,7 @@ class Entree(Porte):
     Classe permettant de representer une porte d'entree.
     """
     def __init__(self, x, y):
-        Bloc.__init__(self, x, y)
+        Porte.__init__(self, x, y)
         self.est_activee = True
 
 
@@ -335,5 +344,5 @@ class Sortie(Porte):
     Classe permettant de representer une porte de sortie.
     """
     def __init__(self, x, y):
-        Bloc.__init__(self, x, y)
+        Porte.__init__(self, x, y)
         self.est_activee = False
