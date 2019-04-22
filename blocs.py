@@ -190,6 +190,7 @@ class Personnage(Bloc):
 
     def tuer(self):
         self.est_mort = True
+        print("mort")
 
 
 class Terre(Bloc):
@@ -213,7 +214,7 @@ class BlocTombant(Bloc):
 
     def revenir(self):
         Bloc.revenir(self)
-        self.tombe = True
+        self.tombe = False
 
     def collision(self, groupe):
         self.tombe = True
