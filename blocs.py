@@ -171,9 +171,10 @@ class Personnage(Bloc):
                 self.revenir()
             elif type_de_bloc == Diamant:
                 self.ramasser_diamant(bloc)
-            elif type_de_bloc == Entree:
-                self.revenir()
-            elif type_de_bloc == Sortie:
+            elif type_de_bloc == Porte:
+                if bloc.est_activee:
+                    self.revenir()
+
 
 
     def creuser_terre(self, terre):
@@ -230,6 +231,10 @@ class BlocTombant(Bloc):
                 if type_de_bloc in (Caillou, Diamant, Entree, Sortie):
                     pass
                     # TODO: regarder en diagonales
+            if type_de_bloc == Personnage:
+                if self.tombe:
+                    bloc.tuer()
+                self.revenir()
 
     def tomber(self, groupe):
         Bloc.bouger(self, ORIENTATION.BAS, groupe)
@@ -257,21 +262,6 @@ class Caillou(BlocTombant):
         if direction in (ORIENTATION.GAUCHE, ORIENTATION.DROITE):
             self.bouger(direction, groupe)
 
-    def collision(self, groupe):
-        """
-        Methode gerant les collisions entre un caillou et les autres blocs.
-
-        :param groupe: groupe de blocs potentiellement collisionnes
-        :return: "None"
-        """
-        BlocTombant.collision(self, groupe)
-        blocs = self.blocs_collisiones(groupe)  # cherche les blocs qui sont en collision avec le caillou
-        for bloc in blocs:
-            type_de_bloc = bloc.__class__
-            if type_de_bloc == Personnage:
-                if self.tombe:
-                    bloc.tuer()
-                self.revenir()
 
 class Diamant(BlocTombant):
     """
@@ -280,13 +270,6 @@ class Diamant(BlocTombant):
     def __init__(self, x, y):
         BlocTombant.__init__(self, x, y)
 
-    def collision(self, groupe):
-        BlocTombant.collision(self, groupe)
-        blocs = self.blocs_collisiones(groupe)
-        for bloc in blocs:
-            type_de_bloc = bloc.__class__
-            if type_de_bloc == Personnage:
-                bloc.ramasser_diamant(self)
 
 class Mur(Bloc):
     """
