@@ -135,6 +135,37 @@ class Bloc(pygame.sprite.Sprite, object):
         """
         self.kill()  # TODO : ajouter une animation pour chaque type de bloc
 
+class BlocTombant(Bloc):
+    """
+    Classe permettant de gerer les blocs qui tombent (caillou et diamant)
+    """
+    def __init__(self, x, y):
+        Bloc.__init__(self, x, y)
+        self.tombe = False
+
+    def actualiser(self, groupe):
+        Bloc.actualiser(self, groupe)
+        self.tomber(groupe)
+
+    def tomber(self, groupe):
+        direction = array([0, 1])
+        direction *= self.TAILLE
+        self.ancien_rect = self.rect  # Enregistre la position precedente du caillou pour pouvoir revenir en arriere
+        self.rect = self.rect.move(*direction)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
+        blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le caillou
+        for bloc in blocs:
+            type_de_bloc = bloc.__class__
+            if type_de_bloc == Caillou or type_de_bloc == Diamant:
+                self.revenir()
+                # TODO: regarder en diagonales
+            elif type_de_bloc == Terre:
+                self.revenir()
+            elif type_de_bloc == Mur:
+                self.revenir()
+            elif type_de_bloc == Personnage:
+                pass
+            else:
+                self.tombe = True
 
 class Personnage(Bloc):
     """
@@ -194,14 +225,14 @@ class Terre(Bloc):
     """
 
 # TODO : creer une classe englobant les caracteristiques communes a la classe "Caillou" et "Diamant", comme tomber
-class Caillou(Bloc):
+class Caillou(BlocTombant):
     """
     Classe permettant de representer un caillou.
     """
 
     def __init__(self, x, y):
-        Bloc.__init__(self, x, y)
-        self.tombe = False
+        BlocTombant.__init__(self, x, y)
+
 
     def bouger(self, direction, groupe):
        Bloc.bouger(self, direction, groupe)
@@ -228,34 +259,19 @@ class Caillou(Bloc):
         if blocs:
             self.revenir()
 
-
     def tomber(self, groupe):
-        direction = array([0, 1])
-        direction *= self.TAILLE
-        self.ancien_rect = self.rect  # Enregistre la position precedente du caillou pour pouvoir revenir en arriere s'il y a qqch en dessous
-        self.rect = self.rect.move(*direction)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
-        self.tombe = True
-        blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le caillou
-        for bloc in blocs:
-            type_de_bloc = bloc.__class__
-            if type_de_bloc == Caillou or type_de_bloc == Diamant:
-                self.revenir()
-                # TODO: regarder en diagonales
-            elif type_de_bloc == Terre:
-                self.revenir()
-            elif type_de_bloc == Mur:
-                self.revenir()
-            elif type_de_bloc == Personnage:
-                self.revenir()
-            else:
-                pass
+        BlocTombant.tomber(self, groupe)
+        if bloc.tombe:
+            self.tuer()
+        else:
+            self.revenir()
 
-
-class Diamant(Bloc):
+class Diamant(BlocTombant):
     """
     Classe permettant de representer un diamant.
     """
-
+    def __init__(self, x, y):
+        BlocTombant.__init__(self, x, y)
 
 class Mur(Bloc):
     """

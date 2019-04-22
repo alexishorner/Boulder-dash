@@ -259,7 +259,6 @@ class Jeu:
         self.arriere_plan.fill((0, 0, 0))
         self.carte = Carte(Niveau.niveau(1))
         self.personnage = self.carte.personnage
-        self.cailloux = self.carte.blocs_cailloux
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.2, 0.01)
@@ -379,9 +378,6 @@ class Jeu:
             self.personnage.bouger(self.mouvement_en_cours, self.carte.blocs)  # On fait avancer le personnage
             self.personnage.etait_en_mouvement = True
             self.mouvement_en_cours = None
-
-        for caillou in self.cailloux:    #fait tomber tous les cailloux de la carte
-            caillou.tomber(self.carte.blocs)
 
         for bloc in self.carte.blocs:
             bloc.actualiser(self.carte.blocs)  # On gere les collisions entre les blocs
