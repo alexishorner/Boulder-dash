@@ -171,6 +171,10 @@ class Personnage(Bloc):
                 self.revenir()
             elif type_de_bloc == Diamant:
                 self.ramasser_diamant(bloc)
+            elif type_de_bloc == Entree:
+                self.revenir()
+            elif type_de_bloc == Sortie:
+
 
     def creuser_terre(self, terre):
         terre.tuer()
