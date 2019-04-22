@@ -190,6 +190,7 @@ class Personnage(Bloc):
 
     def tuer(self):
         self.est_mort = True
+        print("mort")
 
 
 class Terre(Bloc):
@@ -211,17 +212,20 @@ class BlocTombant(Bloc):
         Bloc.actualiser(self, groupe)
         self.tomber(groupe)
 
+    def revenir(self):
+        Bloc.revenir(self)
+        self.tombe = False
+
     def collision(self, groupe):
+        self.tombe = True
         blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le caillou
         for bloc in blocs:
             type_de_bloc = bloc.__class__
-            if type_de_bloc in (Caillou, Diamant):
+            if type_de_bloc != Personnage:
                 self.revenir()
-                # TODO: regarder en diagonales
-            elif type_de_bloc in (Terre, Mur):
-                self.revenir()
-            elif type_de_bloc != Personnage:
-                self.tombe = True
+                if type_de_bloc in (Caillou, Diamant):
+                    pass
+                    # TODO: regarder en diagonales
 
     def tomber(self, groupe):
         Bloc.bouger(self, ORIENTATION.BAS, groupe)
@@ -262,7 +266,8 @@ class Caillou(BlocTombant):
             type_de_bloc = bloc.__class__
             if type_de_bloc == Personnage:
                 if self.tombe:
-                    Personnage.tuer()
+                    bloc.tuer()
+                self.revenir()
 
 class Diamant(BlocTombant):
     """
@@ -277,7 +282,7 @@ class Diamant(BlocTombant):
         for bloc in blocs:
             type_de_bloc = bloc.__class__
             if type_de_bloc == Personnage:
-                bloc.ramaser_diamant(self)
+                bloc.ramasser_diamant(self)
 
 class Mur(Bloc):
     """

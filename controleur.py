@@ -307,13 +307,10 @@ class Jeu:
 
                 if self.minuteur.tics_restants() > 1:  # S'il reste de quoi attendre un tic
                     self.minuteur.attendre_un_tic()
-            if self.mouvement_detecte:  # Si un mouvement a ete detecte, on l'effectue et on actualise l'ecran
-                self.effectuer_mouvement()
-                if self.carte.nombre_diamants == self.personnage.diamants_ramasses:
-                    self.carte.sortie.activer()
-                self.actualiser_ecran()
-            else:
-                self.personnage.etait_en_mouvement = False
+            self.effectuer_mouvement()
+            if self.carte.nombre_diamants == self.personnage.diamants_ramasses:
+                self.carte.sortie.activer()
+            self.actualiser_ecran()
 
             if self.minuteur.tics_restants() > 0:  # Si la periode n'est pas finie
                 self.minuteur.attendre_fin()
@@ -379,6 +376,8 @@ class Jeu:
             self.personnage.bouger(self.mouvement_en_cours, self.carte.blocs)  # On fait avancer le personnage
             self.personnage.etait_en_mouvement = True
             self.mouvement_en_cours = None
+        else:
+            self.personnage.etait_en_mouvement = False
 
         for bloc in self.carte.blocs:
             bloc.actualiser(self.carte.blocs)  # On gere les collisions entre les blocs
