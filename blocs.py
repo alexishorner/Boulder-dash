@@ -211,7 +211,7 @@ class BlocTombant(Bloc):
         Bloc.actualiser(self, groupe)
         self.tomber(groupe)
 
-    def collision(self, groupe, direction):
+    def collision(self, groupe):
         blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le caillou
         for bloc in blocs:
             type_de_bloc = bloc.__class__
@@ -256,7 +256,7 @@ class Caillou(BlocTombant):
         :param groupe: groupe de blocs potentiellement collisionnes
         :return: "None"
         """
-        BlocTombant.collision(self, groupe, direction)
+        BlocTombant.collision(self, groupe)
         blocs = self.blocs_collisiones(groupe)  # cherche les blocs qui sont en collision avec le caillou
         for bloc in blocs:
             type_de_bloc = bloc.__class__
