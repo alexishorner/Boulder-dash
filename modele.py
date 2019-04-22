@@ -115,6 +115,7 @@ class Carte(object):
     """
     def __init__(self, niveau):
         self.blocs_uniques = dict()
+        self.blocs_cailloux = dict()
         self.nombre_diamants = 0
         self.niveau = niveau
         self.personnage = self.blocs_uniques[Personnage]
@@ -154,6 +155,7 @@ class Carte(object):
         self._blocs = nouveaux
         self.blocs_uniques = self.trouver_blocs_uniques(nouveaux)
         self.nombre_diamants = self.compter_diamants(nouveaux)
+        self.blocs_cailloux = self.trouver_cailloux(nouveaux)
 
     @blocs.deleter
     def blocs(self):
@@ -172,6 +174,20 @@ class Carte(object):
             if bloc.__class__ in blocs_uniques.keys():
                 blocs_uniques[bloc.__class__] = bloc
         return blocs_uniques
+
+    @staticmethod
+    def trouver_cailloux(blocs):
+        """
+        cherche dans une liste de bloc tous les blocs de type "Caillou"
+        :param blocs: Blocs dans lesquels chercher
+        :return: liste des cailloux du jeu
+        """
+        blocs_cailloux = []
+        for bloc in blocs:
+            type_de_bloc = bloc.__class__
+            if type_de_bloc == Caillou:
+                blocs_cailloux.append(bloc)
+        return blocs_cailloux
 
     @staticmethod
     def compter_diamants(blocs):

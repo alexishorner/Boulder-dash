@@ -212,7 +212,10 @@ class Caillou(Bloc):
         :param direction: direction dans laquelle le caillou est pousse (=vecteur direction personnage)
         :return: "None"
         """
-        self.bouger(direction, groupe)
+        if direction != ORIENTATION.HAUT:
+            self.bouger(direction, groupe)
+        else:
+            pass
 
     def collision(self, groupe, direction):
         """
@@ -225,8 +228,25 @@ class Caillou(Bloc):
         if blocs:
             self.revenir()
 
-    def actualiser(self, groupe):
-        pass
+
+    def tomber(self, groupe):
+        direction = array([0, 1])
+        direction *= self.TAILLE
+        self.ancien_rect = self.rect  # Enregistre la position precedente du caillou pour pouvoir revenir en arriere s'il y a qqch en dessous
+        self.rect = self.rect.move(*direction)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
+        self.tombe = True
+        blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le caillou
+        for bloc in blocs:
+            type_de_bloc = bloc.__class__
+            if type_de_bloc == Caillou or type_de_bloc == Diamant:
+                self.revenir()
+                # TODO: regarder en diagonales
+            elif type_de_bloc == Terre:
+                self.revenir()
+            elif type_de_bloc == Mur:
+                self.revenir()
+            else:
+                pass
 
 
 class Diamant(Bloc):
