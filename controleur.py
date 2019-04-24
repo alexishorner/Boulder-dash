@@ -373,10 +373,8 @@ class Jeu:
         :return: "None"
         """
         if self.mouvement_detecte:  # Si un mouvement doit etre effectue
-            if self.personnage.etait_en_mouvement:
-                pass
             self.personnage.bouger(self.mouvement_en_cours, self.carte.blocs)  # On fait avancer le personnage
-            self.personnage.etait_en_mouvement = True
+            self.personnage.etait_en_mouvement = True  # FIXME: Personnage peut pousser cailloux dans vide
             self.mouvement_en_cours = None
         else:
             self.personnage.etait_en_mouvement = False

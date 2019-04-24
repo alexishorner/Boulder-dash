@@ -102,6 +102,21 @@ class Bloc(pygame.sprite.Sprite, object):
     def collision(self, groupe):
         return False
 
+    @classmethod
+    def vecteur(cls, direction):
+        if direction == ORIENTATION.DROITE:
+            vecteur = array([1, 0])
+        elif direction == ORIENTATION.GAUCHE:
+            vecteur = array([-1, 0])
+        elif direction == ORIENTATION.HAUT:
+            vecteur = array([0, -1])
+        elif direction == ORIENTATION.BAS:
+            vecteur = array([0, 1])
+        else:
+            raise ValueError("La direction est invalide")
+        vecteur *= cls.TAILLE
+        return vecteur
+
     def bouger(self, direction, groupe):
         """
             Fait bouger le personnage dans la direction "direction".
@@ -111,19 +126,8 @@ class Bloc(pygame.sprite.Sprite, object):
             """
         if not self.a_deja_bouge:
             self.orientation = direction
-            if direction == ORIENTATION.DROITE:
-                vecteur = array([1, 0])
-            elif direction == ORIENTATION.GAUCHE:
-                vecteur = array([-1, 0])
-            elif direction == ORIENTATION.HAUT:
-                vecteur = array([0, -1])
-            elif direction == ORIENTATION.BAS:
-                vecteur = array([0, 1])
-            else:
-                raise ValueError("L'orientation est invalide")
-            vecteur *= self.TAILLE
             self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
-            self.rect = self.rect.move(*vecteur)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
+            self.rect = self.rect.move(*self.vecteur(direction))  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
             est_revenu = self.collision(groupe)
             a_bouge = not est_revenu
             if a_bouge:
@@ -219,7 +223,6 @@ class Terre(Bloc):
     """
 
 
-# TODO : creer une classe englobant les caracteristiques communes a la classe "Caillou" et "Diamant", comme tomber
 class BlocTombant(Bloc):
     """
     Classe permettant de gerer les blocs qui tombent (caillou et diamant)
@@ -242,7 +245,6 @@ class BlocTombant(Bloc):
                 type_de_bloc = bloc.__class__
                 if type_de_bloc in (Caillou, Diamant, Entree, Sortie):
                     pass
-                    # TODO: regarder en diagonales
                 elif type_de_bloc == Personnage:
                     if self.tombe:
                         bloc.tuer()
@@ -253,7 +255,9 @@ class BlocTombant(Bloc):
         return est_revenu
 
     def tomber(self, groupe):
-        self.tombe = Bloc.bouger(self, ORIENTATION.BAS, groupe)
+        tombe = self.bouger(ORIENTATION.BAS, groupe)
+        self.tombe = tombe
+        return tombe
 
 
 class Caillou(BlocTombant):
@@ -275,6 +279,8 @@ class Caillou(BlocTombant):
         :return: "None"
         """
         if direction in (ORIENTATION.GAUCHE, ORIENTATION.DROITE):
+            if self.tomber(groupe):
+                return True
             return self.bouger(direction, groupe)
         return False
 
