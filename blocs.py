@@ -35,12 +35,19 @@ class Bloc(pygame.sprite.Sprite, object):
         self.rect.x = x*self.TAILLE
         self.rect.y = y*self.TAILLE
         self.ancien_rect = self.rect
-        self.a_bouge = False
+        self.nombre_actions_cycle = 0
         self.orientation = ORIENTATION.DROITE
+        
+    @property
+    def a_deja_bouge(self):
+        return bool(self.nombre_actions_cycle)
 
     def actualiser(self, groupe):
-        self.a_bouge = False
+        pass
     # TODO : gerer les autres actions (comme tomber)
+
+    def terminer_cycle(self):
+        self.nombre_actions_cycle = 0
 
     @staticmethod
     def homotetie(rectangle, facteur):
@@ -93,7 +100,7 @@ class Bloc(pygame.sprite.Sprite, object):
         return blocs
 
     def collision(self, groupe):
-        pass
+        return False
 
     def bouger(self, direction, groupe):
         """
@@ -102,22 +109,28 @@ class Bloc(pygame.sprite.Sprite, object):
             :param direction: direction dans laquelle avancer
             :return: "None"
             """
-        self.orientation = direction
-        if direction == ORIENTATION.DROITE:
-            vecteur = array([1, 0])
-        elif direction == ORIENTATION.GAUCHE:
-            vecteur = array([-1, 0])
-        elif direction == ORIENTATION.HAUT:
-            vecteur = array([0, -1])
-        elif direction == ORIENTATION.BAS:
-            vecteur = array([0, 1])
+        if not self.a_deja_bouge:
+            self.orientation = direction
+            if direction == ORIENTATION.DROITE:
+                vecteur = array([1, 0])
+            elif direction == ORIENTATION.GAUCHE:
+                vecteur = array([-1, 0])
+            elif direction == ORIENTATION.HAUT:
+                vecteur = array([0, -1])
+            elif direction == ORIENTATION.BAS:
+                vecteur = array([0, 1])
+            else:
+                raise ValueError("L'orientation est invalide")
+            vecteur *= self.TAILLE
+            self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
+            self.rect = self.rect.move(*vecteur)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
+            est_revenu = self.collision(groupe)
+            a_bouge = not est_revenu
+            if a_bouge:
+                self.nombre_actions_cycle += 1
         else:
-            raise ValueError("L'orientation est invalide")
-        vecteur *= self.TAILLE
-        self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
-        self.rect = self.rect.move(*vecteur)  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
-        self.a_bouge = True
-        self.collision(groupe)
+            a_bouge = False
+        return a_bouge
 
     def revenir(self):
         """
@@ -126,7 +139,6 @@ class Bloc(pygame.sprite.Sprite, object):
         :return: "None"
         """
         self.rect = self.ancien_rect
-        self.a_bouge = False
 
     def tuer(self):
         """
@@ -135,6 +147,7 @@ class Bloc(pygame.sprite.Sprite, object):
         :return: "None"
         """
         self.kill()  # TODO : ajouter une animation pour chaque type de bloc
+
 
 class Personnage(Bloc):
     """
@@ -156,6 +169,7 @@ class Personnage(Bloc):
         :param groupe: groupe de blocs potentiellement collisionnes
         :return: "None"
         """
+        est_revenu = False
         blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le personnage
         for bloc in blocs:
             type_de_bloc = bloc.__class__
@@ -164,16 +178,22 @@ class Personnage(Bloc):
                     self.tuer()
                 else:
                     # self.action_a_effectuer = {"methode": self.pousser_caillou, "args": (bloc, direction, groupe)}
-                    self.pousser_caillou(bloc, groupe)
+                    succes = self.pousser_caillou(bloc, groupe)
+                    if not succes:
+                        self.revenir()
+                        est_revenu = True
             elif type_de_bloc == Terre:
                 self.creuser_terre(bloc)
             elif type_de_bloc == Mur:
                 self.revenir()
+                est_revenu = True
             elif type_de_bloc == Diamant:
                 self.ramasser_diamant(bloc)
             elif type_de_bloc == Porte:
-                if bloc.est_activee:
+                if not bloc.est_activee:
                     self.revenir()
+                    est_revenu = True
+        return est_revenu
 
 
 
@@ -186,12 +206,11 @@ class Personnage(Bloc):
         self.diamants_ramasses += 1
 
     def pousser_caillou(self, caillou, groupe):
-        caillou.etre_pousse(self.orientation, groupe)
-        if not caillou.a_bouge:
-            self.revenir()
+        succes = caillou.etre_pousse(self.orientation, groupe)
+        return succes
 
     def bouger(self, direction, groupe):
-        Bloc.bouger(self, direction, groupe)
+        return Bloc.bouger(self, direction, groupe)
 
     def tuer(self):
         self.est_mort = True
@@ -219,27 +238,26 @@ class BlocTombant(Bloc):
 
     def revenir(self):
         Bloc.revenir(self)
-        self.tombe = False
 
     def collision(self, groupe):
         blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le caillou
-        for bloc in blocs:
-            type_de_bloc = bloc.__class__
-            if type_de_bloc != Personnage:
-                self.revenir()
+        if len(blocs) != 0:
+            for bloc in blocs:
+                type_de_bloc = bloc.__class__
                 if type_de_bloc in (Caillou, Diamant, Entree, Sortie):
                     pass
                     # TODO: regarder en diagonales
-            elif type_de_bloc == Personnage:
-                if self.tombe:
-                    bloc.tuer()
-                self.revenir()
-        if len(blocs) == 0:
-            self.tombe = True
+                elif type_de_bloc == Personnage:
+                    if self.tombe:
+                        bloc.tuer()
+            self.revenir()
+            est_revenu = True
+        else:
+            est_revenu = False
+        return est_revenu
 
     def tomber(self, groupe):
-        Bloc.bouger(self, ORIENTATION.BAS, groupe)
-
+        self.tombe = Bloc.bouger(self, ORIENTATION.BAS, groupe)
 
 
 class Caillou(BlocTombant):
@@ -250,18 +268,19 @@ class Caillou(BlocTombant):
     def __init__(self, x, y):
         BlocTombant.__init__(self, x, y)
 
-
     def bouger(self, direction, groupe):
-        Bloc.bouger(self, direction, groupe)
+        return Bloc.bouger(self, direction, groupe)
 
     def etre_pousse(self, direction, groupe):
         """
         gere le mouvement du caillou lorsqu'il est pousse
+        :param groupe: groupe de blocs contre lequel tester les collisions
         :param direction: direction dans laquelle le caillou est pousse (=vecteur direction personnage)
         :return: "None"
         """
         if direction in (ORIENTATION.GAUCHE, ORIENTATION.DROITE):
-            self.bouger(direction, groupe)
+            return self.bouger(direction, groupe)
+        return False
 
 
 class Diamant(BlocTombant):
@@ -314,7 +333,7 @@ class Porte(Bloc):
         """
         self.est_activee = True
 
-    def desctiver(self):
+    def desactiver(self):
         """
         Methode de convenance permettant de desactiver la porte.
 
