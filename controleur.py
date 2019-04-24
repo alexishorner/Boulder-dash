@@ -381,8 +381,15 @@ class Jeu:
         else:
             self.personnage.etait_en_mouvement = False
 
-        for bloc in self.carte.blocs:
-            bloc.actualiser(self.carte.blocs)  # On gere les collisions entre les blocs
+        blocs_a_traiter = self.carte.blocs.copy()
+        continuer = True
+        while continuer:
+            continuer = False
+            for bloc in blocs_a_traiter:
+                bloc.actualiser(self.carte.blocs)  # On gere les collisions entre les blocs
+                if bloc.a_deja_bouge:
+                    blocs_a_traiter.remove(bloc)
+                    continuer = True
 
         for bloc in self.carte.blocs:
             bloc.terminer_cycle()

@@ -174,14 +174,10 @@ class Personnage(Bloc):
         for bloc in blocs:
             type_de_bloc = bloc.__class__
             if type_de_bloc == Caillou:
-                if bloc.tombe:
-                    self.tuer()
-                else:
-                    # self.action_a_effectuer = {"methode": self.pousser_caillou, "args": (bloc, direction, groupe)}
-                    succes = self.pousser_caillou(bloc, groupe)
-                    if not succes:
-                        self.revenir()
-                        est_revenu = True
+                succes = self.pousser_caillou(bloc, groupe)
+                if not succes:
+                    self.revenir()
+                    est_revenu = True
             elif type_de_bloc == Terre:
                 self.creuser_terre(bloc)
             elif type_de_bloc == Mur:
