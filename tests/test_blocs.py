@@ -25,6 +25,14 @@ def test_coordonnees():
     for i, coordonnee in enumerate(coordonnees):
         assert(coordonnees[i] == coordonnee)
 
+def test_test():
+    bloc = Bloc(1, 2)
+    rect = bloc.rect.copy()
+    blocs = {bloc.rect: "test", rect: "test2"}
+    print(blocs[bloc.rect], blocs[rect])
+    bloc.rect.move_ip(0, 1)
+    print(blocs[bloc.rect], blocs[rect])
+
 
 if __name__ == "__main__":
     # tests = (test_coordonnees, test_adjacents)  # On cree un tuple avec toutes les fonctions de test

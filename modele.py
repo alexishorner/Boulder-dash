@@ -2,6 +2,7 @@
 Module stockant les donnees du jeu.
 """
 from blocs import *
+import itertools
 
 
 def _enlever_extremite(chaine, extremite=ORIENTATION.GAUCHE, caracteres_a_enlever=("\n", " ")):
@@ -59,6 +60,18 @@ def enlever_extremites(chaine, caracteres_a_enlever=("\n", " ")):
     return _enlever_extremite(variable_temporaire, ORIENTATION.DROITE, caracteres_a_enlever)  # enleve l'extremite droite
 
 
+def dimensions(liste):
+     return max(array(liste).shape)
+
+
+def aplatir(liste):
+    dim = dimensions(liste)
+    aplatie = liste
+    for i in range(dim - 1):
+        aplatie = itertools.chain.from_iterable(aplatie)
+    return list(aplatie)
+
+
 class Niveau:
     """
     Classe permettant de representer un niveau.
@@ -67,47 +80,42 @@ class Niveau:
     Cette classe utilise une chaine de caractere pour stocker le niveau et offre la possibilite de specifier le numero
     du niveau.
     """
-    ASCII_VERS_BLOC = {"O": Caillou,       # Ressemble a un caillou
-                       "#": Mur,           # Ressemble a une barriere -> mur
-                       "P": Personnage,    # "P" comme "Personnage"
-                       "[": Entree,        # Forme rectangulaire comme une porte. Crochet ouvrant -> entree
-                       "]": Sortie,        # Forme rectangulaire comme une porte. Crochet fermant -> sortie
-                       "*": Terre,         # Ressemble aux points dans Packman et est centre verticalement, contrairement au point "."
-                       "$": Diamant,       # Dollar fait penser a argent -> diamant
-                       "~": lambda: None}  # Vide
+    ASCII_VERS_BLOC = {"O": Caillou,            # Ressemble a un caillou
+                       "#": Mur,                # Ressemble a une barriere -> mur
+                       "P": Personnage,         # "P" comme "Personnage"
+                       "[": Entree,             # Forme rectangulaire comme une porte. Crochet ouvrant -> entree
+                       "]": Sortie,             # Forme rectangulaire comme une porte. Crochet fermant -> sortie
+                       "*": Terre,              # Ressemble aux points dans Packman et est centre verticalement, contrairement au point "."
+                       "$": Diamant,            # Dollar fait penser a argent -> diamant
+                       "~": lambda *foo: None}  # Vague -> fluide -> air -> vide
 
     def __init__(self, ascii, numero=None):
         self.numero = numero  # Numero du niveau
         self.ascii = ascii  # Representation du niveau avec des caracteres ascii
 
-    @staticmethod
-    def inverser(liste2d):
-        liste_inversee = liste2d
-        for y in range(len(liste2d)):
-            for x in range(len(liste2d[y])):
-                liste_inversee[x][y] = liste2d[y][x]  # TODO: Tester
-        return liste_inversee
-
     def vers_blocs(self):
         """
-        Prend en entree un niveau et cree un groupe de blocs ayant chacun le type et la position dictee par le niveau.
+        Prend en entree un niveau et cree un groupe de cases ayant chacun le type et la position dictee par le niveau.
 
         :param niveau: niveau a interpreter
-        :return: groupe de blocs initialises avec la bonne position et le bon type
+        :return: groupe de cases initialises avec la bonne position et le bon type
         """
         niveau_ascii = self.ascii
         niveau_ascii = enlever_extremites(niveau_ascii).replace(" ", "")    # On enleve tous les espaces, ainsi que les
                                                                             # retours a la ligne se trouvant au debut ou
                                                                             # a la fin
         lignes_ascii = niveau_ascii.split("\n")
-        blocs_inverses = []
+        longueur_ligne = len(lignes_ascii[0])
+        blocs = dict()
         for y, ligne_ascii in enumerate(lignes_ascii):
-            ligne = []
+            if len(ligne_ascii) != longueur_ligne:  # On teste si chaque ligne fait la meme longueur
+                raise ValueError("Le niveau a ete defini incorrectement.")
+
             for x, bloc_ascii in enumerate(ligne_ascii):
-                bloc = self.ASCII_VERS_BLOC[bloc_ascii](x, y)   # On convertit chaque caractere en bloc et leur attribue
-                ligne.append(bloc)                              # une position initiale
-            blocs_inverses.append(ligne)
-        blocs = self.inverser(blocs_inverses)
+                bloc = self.ASCII_VERS_BLOC[bloc_ascii](x, y)  # On convertit chaque caractere en bloc et leur attribue
+                                                               # une position initiale
+                rect = bloc.rect
+                blocs.update({rect: bloc})
         return blocs
 
     @classmethod
@@ -145,32 +153,33 @@ class Carte(object):
         return self._niveau
 
     @niveau.setter
-    def niveau(self, nouveau):
-        self._niveau = nouveau
-        self.blocs = nouveau.vers_blocs()
+    def niveau(self, valeur):
+        self._niveau = valeur
+        self.cases = valeur.vers_blocs()
 
     @niveau.deleter
     def niveau(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
 
     @property
-    def blocs(self):
+    def cases(self):
         """
         Propriete permettant d'acceder aux blocs.
 
         :return: blocs
         """
-        return self._blocs
+        return self._cases
 
-    @blocs.setter
-    def blocs(self, nouveaux):
-        self._blocs = nouveaux
-        self.blocs_uniques = self.trouver_blocs_uniques(nouveaux)
-        self.nombre_diamants = self.compter_diamants(nouveaux)
-        self.blocs_cailloux = self.trouver_cailloux(nouveaux)
+    @cases.setter
+    def cases(self, valeur):
+        self._cases = valeur
+        self.blocs = aplatir(valeur)
+        self.blocs_uniques = self.trouver_blocs_uniques(self.blocs)
+        self.nombre_diamants = self.compter_diamants(self.blocs)
+        self.blocs_cailloux = self.trouver_cailloux(self.blocs)
 
-    @blocs.deleter
-    def blocs(self):
+    @cases.deleter
+    def cases(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
 
     @staticmethod
@@ -222,9 +231,9 @@ class Carte(object):
             for j in range(-1, 1):
                 x = index_x + i
                 y = index_y + j
-                if x < len(self.blocs) and y < len(self.blocs[x]):
-                    adjacents.append(self.blocs[x][y])
-        return adjacents
+                if x < len(self.cases) and y < len(self.cases[x]):
+                    adjacents.append(self.cases[x][y])
+        return aplatir(adjacents)
 
     def dessiner(self, ecran):
         """
@@ -233,7 +242,8 @@ class Carte(object):
         :param ecran: Ecran sur lequel dessiner les blocs.
         :return: "None"
         """
-        self.blocs.remove(self.personnage)
-        self.blocs.draw(ecran)  # Dessine les blocs autres que le personnage en premier
-        self.blocs.add(self.personnage)
+        for bloc in self.blocs:
+            if bloc is not self.personnage:
+                ecran.blit(bloc.image, bloc.rect)  # Dessine les blocs autres que le personnage en premier
+        self.blocs.append(self.personnage)
         ecran.blit(self.personnage.image, self.personnage.rect)  # Dessine le personnage en dernier pour qu'il soit au premier plan

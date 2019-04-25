@@ -102,7 +102,7 @@ class Bloc(pygame.sprite.Sprite, object):
     def a_deja_bouge(self):
         return bool(self.nombre_actions_cycle)
 
-    def actualiser(self, groupe):
+    def actualiser(self):
         pass
     # TODO : gerer les autres actions (comme tomber)
 
@@ -190,7 +190,7 @@ class Bloc(pygame.sprite.Sprite, object):
         vecteur *= cls.TAILLE
         return vecteur
 
-    def bouger(self, direction, groupe):
+    def bouger(self, direction):
         """
             Fait bouger le personnage dans la direction "direction".
 
@@ -200,11 +200,9 @@ class Bloc(pygame.sprite.Sprite, object):
         if not self.a_deja_bouge:
             self.orientation = direction
             self.ancien_rect = self.rect  # Enregistre la position precedente du personnage pour pouvoir revenir en arriere
-            self.rect = self.rect.move(*self.vecteur(direction))  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
-            est_revenu = self.collision(groupe)
-            a_bouge = not est_revenu
-            if a_bouge:
-                self.nombre_actions_cycle += 1
+            self.rect.move_ip(*self.vecteur(direction))  # L'asterisque permet de passer un tuple a la place de plusieurs arguments
+            self.nombre_actions_cycle += 1
+            a_bouge = True
         else:
             a_bouge = False
         return a_bouge
@@ -215,7 +213,7 @@ class Bloc(pygame.sprite.Sprite, object):
 
         :return: "None"
         """
-        self.rect = self.ancien_rect
+        self.rect.x, self.rect.y = self.ancien_rect.x, self.ancien_rect.y
 
     def tuer(self):
         """
@@ -282,8 +280,8 @@ class Personnage(Bloc):
         succes = caillou.etre_pousse(self.orientation, groupe)
         return succes
 
-    def bouger(self, direction, groupe):
-        return Bloc.bouger(self, direction, groupe)
+    def bouger(self, direction):
+        return Bloc.bouger(self, direction)
 
     def tuer(self):
         self.est_mort = True
@@ -304,9 +302,9 @@ class BlocTombant(Bloc):
         Bloc.__init__(self, x, y)
         self.tombe = False
 
-    def actualiser(self, groupe):
-        Bloc.actualiser(self, groupe)
-        self.tomber(groupe)
+    def actualiser(self):
+        Bloc.actualiser(self)
+        self.tomber()
 
     def revenir(self):
         Bloc.revenir(self)
@@ -327,8 +325,8 @@ class BlocTombant(Bloc):
             est_revenu = False
         return est_revenu
 
-    def tomber(self, groupe):
-        tombe = self.bouger(ORIENTATION.BAS, groupe)
+    def tomber(self):
+        tombe = self.bouger(ORIENTATION.BAS)
         self.tombe = tombe
         return tombe
 
@@ -341,8 +339,8 @@ class Caillou(BlocTombant):
     def __init__(self, x, y):
         BlocTombant.__init__(self, x, y)
 
-    def bouger(self, direction, groupe):
-        return Bloc.bouger(self, direction, groupe)
+    def bouger(self, direction):
+        return Bloc.bouger(self, direction)
 
     def etre_pousse(self, direction, groupe):
         """
@@ -352,9 +350,9 @@ class Caillou(BlocTombant):
         :return: "None"
         """
         if direction in (ORIENTATION.GAUCHE, ORIENTATION.DROITE):
-            if self.tomber(groupe):
+            if self.tomber():
                 return True
-            return self.bouger(direction, groupe)
+            return self.bouger(direction)
         return False
 
 

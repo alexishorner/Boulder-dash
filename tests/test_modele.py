@@ -9,19 +9,27 @@ def test_enlever_extremites():
     assert(modele.enlever_extremites("sbdufgidu5661 549d86gsd4654\n4d7") == "sbdufgidu5661 549d86gsd4654\n4d7")
 
 
+def test_inverser():
+    assert(modele.transposer([[1, 2, 3], [4, 5]]) == [[1, 4], [2, 5], [3, None]])
+
+
+def test_dimensions():
+    assert()
+
+
 def test_vers_blocs():
     niveau = modele.Niveau("""
-                    ############
-                    #***O***O*$#
-                    #***OOP**[##
-                    #$$$#******#
-                    #OOOO*$]***#
-                    #**********#
-                    #**********#
-                    #**********#
-                    #**********#
-                    #**********#
-                    ############
+                    ############~
+                    #***O***O*$#~
+                    #***OOP**[##~
+                    #$$$#******#~
+                    #OOOO*$]***#~
+                    #**********#~
+                    #**********#~
+                    #**********#~
+                    #**********#~
+                    #**********#~
+                    ############~
                     """)
     nombre_de_blocs_par_sorte = dict.fromkeys(modele.Niveau.ASCII_VERS_BLOC.values(), 0)
     for c in niveau.ascii:
@@ -32,16 +40,20 @@ def test_vers_blocs():
     blocs = niveau.vers_blocs()
 
     nombre_de_blocs_par_sorte_2 = dict.fromkeys(modele.Niveau.ASCII_VERS_BLOC.values(), 0)
-    for bloc in blocs:
-        for cle, sorte in modele.Niveau.ASCII_VERS_BLOC.iteritems():
-            if bloc.__class__ == sorte:
-                nombre_de_blocs_par_sorte_2[sorte] += 1
+    for colonne in blocs:
+        for blocs in colonne:
+            for bloc in blocs:
+                for sorte in nombre_de_blocs_par_sorte_2.keys():
+                    if bloc is None and sorte(0, 0) is None:
+                        nombre_de_blocs_par_sorte_2[sorte] += 1
+                    elif bloc.__class__ == sorte:
+                        nombre_de_blocs_par_sorte_2[sorte] += 1
 
     assert(nombre_de_blocs_par_sorte == nombre_de_blocs_par_sorte_2)
 
 
 if __name__ == "__main__":
-    tests = (test_enlever_extremites, test_vers_blocs)  # On cree un tuple avec toutes les fonctions de test
+    tests = (test_enlever_extremites, test_inverser,test_vers_blocs)  # On cree un tuple avec toutes les fonctions de test
     for test in tests:
         print("")
         chaine = " du test \"{0}\"".format(test.__name__)  # On recupere le nom de chaque fonction de test

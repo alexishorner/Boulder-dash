@@ -373,21 +373,21 @@ class Jeu:
         :return: "None"
         """
         if self.mouvement_detecte:  # Si un mouvement doit etre effectue
-            self.personnage.bouger(self.mouvement_en_cours, self.carte.blocs)  # On fait avancer le personnage
+            self.personnage.bouger(self.mouvement_en_cours)  # On fait avancer le personnage
             self.personnage.etait_en_mouvement = True  # FIXME: Personnage peut pousser cailloux dans vide
             self.mouvement_en_cours = None
         else:
             self.personnage.etait_en_mouvement = False
 
-        blocs_a_traiter = self.carte.blocs.copy()
-        continuer = True
-        while continuer:
-            continuer = False
-            for bloc in blocs_a_traiter:
-                bloc.actualiser(self.carte.blocs)  # On gere les collisions entre les blocs
-                if bloc.a_deja_bouge:
-                    blocs_a_traiter.remove(bloc)
-                    continuer = True
+        # blocs_a_traiter = self.carte.blocs
+        # continuer = True
+        # while continuer:
+        #     continuer = False
+        #     for bloc in blocs_a_traiter:
+        #         bloc.actualiser(self.carte.cases)  # On gere les collisions entre les blocs
+        #         if bloc.a_deja_bouge:
+        #             blocs_a_traiter.remove(bloc)
+        #             continuer = True
 
         for bloc in self.carte.blocs:
             bloc.terminer_cycle()
