@@ -72,14 +72,15 @@ class Rectangle(pygame.Rect):
             if "height" in kwargs.keys():
                 arguments.append(kwargs["height"])
         pygame.Rect.__init__(self, *(args + tuple(arguments)))
+        self.z = 0  # TODO: implementer z
 
     def __hash__(self):
         """
         Permet de donner une identification unique a chaque rectangle
         :return: hash
         """
-        argument = (self.x, self.y, self.z=0 self.width, self.height, self.class)   #TODO: implementer z
-        return hash(argument)
+        arguments = (self.x, self.y, self.z, self.width, self.height, self.__class__)
+        return hash(arguments)
 
 class Bloc(pygame.sprite.Sprite, object):
     """
