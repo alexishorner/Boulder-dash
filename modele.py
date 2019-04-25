@@ -67,17 +67,26 @@ class Niveau:
     Cette classe utilise une chaine de caractere pour stocker le niveau et offre la possibilite de specifier le numero
     du niveau.
     """
-    ASCII_VERS_BLOC = {"O": Caillou,     # Ressemble a un caillou
-                       "#": Mur,         # Ressemble a une barriere -> mur
-                       "P": Personnage,  # "P" comme "Personnage"
-                       "[": Entree,      # Forme rectangulaire comme une porte. Crochet ouvrant -> entree
-                       "]": Sortie,      # Forme rectangulaire comme une porte. Crochet fermant -> sortie
-                       "*": Terre,       # Ressemble aux points dans Packman et est centre verticalement, contrairement au point "."
-                       "$": Diamant}     # Dollar fait penser a argent -> diamant
+    ASCII_VERS_BLOC = {"O": Caillou,       # Ressemble a un caillou
+                       "#": Mur,           # Ressemble a une barriere -> mur
+                       "P": Personnage,    # "P" comme "Personnage"
+                       "[": Entree,        # Forme rectangulaire comme une porte. Crochet ouvrant -> entree
+                       "]": Sortie,        # Forme rectangulaire comme une porte. Crochet fermant -> sortie
+                       "*": Terre,         # Ressemble aux points dans Packman et est centre verticalement, contrairement au point "."
+                       "$": Diamant,       # Dollar fait penser a argent -> diamant
+                       "~": lambda: None}  # Vide
 
     def __init__(self, ascii, numero=None):
         self.numero = numero  # Numero du niveau
         self.ascii = ascii  # Representation du niveau avec des caracteres ascii
+
+    @staticmethod
+    def inverser(liste2d):
+        liste_inversee = liste2d
+        for y in range(len(liste2d)):
+            for x in range(len(liste2d[y])):
+                liste_inversee[x][y] = liste2d[y][x]  # TODO: Tester
+        return liste_inversee
 
     def vers_blocs(self):
         """
@@ -90,12 +99,15 @@ class Niveau:
         niveau_ascii = enlever_extremites(niveau_ascii).replace(" ", "")    # On enleve tous les espaces, ainsi que les
                                                                             # retours a la ligne se trouvant au debut ou
                                                                             # a la fin
-        blocs = pygame.sprite.Group()
-        for y, ligne_ascii in enumerate(niveau_ascii.split("\n")):
+        lignes_ascii = niveau_ascii.split("\n")
+        blocs_inverses = []
+        for y, ligne_ascii in enumerate(lignes_ascii):
+            ligne = []
             for x, bloc_ascii in enumerate(ligne_ascii):
                 bloc = self.ASCII_VERS_BLOC[bloc_ascii](x, y)   # On convertit chaque caractere en bloc et leur attribue
-                                                                # une position initiale
-                blocs.add(bloc)
+                ligne.append(bloc)                              # une position initiale
+            blocs_inverses.append(ligne)
+        blocs = self.inverser(blocs_inverses)
         return blocs
 
     @classmethod
@@ -202,6 +214,17 @@ class Carte(object):
             if bloc.__class__ == Diamant:
                 nombre += 1
         return nombre
+
+    def blocs_adjacents(self, bloc):
+        adjacents = []
+        index_x, index_y = bloc.index
+        for i in range(-1, 1):
+            for j in range(-1, 1):
+                x = index_x + i
+                y = index_y + j
+                if x < len(self.blocs) and y < len(self.blocs[x]):
+                    adjacents.append(self.blocs[x][y])
+        return adjacents
 
     def dessiner(self, ecran):
         """

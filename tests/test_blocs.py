@@ -16,9 +16,18 @@ def test_adjacents():
     blocs_adjacents = bloc_milieu.blocs_adjacents(blocs)
     assert(len(blocs_adjacents) == 8)
 
+def test_coordonnees():
+    coordonnees = Coordonees(2, 3)
+    assert(coordonnees.x == 2)
+    assert(coordonnees.y == 3)
+    coordonnees.x = 5
+    assert(coordonnees.x == 5)
+    for i, coordonnee in enumerate(coordonnees):
+        assert(coordonnees[i] == coordonnee)
+
 
 if __name__ == "__main__":
-    tests = (test_adjacents,)  # On cree un tuple avec toutes les fonctions de test
+    tests = (test_coordonnees, test_adjacents)  # On cree un tuple avec toutes les fonctions de test
     for test in tests:
         print("")
         chaine = " du test \"{0}\"".format(test.__name__)  # On recupere le nom de chaque fonction de test

@@ -21,6 +21,41 @@ from constantes import *
 from numpy import array
 
 
+class Coordonees(list):
+    def __init__(self, x, y):
+        list.__init__(self, [x, y])
+
+    @property
+    def x(self):
+        return self[0]
+
+    @x.setter
+    def x(self, valeur):
+        self[0] = valeur
+
+    @x.deleter
+    def x(self):
+        raise AttributeError("L'attribut ne peut pas etre supprime.")
+
+    @property
+    def y(self):
+        return self[1]
+
+    @y.setter
+    def y(self, valeur):
+        self[1] = valeur
+
+    @y.deleter
+    def y(self):
+        raise AttributeError("L'attribut ne peut pas etre supprime.")
+
+    def __mul__(self, autre):
+        return Coordonees(self.x * autre, self.y * autre)
+
+    def __div__(self, autre):
+        return Coordonees(self.x / autre, self.y / autre)
+
+
 class Bloc(pygame.sprite.Sprite, object):
     """
     Classe de base pour tous les blocs.
@@ -49,6 +84,19 @@ class Bloc(pygame.sprite.Sprite, object):
     def terminer_cycle(self):
         self.nombre_actions_cycle = 0
 
+    @property
+    def index(self):
+        return Coordonees(self.rect.x, self.rect.y) / self.TAILLE
+
+    @index.setter
+    def index(self, *valeur):
+        index = Coordonees(*valeur)
+        self.rect.x, self.rect.y = index * self.TAILLE
+
+    @index.deleter
+    def index(self):
+        raise AttributeError("L'attribut ne peut pas etre supprime.")
+
     @staticmethod
     def homotetie(rectangle, facteur):
         """
@@ -70,22 +118,22 @@ class Bloc(pygame.sprite.Sprite, object):
         rect.y -= depl_y
         return rect
 
-    def blocs_adjacents(self, groupe):
-        """
-        Renvoie un groupe contenant les blocs adjacents a "self".
-
-        :param groupe: groupe de blocs a tester pour voir s'ils sont adjacents a "self"
-        :return: groupe de blocs adjacents a "self"
-        """
-        rect = self.homotetie(self.rect, 3)
-        adjacents = []
-        groupe_ = groupe
-        if self in groupe_:
-            groupe_.remove(self)
-        for bloc in groupe_:
-            if rect.collidepoint(bloc.rect.center):
-                adjacents.append(bloc)
-        return adjacents
+    # def blocs_adjacents(self, groupe):
+    #     """
+    #     Renvoie un groupe contenant les blocs adjacents a "self".
+    #
+    #     :param groupe: groupe de blocs a tester pour voir s'ils sont adjacents a "self"
+    #     :return: groupe de blocs adjacents a "self"
+    #     """
+    #     rect = self.homotetie(self.rect, 3)
+    #     adjacents = []
+    #     groupe_ = groupe
+    #     if self in groupe_:
+    #         groupe_.remove(self)
+    #     for bloc in groupe_:
+    #         if rect.collidepoint(bloc.rect.center):
+    #             adjacents.append(bloc)
+    #     return adjacents
 
     def blocs_collisiones(self, groupe):
         """
