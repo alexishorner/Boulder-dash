@@ -27,10 +27,12 @@ def test_coordonnees():
 
 
 if __name__ == "__main__":
-    tests = (test_coordonnees, test_adjacents)  # On cree un tuple avec toutes les fonctions de test
-    for test in tests:
-        print("")
-        chaine = " du test \"{0}\"".format(test.__name__)  # On recupere le nom de chaque fonction de test
-        print("Debut{0}...".format(chaine))  # Equivalent a "Debut du test \"" + nom_du_test + "\"..."
-        test()  # On effectue le test
-        print("Fin{0}".format(chaine))  # Equivalent a "Fin du test \"" + nom_du_test + "\""
+    # tests = (test_coordonnees, test_adjacents)  # On cree un tuple avec toutes les fonctions de test
+    # for test in tests:
+    #     print("")
+    #     chaine = " du test \"{0}\"".format(test.__name__)  # On recupere le nom de chaque fonction de test
+    #     print("Debut{0}...".format(chaine))  # Equivalent a "Debut du test \"" + nom_du_test + "\"..."
+    #     test()  # On effectue le test
+    #     print("Fin{0}".format(chaine))  # Equivalent a "Fin du test \"" + nom_du_test + "\""
+    Rectangle(1,2,3,4)
+    Rectangle(1,2,3, width=3, height=4)

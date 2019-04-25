@@ -55,6 +55,31 @@ class Coordonees(list):
     def __div__(self, autre):
         return Coordonees(self.x / autre, self.y / autre)
 
+class Rectangle(pygame.Rect):
+    """
+    Classe gerant les rectangles
+    """
+
+    def __init__(self, *args, **kwargs):
+        arguments = []
+        if len(kwargs) != 0:
+            if "left" in kwargs.keys():
+                arguments.append(kwargs["left"])
+            if "top" in kwargs.keys():
+                arguments.append(kwargs["top"])
+            if "width" in kwargs.keys():
+                arguments.append(kwargs["width"])
+            if "height" in kwargs.keys():
+                arguments.append(kwargs["height"])
+        pygame.Rect.__init__(self, *(args + tuple(arguments)))
+
+    def __hash__(self):
+        """
+        Permet de donner une identification unique a chaque rectangle
+        :return: hash
+        """
+        argument = (self.x, self.y, self.z=0 self.width, self.height, self.class)   #TODO: implementer z
+        return hash(argument)
 
 class Bloc(pygame.sprite.Sprite, object):
     """
