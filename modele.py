@@ -72,6 +72,45 @@ def aplatir(liste):
     return list(aplatie)
 
 
+class Case:
+    """
+    Classe permettant de stocker des blocs partageant la meme position.
+    """
+    def __init__(self, rect, blocs=tuple()):
+        self.rect = Rectangle(rect)
+        self.blocs = list(blocs)
+
+    @property
+    def blocs(self):
+        return self._blocs
+
+    @blocs.setter
+    def blocs(self, nouveaux):
+        blocs = list(nouveaux)
+        self.blocs_ = self.trier(blocs)
+
+    @blocs.deleter
+    def blocs(self):
+        raise AttributeError("L'attribut ne peut pas etre supprime.")
+
+    def ajouter(self, bloc):
+        self._blocs.append(bloc)
+        self._blocs = self.trier(self._blocs)
+
+
+    @staticmethod
+    def trier(blocs):
+        if len(blocs) == 0:
+            return [None]
+
+        blocs_ = blocs
+        while None in blocs_ and len(blocs_) > 1:
+            blocs_.remove(None)  # On enleve les occurences inutiles de "None"
+        if None not in blocs_:
+            blocs_ = sorted(blocs_, key=lambda bloc: bloc.z)  # On trie les blocs par position z
+        return blocs_
+
+
 class Niveau:
     """
     Classe permettant de representer un niveau.
@@ -106,17 +145,19 @@ class Niveau:
                                                                             # a la fin
         lignes_ascii = niveau_ascii.split("\n")
         longueur_ligne = len(lignes_ascii[0])
-        blocs = dict()
+        cases = dict()
         for y, ligne_ascii in enumerate(lignes_ascii):
             if len(ligne_ascii) != longueur_ligne:  # On teste si chaque ligne fait la meme longueur
                 raise ValueError("Le niveau a ete defini incorrectement.")
 
             for x, bloc_ascii in enumerate(ligne_ascii):
+                rect = rect = Rectangle(x, y, Bloc.TAILLE, Bloc.TAILLE)
+                case = Case(rect)
                 bloc = self.ASCII_VERS_BLOC[bloc_ascii](x, y)  # On convertit chaque caractere en bloc et leur attribue
                                                                # une position initiale
-                rect = bloc.rect
-                blocs.update({rect: bloc})
-        return blocs
+
+                cases.update({rect: case})
+        return cases
 
     @classmethod
     def niveau(cls, numero):
@@ -134,6 +175,7 @@ class Carte(object):
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, niveau):
+        self.blocs = []
         self.blocs_uniques = dict()
         self.blocs_cailloux = dict()
         self.nombre_diamants = 0
@@ -172,8 +214,15 @@ class Carte(object):
 
     @cases.setter
     def cases(self, valeur):
+        if not isinstance(valeur, dict):
+            raise ValueError("Les cases doivent etre un dictionnaire.")
         self._cases = valeur
-        self.blocs = aplatir(valeur)
+        blocs = []
+        for case in valeur.itervalues():
+            blocs.extend(case.blocs)
+        while None in blocs:
+            blocs.remove(None)
+        self.blocs = blocs
         self.blocs_uniques = self.trouver_blocs_uniques(self.blocs)
         self.nombre_diamants = self.compter_diamants(self.blocs)
         self.blocs_cailloux = self.trouver_cailloux(self.blocs)
@@ -223,6 +272,16 @@ class Carte(object):
             if bloc.__class__ == Diamant:
                 nombre += 1
         return nombre
+
+    def case(self, x, y):
+        """
+        Permet d'acceder a la case situee a la position (x, y).
+        :param x: coordonnee x de la case
+        :param y: coordonne y de la case
+        :return: instance de "Case" se situant a la position (x, y)
+        """
+        rect = Rectangle(x, y, Bloc.TAILLE, Bloc.TAILLE)
+        return self.cases[rect]
 
     def blocs_adjacents(self, bloc):
         adjacents = []

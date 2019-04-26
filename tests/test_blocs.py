@@ -16,6 +16,7 @@ def test_adjacents():
     blocs_adjacents = bloc_milieu.blocs_adjacents(blocs)
     assert(len(blocs_adjacents) == 8)
 
+
 def test_coordonnees():
     coordonnees = Coordonees(2, 3)
     assert(coordonnees.x == 2)
@@ -25,16 +26,17 @@ def test_coordonnees():
     for i, coordonnee in enumerate(coordonnees):
         assert(coordonnees[i] == coordonnee)
 
+
 def test_test():
-    bloc = Bloc(1, 2)
-    rect = bloc.rect.copy()
-    blocs = {bloc.rect: "test", rect: "test2"}
-    print(blocs[bloc.rect], blocs[rect])
-    bloc.rect.move_ip(0, 1)
-    print(blocs[bloc.rect], blocs[rect])
+    image = IMAGES["Personnage"]
+    rect1 = image.get_rect()
+    rect2 = Rectangle(rect1)
+    print(rect1 == rect2)
+    print(rect1 in (rect2,))
 
 
 if __name__ == "__main__":
+    test_test()
     # tests = (test_coordonnees, test_adjacents)  # On cree un tuple avec toutes les fonctions de test
     # for test in tests:
     #     print("")
@@ -42,5 +44,3 @@ if __name__ == "__main__":
     #     print("Debut{0}...".format(chaine))  # Equivalent a "Debut du test \"" + nom_du_test + "\"..."
     #     test()  # On effectue le test
     #     print("Fin{0}".format(chaine))  # Equivalent a "Fin du test \"" + nom_du_test + "\""
-    Rectangle(1,2,3,4)
-    Rectangle(1,2,3, width=3, height=4)

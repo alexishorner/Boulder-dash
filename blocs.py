@@ -55,6 +55,7 @@ class Coordonees(list):
     def __div__(self, autre):
         return Coordonees(self.x / autre, self.y / autre)
 
+
 class Rectangle(pygame.Rect):
     """
     Classe gerant les rectangles
@@ -72,15 +73,19 @@ class Rectangle(pygame.Rect):
             if "height" in kwargs.keys():
                 arguments.append(kwargs["height"])
         pygame.Rect.__init__(self, *(args + tuple(arguments)))
-        self.z = 0  # TODO: implementer z
+
+    def __eq__(self, autre):
+        return (self.x == autre.x and self.y == autre.y and self.width == autre.width and
+                self.height == autre.height)
 
     def __hash__(self):
         """
         Permet de donner une identification unique a chaque rectangle
         :return: hash
         """
-        arguments = (self.x, self.y, self.z, self.width, self.height, self.__class__)
+        arguments = (self.x, self.y, self.width, self.height)
         return hash(arguments)
+
 
 class Bloc(pygame.sprite.Sprite, object):
     """
@@ -96,8 +101,26 @@ class Bloc(pygame.sprite.Sprite, object):
         self.rect.x = x*self.TAILLE
         self.rect.y = y*self.TAILLE
         self.ancien_rect = self.rect
+        self.z = 0
         self.nombre_actions_cycle = 0
         self.orientation = ORIENTATION.DROITE
+
+    @property
+    def rect_hashable(self):
+        """
+        Permet d'utiliser le rectangle comme cle de dictionnaire.
+
+        :return: Copie de self.rect, mais hashable.
+        """
+        return Rectangle(self.rect)
+
+    @rect_hashable.setter
+    def rect_hashable(self, nouveau):
+        raise AttributeError("Le rectangle hashable n'est pas modifiable, utiliser l'attribut \"rect\" a la place.")
+
+    @rect_hashable.deleter
+    def rect_hashable(self):
+        raise AttributeError("L'attribut ne peut pas etre supprime.")
         
     @property
     def a_deja_bouge(self):
