@@ -37,6 +37,21 @@ def modulo(num, div):
     return (a / b - int(math.ceil(a / b * facteur) / facteur)) * b
 
 
+def vecteur(direction):
+    if direction == ORIENTATIONS.DROITE:
+        v = array([1, 0])
+    elif direction == ORIENTATIONS.GAUCHE:
+        v = array([-1, 0])
+    elif direction == ORIENTATIONS.HAUT:
+        v = array([0, -1])
+    elif direction == ORIENTATIONS.BAS:
+        v = array([0, 1])
+    else:
+        raise ValueError("La direction est invalide")
+    v *= DIMENSIONS.LARGEUR_CASE
+    return v
+
+
 class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe de nouveau style.
     """
     Classe permettant de gerer les evenements de pression des touches.
@@ -366,13 +381,54 @@ class Jeu(object):
                 elif derniere_touche_pressee in TOUCHES.DROITE:
                     self.mouvement_en_cours = ORIENTATIONS.DROITE
 
+    def faire_bouger(self, bloc, direction):
+        if not bloc.PEUT_BOUGER:
+            raise RuntimeError("Ce type de bloc n'a pas le droit de bouger.")
+        rect = bloc.rect_hashable
+        v = vecteur(direction)
+        nouveau_rect = rect.move(v)
+        blocs_collisiones = self.carte.cases[nouveau_rect].blocs
+        if len(blocs_collisiones) == 1:
+            bloc_collisione = blocs_collisiones[0]
+        else:  # len == 2
+            bloc_collisione = None
+            for b in blocs_collisiones:
+                if b is not self.personnage:
+                    bloc_collisione = b
+        if bloc_collisione is None:
+            pass  # faire bouger
+            return True
+        elif isinstance(bloc_collisione, Personnage):
+            print("mort") # tuer personnage  # TODO: gerer mort, faire exploser
+        else:
+            return False
+
+    def faire_tomber(self, bloc):
+        rect = bloc.rect_hashable
+        bas = vecteur(ORIENTATIONS.BAS)
+        nouveau_rect = rect.move(bas)
+        blocs_collisiones = self.carte.cases[nouveau_rect].blocs
+        if len(blocs_collisiones) == 1:
+            bloc_collisione = blocs_collisiones[0]
+        else:  # len == 2
+            bloc_collisione = None
+            for b in blocs_collisiones:
+                if b is not self.personnage:
+                    bloc_collisione = b
+        if bloc_collisione is None or isinstance(bloc_collisione, ())
+
     def effectuer_mouvement(self):
         """
         Fait bouger les differents blocs.
 
         :return: "None"
         """
+        # On fait bouger le personnage
         if self.mouvement_detecte:  # Si un mouvement doit etre effectue
+            rect_personnage = self.personnage.rect_hashable
+            rect_personnage.move_ip(vecteur(self.mouvement_en_cours))
+            blocs_collisiones = self.carte.cases[rect_personnage].blocs  # TODO: finir cette partie (collisions, mouvement)
+
             self.personnage.bouger(self.mouvement_en_cours)  # On fait avancer le personnage
             self.personnage.etait_en_mouvement = True  # FIXME: Personnage peut pousser cailloux dans vide
             self.mouvement_en_cours = None
@@ -380,14 +436,26 @@ class Jeu(object):
             self.personnage.etait_en_mouvement = False
             self.personnage.caillou_pousse = None
 
+
         for x in range(self.carte.nombre_cases_largeur - 1, -1, -1):
-            for y in range(self.carte.nombre_cases_hauteur - 1, -1, -1):
+            for y in range(self.carte.nombre_cases_hauteur - 1, -1, -1):  # On parcourt les blocs de droite a gauche et de bas en haut
                 rect = rectangle_a(x, y)
                 blocs = self.carte.cases[rect]
                 if len(blocs) == 1:
-                    pass
+                    bloc = blocs[0]
+                    if isinstance(bloc, BlocTombant):
+                        self.faire_tomber(bloc)
+
                 elif len(blocs) == 2:
-                    pass
+                    bloc = None
+                    if self.personnage in blocs:
+                        for b in blocs:
+                            if b is not self.personnage:
+                                bloc = b
+                        if not isinstance(bloc, Porte):
+                            raise RuntimeError("Le personnage n'a le droit d'etre que sur des cases vides ou occuppe par une porte.")
+                    else:
+                        raise RuntimeError("Le personnage est le seul bloc ayant le droit d'etre sur une case occuppee.")
                 else:
                     raise RuntimeError("Il n'est pas cense y avoir plus de deux blocs a la meme position.")
 

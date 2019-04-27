@@ -90,6 +90,8 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
     """
     Classe de base pour tous les blocs.
     """
+    PEUT_BOUGER = False
+
     def __init__(self, rect):
         pygame.sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
         image = IMAGES[self.__class__.__name__]
@@ -183,20 +185,20 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
     def collision(self, groupe):
         return False
 
-    @classmethod
-    def vecteur(cls, direction):
-        if direction == ORIENTATIONS.DROITE:
-            vecteur = array([1, 0])
-        elif direction == ORIENTATIONS.GAUCHE:
-            vecteur = array([-1, 0])
-        elif direction == ORIENTATIONS.HAUT:
-            vecteur = array([0, -1])
-        elif direction == ORIENTATIONS.BAS:
-            vecteur = array([0, 1])
-        else:
-            raise ValueError("La direction est invalide")
-        vecteur *= DIMENSIONS.LARGEUR_CASE
-        return vecteur
+    # @staticmethod
+    # def vecteur(direction):
+    #     if direction == ORIENTATIONS.DROITE:
+    #         vecteur = array([1, 0])
+    #     elif direction == ORIENTATIONS.GAUCHE:
+    #         vecteur = array([-1, 0])
+    #     elif direction == ORIENTATIONS.HAUT:
+    #         vecteur = array([0, -1])
+    #     elif direction == ORIENTATIONS.BAS:
+    #         vecteur = array([0, 1])
+    #     else:
+    #         raise ValueError("La direction est invalide")
+    #     vecteur *= DIMENSIONS.LARGEUR_CASE
+    #     return vecteur
 
     def bouger(self, direction):
         """
@@ -236,6 +238,7 @@ class Personnage(Bloc):
     """
     Classe permettant de representer un personnage.
     """
+    PEUT_BOUGER = True
 
     def __init__(self, rect):
         super(Personnage, self).__init__(rect)
@@ -307,6 +310,8 @@ class BlocTombant(Bloc):
     """
     Classe permettant de gerer les blocs qui tombent (caillou et diamant)
     """
+    PEUT_BOUGER = True
+
     def __init__(self, rect):
         super(BlocTombant, self).__init__(rect)
         self.tombe = False
@@ -344,9 +349,8 @@ class Caillou(BlocTombant):
     """
     Classe permettant de representer un caillou.
     """
-
     def __init__(self, rect):
-        BlocTombant.__init__(self, rect)
+        super(Caillou, self).__init__(rect)
 
     def bouger(self, direction):
         return Bloc.bouger(self, direction)
@@ -370,7 +374,7 @@ class Diamant(BlocTombant):
     Classe permettant de representer un diamant.
     """
     def __init__(self, rect):
-        BlocTombant.__init__(self, rect)
+        super(Diamant, self).__init__(rect)
 
 
 class Mur(Bloc):
