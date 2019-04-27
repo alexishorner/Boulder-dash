@@ -128,7 +128,7 @@ class Case(object):
         return blocs_
 
 
-class Niveau:
+class Niveau(object):
     """
     Classe permettant de representer un niveau.
     Un niveau est un schema decrivant la position initiale de blocs de types divers.
@@ -238,6 +238,9 @@ class Carte(object):
             blocs.extend(case.blocs)
         while None in blocs:
             blocs.remove(None)
+        self.rectangle = self.rectangle_carte(self.cases)
+        self.nombre_cases_largeur = self.rectangle.width / DIMENSIONS.LARGEUR_CASE
+        self.nombre_cases_hauteur = self.rectangle.height / DIMENSIONS.LARGEUR_CASE
         self.blocs = blocs
         self.blocs_uniques = self.trouver_blocs_uniques(self.blocs)
         self.nombre_diamants = self.compter_diamants(self.blocs)
@@ -246,6 +249,24 @@ class Carte(object):
     @cases.deleter
     def cases(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
+
+    @staticmethod
+    def rectangle_carte(cases):
+        x_min = y_min = x_max = y_max = None
+        for cle in cases.keys():
+            if x_min is None:
+                x_min = x_max = cle.x
+                y_min = y_max = cle.y
+            else:
+                if cle.x < x_min:
+                    x_min = cle.x
+                if cle.x > x_max:
+                    x_max = cle.x
+                if cle.y < y_min:
+                    y_min = cle.y
+                if cle.y > y_max:
+                    y_max = cle.y
+        return Rectangle(x_min, y_min, x_max - x_min, y_max - y_min)
 
     def blocs_a(self, x, y):
         rect = rectangle_a(x, y)
@@ -305,7 +326,7 @@ class Carte(object):
 
     def blocs_adjacents(self, bloc):
         adjacents = []
-        index_x, index_y = self.coordonnees_vers_index(bloc.rect.x, bloc.rect.y)
+        index_x, index_y = coordonnees_vers_index(bloc.rect.x, bloc.rect.y)
         for i in range(-1, 1):
             for j in range(-1, 1):
                 x = index_x + i

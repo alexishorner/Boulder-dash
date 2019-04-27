@@ -86,7 +86,7 @@ class Rectangle(pygame.Rect):
         return hash(arguments)
 
 
-class Bloc(pygame.sprite.Sprite, object):
+class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygame.sprite.Sprite" est une classe de nouveau style
     """
     Classe de base pour tous les blocs.
     """
@@ -244,6 +244,7 @@ class Personnage(Bloc):
         self.etait_en_mouvement = False
         self.diamants_ramasses = 0
         self.terre_creusee = 0
+        self.caillou_pousse = None
 
     def collision(self, groupe):
         """

@@ -37,7 +37,7 @@ def modulo(num, div):
     return (a / b - int(math.ceil(a / b * facteur) / facteur)) * b
 
 
-class GestionnaireTouches:
+class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe de nouveau style.
     """
     Classe permettant de gerer les evenements de pression des touches.
 
@@ -124,7 +124,7 @@ class GestionnaireTouches:
         return len(pygame.key.get_pressed())
 
 
-class Minuteur:
+class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style a une vraie utilite, puisque cela permet d'utiliser des proprietes
     """
     Classe permettant de simuler un minuteur. Le minuteur se remet a zero a intervalles fixes dont la duree est
     determinee par "self._periode". La remise a zero est une illusion externe qui n'a jamais rellement lieu en interne ;
@@ -248,7 +248,7 @@ class Minuteur:
             return 0
 
 
-class Jeu:
+class Jeu(object):
     """
     Classe gerant l'ensemble du jeu.
     """
@@ -378,6 +378,18 @@ class Jeu:
             self.mouvement_en_cours = None
         else:
             self.personnage.etait_en_mouvement = False
+            self.personnage.caillou_pousse = None
+
+        for x in range(self.carte.nombre_cases_largeur - 1, -1, -1):
+            for y in range(self.carte.nombre_cases_hauteur - 1, -1, -1):
+                rect = rectangle_a(x, y)
+                blocs = self.carte.cases[rect]
+                if len(blocs) == 1:
+                    pass
+                elif len(blocs) == 2:
+                    pass
+                else:
+                    raise RuntimeError("Il n'est pas cense y avoir plus de deux blocs a la meme position.")
 
         # blocs_a_traiter = self.carte.blocs
         # continuer = True
