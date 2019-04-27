@@ -37,11 +37,17 @@ IMAGES.update({"Porte": image_porte, "Entree": image_porte, "Sortie": image_port
 
 
 @unique
-class ORIENTATION(IntEnum):
+class ORIENTATIONS(IntEnum):
     """
     Classe permettant de definir des orientations comme des nombres entiers.
     """
     GAUCHE, DROITE, HAUT, BAS = range(4)
+
+
+class DIMENSIONS:
+    X_MIN = 0
+    Y_MIN = 0
+    LARGEUR_CASE = 75
 
 
 class ECRAN:

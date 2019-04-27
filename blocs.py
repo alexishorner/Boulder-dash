@@ -21,46 +21,45 @@ from constantes import *
 from numpy import array
 
 
-class Coordonees(list):
-    def __init__(self, x, y):
-        list.__init__(self, [x, y])
-
-    @property
-    def x(self):
-        return self[0]
-
-    @x.setter
-    def x(self, valeur):
-        self[0] = valeur
-
-    @x.deleter
-    def x(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
-
-    @property
-    def y(self):
-        return self[1]
-
-    @y.setter
-    def y(self, valeur):
-        self[1] = valeur
-
-    @y.deleter
-    def y(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
-
-    def __mul__(self, autre):
-        return Coordonees(self.x * autre, self.y * autre)
-
-    def __div__(self, autre):
-        return Coordonees(self.x / autre, self.y / autre)
+# class Coordonnees(list):
+#     def __init__(self, x, y):
+#         super(Coordonnees, self).__init__([x, y])
+#
+#     @property
+#     def x(self):
+#         return self[0]
+#
+#     @x.setter
+#     def x(self, valeur):
+#         self[0] = valeur
+#
+#     @x.deleter
+#     def x(self):
+#         raise AttributeError("L'attribut ne peut pas etre supprime.")
+#
+#     @property
+#     def y(self):
+#         return self[1]
+#
+#     @y.setter
+#     def y(self, valeur):
+#         self[1] = valeur
+#
+#     @y.deleter
+#     def y(self):
+#         raise AttributeError("L'attribut ne peut pas etre supprime.")
+#
+#     def __mul__(self, autre):
+#         return Coordonnees(self.x * autre, self.y * autre)
+#
+#     def __div__(self, autre):
+#         return Coordonnees(self.x / autre, self.y / autre)
 
 
 class Rectangle(pygame.Rect):
     """
-    Classe gerant les rectangles
+    Classe permettant d'avoir des rectangles pouvant etre utilises comme cle de dictionnaire.
     """
-
     def __init__(self, *args, **kwargs):
         arguments = []
         if len(kwargs) != 0:
@@ -72,7 +71,7 @@ class Rectangle(pygame.Rect):
                 arguments.append(kwargs["width"])
             if "height" in kwargs.keys():
                 arguments.append(kwargs["height"])
-        pygame.Rect.__init__(self, *(args + tuple(arguments)))
+        super(Rectangle, self).__init__(*(args + tuple(arguments)))
 
     def __eq__(self, autre):
         return (self.x == autre.x and self.y == autre.y and self.width == autre.width and
@@ -91,19 +90,17 @@ class Bloc(pygame.sprite.Sprite, object):
     """
     Classe de base pour tous les blocs.
     """
-    TAILLE = 75
-
-    def __init__(self, x, y):
+    def __init__(self, rect):
         pygame.sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
         image = IMAGES[self.__class__.__name__]
-        self.image = pygame.transform.scale(image, (self.TAILLE, self.TAILLE))
+        self.image = pygame.transform.scale(image, (rect.width, rect.height))
         self.rect = self.image.get_rect()
-        self.rect.x = x*self.TAILLE
-        self.rect.y = y*self.TAILLE
-        self.ancien_rect = self.rect
+        self.rect.x = rect.x
+        self.rect.y = rect.y
+        self.ancien_rect = self.rect.copy()
         self.z = 0
         self.nombre_actions_cycle = 0
-        self.orientation = ORIENTATION.DROITE
+        self.orientation = ORIENTATIONS.DROITE
 
     @property
     def rect_hashable(self):
@@ -132,19 +129,6 @@ class Bloc(pygame.sprite.Sprite, object):
 
     def terminer_cycle(self):
         self.nombre_actions_cycle = 0
-
-    @property
-    def index(self):
-        return Coordonees(self.rect.x, self.rect.y) / self.TAILLE
-
-    @index.setter
-    def index(self, *valeur):
-        index = Coordonees(*valeur)
-        self.rect.x, self.rect.y = index * self.TAILLE
-
-    @index.deleter
-    def index(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
 
     @staticmethod
     def homotetie(rectangle, facteur):
@@ -201,17 +185,17 @@ class Bloc(pygame.sprite.Sprite, object):
 
     @classmethod
     def vecteur(cls, direction):
-        if direction == ORIENTATION.DROITE:
+        if direction == ORIENTATIONS.DROITE:
             vecteur = array([1, 0])
-        elif direction == ORIENTATION.GAUCHE:
+        elif direction == ORIENTATIONS.GAUCHE:
             vecteur = array([-1, 0])
-        elif direction == ORIENTATION.HAUT:
+        elif direction == ORIENTATIONS.HAUT:
             vecteur = array([0, -1])
-        elif direction == ORIENTATION.BAS:
+        elif direction == ORIENTATIONS.BAS:
             vecteur = array([0, 1])
         else:
             raise ValueError("La direction est invalide")
-        vecteur *= cls.TAILLE
+        vecteur *= DIMENSIONS.LARGEUR_CASE
         return vecteur
 
     def bouger(self, direction):
@@ -253,10 +237,10 @@ class Personnage(Bloc):
     Classe permettant de representer un personnage.
     """
 
-    def __init__(self, x, y):
-        Bloc.__init__(self, x, y)
+    def __init__(self, rect):
+        super(Personnage, self).__init__(rect)
         self.est_mort = False
-        self.orientation = ORIENTATION.DROITE
+        self.orientation = ORIENTATIONS.DROITE
         self.etait_en_mouvement = False
         self.diamants_ramasses = 0
         self.terre_creusee = 0
@@ -322,8 +306,8 @@ class BlocTombant(Bloc):
     """
     Classe permettant de gerer les blocs qui tombent (caillou et diamant)
     """
-    def __init__(self, x, y):
-        Bloc.__init__(self, x, y)
+    def __init__(self, rect):
+        super(BlocTombant, self).__init__(rect)
         self.tombe = False
 
     def actualiser(self):
@@ -350,7 +334,7 @@ class BlocTombant(Bloc):
         return est_revenu
 
     def tomber(self):
-        tombe = self.bouger(ORIENTATION.BAS)
+        tombe = self.bouger(ORIENTATIONS.BAS)
         self.tombe = tombe
         return tombe
 
@@ -360,8 +344,8 @@ class Caillou(BlocTombant):
     Classe permettant de representer un caillou.
     """
 
-    def __init__(self, x, y):
-        BlocTombant.__init__(self, x, y)
+    def __init__(self, rect):
+        BlocTombant.__init__(self, rect)
 
     def bouger(self, direction):
         return Bloc.bouger(self, direction)
@@ -373,7 +357,7 @@ class Caillou(BlocTombant):
         :param direction: direction dans laquelle le caillou est pousse (=vecteur direction personnage)
         :return: "None"
         """
-        if direction in (ORIENTATION.GAUCHE, ORIENTATION.DROITE):
+        if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):
             if self.tomber():
                 return True
             return self.bouger(direction)
@@ -384,8 +368,8 @@ class Diamant(BlocTombant):
     """
     Classe permettant de representer un diamant.
     """
-    def __init__(self, x, y):
-        BlocTombant.__init__(self, x, y)
+    def __init__(self, rect):
+        BlocTombant.__init__(self, rect)
 
 
 class Mur(Bloc):
@@ -398,8 +382,8 @@ class Porte(Bloc):
     """
     Classe permettant de representer une porte de maniere generique.
     """
-    def __init__(self, x, y):
-        Bloc.__init__(self, x, y)
+    def __init__(self, rect):
+        super(Porte, self).__init__(rect)
         self._est_activee = False
 
     @property
@@ -443,8 +427,8 @@ class Entree(Porte):
     """
     Classe permettant de representer une porte d'entree.
     """
-    def __init__(self, x, y):
-        Porte.__init__(self, x, y)
+    def __init__(self, rect):
+        super(Entree, self).__init__(rect)
         self.est_activee = True
 
 
@@ -452,6 +436,6 @@ class Sortie(Porte):
     """
     Classe permettant de representer une porte de sortie.
     """
-    def __init__(self, x, y):
-        Porte.__init__(self, x, y)
+    def __init__(self, rect):
+        super(Sortie, self).__init__(rect)
         self.est_activee = False

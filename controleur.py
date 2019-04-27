@@ -358,13 +358,13 @@ class Jeu:
 
                 # On regarde quelle touche est pressee et on stocke le mouvement en consequence
                 if derniere_touche_pressee in TOUCHES.HAUT:
-                    self.mouvement_en_cours = ORIENTATION.HAUT
+                    self.mouvement_en_cours = ORIENTATIONS.HAUT
                 elif derniere_touche_pressee in TOUCHES.BAS:
-                    self.mouvement_en_cours = ORIENTATION.BAS
+                    self.mouvement_en_cours = ORIENTATIONS.BAS
                 elif derniere_touche_pressee in TOUCHES.GAUCHE:
-                    self.mouvement_en_cours = ORIENTATION.GAUCHE
+                    self.mouvement_en_cours = ORIENTATIONS.GAUCHE
                 elif derniere_touche_pressee in TOUCHES.DROITE:
-                    self.mouvement_en_cours = ORIENTATION.DROITE
+                    self.mouvement_en_cours = ORIENTATIONS.DROITE
 
     def effectuer_mouvement(self):
         """

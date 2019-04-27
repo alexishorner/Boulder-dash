@@ -5,12 +5,12 @@ from blocs import *
 import itertools
 
 
-def _enlever_extremite(chaine, extremite=ORIENTATION.GAUCHE, caracteres_a_enlever=("\n", " ")):
+def _enlever_extremite(chaine, extremite=ORIENTATIONS.GAUCHE, caracteres_a_enlever=("\n", " ")):
     """
     Enleve des caracteres se trouvant a une extremite d'une chaine de caracteres.
 
     Exemple :
-    extremite == ORIENTATION.DROITE
+    extremite == ORIENTATIONS.DROITE
     caracteres_a_enlever == ("\n", "_")
     chaine == "_\n__\n_\nCeci_est\n_une_chaine\n_d'exemple__\n\n____\n"
               ^--gauche-^------------milieu--------------^---droite--^
@@ -30,7 +30,7 @@ def _enlever_extremite(chaine, extremite=ORIENTATION.GAUCHE, caracteres_a_enleve
     :param caracteres_a_enlever: iterable contenant les caracteres devant etre enleves
     :return: chaine de caracteres apres avoir enleve les caracteres specifies a l'extremite demandee
     """
-    if extremite == ORIENTATION.GAUCHE:
+    if extremite == ORIENTATIONS.GAUCHE:
         debut = 0  # On commence a gauche (i.e. au caractere 0) de la chaine de caracteres
         increment = 1  # On lit de gauche a droite
     else:
@@ -43,7 +43,7 @@ def _enlever_extremite(chaine, extremite=ORIENTATION.GAUCHE, caracteres_a_enleve
             break
         i += increment
 
-    if extremite == ORIENTATION.GAUCHE:
+    if extremite == ORIENTATIONS.GAUCHE:
         return chaine[i:]  # renvoie la chaine de caracteres depuis le caractere i jusqu'a la fin
     return chaine[:i+1]  # renvoie la chaine de caracteres depuis le debut jusqu'au caractere i
 
@@ -56,12 +56,12 @@ def enlever_extremites(chaine, caracteres_a_enlever=("\n", " ")):
     :param caracteres_a_enlever: iterable contenant les caracteres devant etre enleves
     :return: chaine de caracteres apres avoir enleve les caracteres specifies a chacune des extremites.
     """
-    variable_temporaire = _enlever_extremite(chaine, ORIENTATION.GAUCHE, caracteres_a_enlever)  # enleve l'extremite gauche
-    return _enlever_extremite(variable_temporaire, ORIENTATION.DROITE, caracteres_a_enlever)  # enleve l'extremite droite
+    variable_temporaire = _enlever_extremite(chaine, ORIENTATIONS.GAUCHE, caracteres_a_enlever)  # enleve l'extremite gauche
+    return _enlever_extremite(variable_temporaire, ORIENTATIONS.DROITE, caracteres_a_enlever)  # enleve l'extremite droite
 
 
 def dimensions(liste):
-     return max(array(liste).shape)
+    return max(array(liste).shape)
 
 
 def aplatir(liste):
@@ -72,7 +72,25 @@ def aplatir(liste):
     return list(aplatie)
 
 
-class Case:
+def index_vers_coordonnees(x, y):
+    x_min, y_min = DIMENSIONS.X_MIN, DIMENSIONS.Y_MIN
+    largeur = DIMENSIONS.LARGEUR_CASE
+    return x_min + x * largeur, y_min + y * largeur
+
+
+def coordonnees_vers_index(x, y):
+    x_min, y_min = DIMENSIONS.X_MIN, DIMENSIONS.Y_MIN
+    largeur = DIMENSIONS.LARGEUR_CASE
+    return (x - x_min) / largeur, (y - y_min) / largeur
+
+
+def rectangle_a(x, y):
+    pos_x, pos_y = index_vers_coordonnees(x, y)
+    largeur = DIMENSIONS.LARGEUR_CASE
+    return Rectangle(pos_x, pos_y, largeur, largeur)
+
+
+class Case(object):
     """
     Classe permettant de stocker des blocs partageant la meme position.
     """
@@ -87,7 +105,7 @@ class Case:
     @blocs.setter
     def blocs(self, nouveaux):
         blocs = list(nouveaux)
-        self.blocs_ = self.trier(blocs)
+        self._blocs = self.trier(blocs)
 
     @blocs.deleter
     def blocs(self):
@@ -96,7 +114,6 @@ class Case:
     def ajouter(self, bloc):
         self._blocs.append(bloc)
         self._blocs = self.trier(self._blocs)
-
 
     @staticmethod
     def trier(blocs):
@@ -132,11 +149,10 @@ class Niveau:
         self.numero = numero  # Numero du niveau
         self.ascii = ascii  # Representation du niveau avec des caracteres ascii
 
-    def vers_blocs(self):
+    def vers_cases(self):
         """
         Prend en entree un niveau et cree un groupe de cases ayant chacun le type et la position dictee par le niveau.
 
-        :param niveau: niveau a interpreter
         :return: groupe de cases initialises avec la bonne position et le bon type
         """
         niveau_ascii = self.ascii
@@ -151,11 +167,11 @@ class Niveau:
                 raise ValueError("Le niveau a ete defini incorrectement.")
 
             for x, bloc_ascii in enumerate(ligne_ascii):
-                rect = rect = Rectangle(x, y, Bloc.TAILLE, Bloc.TAILLE)
+                rect = rectangle_a(x, y)
                 case = Case(rect)
-                bloc = self.ASCII_VERS_BLOC[bloc_ascii](x, y)  # On convertit chaque caractere en bloc et leur attribue
+                bloc = self.ASCII_VERS_BLOC[bloc_ascii](rect)  # On convertit chaque caractere en bloc et leur attribue
                                                                # une position initiale
-
+                case.ajouter(bloc)
                 cases.update({rect: case})
         return cases
 
@@ -177,7 +193,7 @@ class Carte(object):
     def __init__(self, niveau):
         self.blocs = []
         self.blocs_uniques = dict()
-        self.blocs_cailloux = dict()
+        self.cailloux = dict()
         self.nombre_diamants = 0
         self.niveau = niveau
         self.personnage = self.blocs_uniques[Personnage]
@@ -197,7 +213,7 @@ class Carte(object):
     @niveau.setter
     def niveau(self, valeur):
         self._niveau = valeur
-        self.cases = valeur.vers_blocs()
+        self.cases = valeur.vers_cases()
 
     @niveau.deleter
     def niveau(self):
@@ -206,9 +222,9 @@ class Carte(object):
     @property
     def cases(self):
         """
-        Propriete permettant d'acceder aux blocs.
+        Propriete permettant d'acceder aux cases.
 
-        :return: blocs
+        :return: cases
         """
         return self._cases
 
@@ -225,11 +241,15 @@ class Carte(object):
         self.blocs = blocs
         self.blocs_uniques = self.trouver_blocs_uniques(self.blocs)
         self.nombre_diamants = self.compter_diamants(self.blocs)
-        self.blocs_cailloux = self.trouver_cailloux(self.blocs)
+        self.cailloux = self.trouver_cailloux(self.blocs)
 
     @cases.deleter
     def cases(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
+
+    def blocs_a(self, x, y):
+        rect = rectangle_a(x, y)
+        return self.cases[rect].blocs
 
     @staticmethod
     def trouver_blocs_uniques(blocs):
@@ -273,19 +293,19 @@ class Carte(object):
                 nombre += 1
         return nombre
 
-    def case(self, x, y):
+    def case_a(self, x, y):
         """
         Permet d'acceder a la case situee a la position (x, y).
         :param x: coordonnee x de la case
         :param y: coordonne y de la case
         :return: instance de "Case" se situant a la position (x, y)
         """
-        rect = Rectangle(x, y, Bloc.TAILLE, Bloc.TAILLE)
+        rect = rectangle_a(x, y)
         return self.cases[rect]
 
     def blocs_adjacents(self, bloc):
         adjacents = []
-        index_x, index_y = bloc.index
+        index_x, index_y = self.coordonnees_vers_index(bloc.rect.x, bloc.rect.y)
         for i in range(-1, 1):
             for j in range(-1, 1):
                 x = index_x + i
