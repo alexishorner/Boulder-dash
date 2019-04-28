@@ -37,18 +37,25 @@ def modulo(num, div):
     return (a / b - int(math.ceil(a / b * facteur) / facteur)) * b
 
 
-def vecteur(direction):
-    if direction == ORIENTATIONS.DROITE:
-        v = array([1, 0])
-    elif direction == ORIENTATIONS.GAUCHE:
-        v = array([-1, 0])
-    elif direction == ORIENTATIONS.HAUT:
-        v = array([0, -1])
-    elif direction == ORIENTATIONS.BAS:
-        v = array([0, 1])
-    else:
-        raise ValueError("La direction est invalide")
-    v *= DIMENSIONS.LARGEUR_CASE
+def vecteur(directions):
+    try:
+        len(directions)  # On verifie si "directions" est iterable
+        directions_ = directions
+    except TypeError:
+        directions_ = [directions]  # S'il n'y a qu'une seule direction on la transforme en liste
+    v = array([0, 0])  # On commence avec un vecteur nul
+    for direction in directions_:  # On ajoute le vecteur correspondant a chaque direction
+        if direction == ORIENTATIONS.DROITE:
+            v += array([1, 0])
+        elif direction == ORIENTATIONS.GAUCHE:
+            v += array([-1, 0])
+        elif direction == ORIENTATIONS.HAUT:
+            v += array([0, -1])
+        elif direction == ORIENTATIONS.BAS:
+            v += array([0, 1])
+        else:
+            raise ValueError("La direction est invalide")
+    v *= DIMENSIONS.LARGEUR_CASE  # On multiplie par la largeur d'une case pour avoir la bonne norme
     return v
 
 
@@ -381,27 +388,55 @@ class Jeu(object):
                 elif derniere_touche_pressee in TOUCHES.DROITE:
                     self.mouvement_en_cours = ORIENTATIONS.DROITE
 
-    def faire_bouger(self, bloc, direction):
-        if not bloc.PEUT_BOUGER:
-            raise RuntimeError("Ce type de bloc n'a pas le droit de bouger.")
-        rect = bloc.rect_hashable
-        v = vecteur(direction)
-        nouveau_rect = rect.move(v)
-        blocs_collisiones = self.carte.cases[nouveau_rect].blocs
+    def bloc_collisione(self, bloc, directions):
+        v = vecteur(directions)
+        rect = bloc.rect_hashable.move(v)
+        blocs_collisiones = self.carte.cases[rect].blocs
         if len(blocs_collisiones) == 1:
             bloc_collisione = blocs_collisiones[0]
         else:  # len == 2
             bloc_collisione = None
             for b in blocs_collisiones:
-                if b is not self.personnage:
-                    bloc_collisione = b
-        if bloc_collisione is None:
-            pass  # faire bouger
-            return True
-        elif isinstance(bloc_collisione, Personnage):
-            print("mort") # tuer personnage  # TODO: gerer mort, faire exploser
-        else:
-            return False
+                if b is not self.personnage:  # On renvoie que la porte et pas le personnage, car la porte protege le personnage
+                    bloc_collisione = b  # Porte
+        return bloc_collisione
+
+
+    def _bouger_personnage(self, personnage, direction):  # ATTENTION: methode faite pour etre utilisee dans "fair_bouger" uniquement
+        reussite = False
+        bloc_collisione = self.bloc_collisione(personnage, direction)
+        if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) and isinstance(bloc_collisione, Caillou):
+            reussite = self.faire_bouger(bloc_collisione, direction)
+
+    def _bouger_bloc_tombant(self, bloc, direction):  # ATTENTION: methode faite pour etre utilisee dans "fair_bouger" uniquement
+        personnage_mort = False
+        reussite = False
+        bloc_collisione = self.bloc_collisione(bloc, direction)
+        if isinstance(bloc_collisione, Personnage):
+            if bloc.tombe:
+                personnage_mort = True
+                reussite = True
+        return reussite, personnage_mort, bloc_collisione
+
+    def faire_bouger(self, bloc, direction):
+        personnage_mort = False
+        reussite = False
+        bloc_collisione = None
+        if bloc.PEUT_BOUGER:
+            bloc_collisione = self.bloc_collisione(bloc, direction)
+
+            if bloc_collisione is None:
+                reussite = True
+            else:
+                if isinstance(bloc, Personnage):
+                    pass # bouger personnage
+                elif isinstance(bloc, BlocTombant):
+                    pass
+            if personnage_mort:
+                print("mort") # tuer personnage  # TODO: gerer mort, faire exploser
+            elif reussite:
+                pass # bouger
+        return reussite, bloc_collisione
 
     def faire_tomber(self, bloc):
         rect = bloc.rect_hashable
