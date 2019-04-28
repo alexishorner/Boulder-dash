@@ -59,6 +59,23 @@ def vecteur(directions):
     return v
 
 
+class Action(object):
+    def __init__(self, methode=None, *args, **kwargs):
+        self.reinitialiser()
+        if methode is not None:
+            self.methode = methode
+        self.args = args
+        self.kwargs = kwargs
+
+    def effectuer(self):
+        self.methode(*self.args, **self.kwargs)
+
+    def reinitialiser(self):
+        self.methode = lambda *_: None
+        self.args = tuple()
+        self.kwargs = dict()
+
+
 class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe de nouveau style.
     """
     Classe permettant de gerer les evenements de pression des touches.
@@ -286,6 +303,7 @@ class Jeu(object):
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.2, 0.01)
         self.mouvement_en_cours = None
+        self.actions_a_effectuer = []
 
     @property
     def mouvement_detecte(self):
@@ -329,7 +347,7 @@ class Jeu(object):
 
                 if self.minuteur.tics_restants() > 1:  # S'il reste de quoi attendre un tic
                     self.minuteur.attendre_un_tic()
-            self.effectuer_mouvement()
+            self.effectuer_mouvements()
             if self.carte.nombre_diamants == self.personnage.diamants_ramasses:
                 self.carte.sortie.activer()
             self.actualiser_ecran()
@@ -388,6 +406,14 @@ class Jeu(object):
                 elif derniere_touche_pressee in TOUCHES.DROITE:
                     self.mouvement_en_cours = ORIENTATIONS.DROITE
 
+    def terminer_mouvements(self):
+        for action in self.actions_a_effectuer:
+            action.effectuer()
+        self.actions_a_effectuer = []
+        self.carte.supprimer_morts()
+        for bloc in self.carte.blocs_tries:
+            bloc.terminer_cycle()
+
     def bloc_collisione(self, bloc, directions):
         v = vecteur(directions)
         rect = bloc.rect_hashable.move(v)
@@ -404,14 +430,20 @@ class Jeu(object):
     def _bouger_personnage(self, personnage, direction):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
         reussite = False
         bloc_collisione = self.bloc_collisione(personnage, direction)
-        if isinstance(bloc_collisione, Caillou):
-            if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):
-                reussite = self.faire_bouger(bloc_collisione, direction)
-        elif isinstance(bloc_collisione, Diamant):
-            if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) or not bloc_collisione.tombe:
-                personnage.ramasser_diamant()
-            # FIXME: problemes quand personnage bouge vers le bas
-            reussite = True
+        if isinstance(bloc_collisione, BlocTombant):
+            if direction == ORIENTATIONS.BAS:
+                self.actions_a_effectuer.append(Action(self.faire_bouger(personnage, direction)))
+                # FIXME: problemes quand personnage bouge vers le bas en meme temps que caillou ou diamant tombe (peut-etre regle maintenant)
+            else:
+                if isinstance(bloc_collisione, Caillou):
+                    if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):  # TODO: attendre avant de pousser caillou
+                        reussite = self.faire_bouger(bloc_collisione, direction)  # On fait bouger le caillou et on regarde
+                elif isinstance(bloc_collisione, Diamant):
+                    if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) or not bloc_collisione.tombe:
+                        personnage.ramasser_diamant()
+                        reussite = True
+                # On ne gere pas les cas ou le personnage est tue, ils seront traites avec les blocs
+        return reussite
 
     def _bouger_bloc_tombant(self, bloc, direction):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
         personnage_mort = False
@@ -458,7 +490,7 @@ class Jeu(object):
                     bloc_collisione = b
         if bloc_collisione is None or isinstance(bloc_collisione, ())
 
-    def effectuer_mouvement(self):
+    def effectuer_mouvements(self):
         """
         Fait bouger les differents blocs.
 
@@ -510,7 +542,5 @@ class Jeu(object):
         #             blocs_a_traiter.remove(bloc)
         #             continuer = True
 
-        self.carte.supprimer_morts()
 
-        for bloc in self.carte.blocs_tries:
-            bloc.terminer_cycle()
+        self.terminer_mouvements()
