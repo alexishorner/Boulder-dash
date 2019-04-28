@@ -401,14 +401,19 @@ class Jeu(object):
                     bloc_collisione = b  # Porte
         return bloc_collisione
 
-
-    def _bouger_personnage(self, personnage, direction):  # ATTENTION: methode faite pour etre utilisee dans "fair_bouger" uniquement
+    def _bouger_personnage(self, personnage, direction):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
         reussite = False
         bloc_collisione = self.bloc_collisione(personnage, direction)
-        if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) and isinstance(bloc_collisione, Caillou):
-            reussite = self.faire_bouger(bloc_collisione, direction)
+        if isinstance(bloc_collisione, Caillou):
+            if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):
+                reussite = self.faire_bouger(bloc_collisione, direction)
+        elif isinstance(bloc_collisione, Diamant):
+            if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) or not bloc_collisione.tombe:
+                personnage.ramasser_diamant()
+            # FIXME: problemes quand personnage bouge vers le bas
+            reussite = True
 
-    def _bouger_bloc_tombant(self, bloc, direction):  # ATTENTION: methode faite pour etre utilisee dans "fair_bouger" uniquement
+    def _bouger_bloc_tombant(self, bloc, direction):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
         personnage_mort = False
         reussite = False
         bloc_collisione = self.bloc_collisione(bloc, direction)
@@ -435,7 +440,8 @@ class Jeu(object):
             if personnage_mort:
                 print("mort") # tuer personnage  # TODO: gerer mort, faire exploser
             elif reussite:
-                pass # bouger
+                nouveau_rect = bloc.rect.move(vecteur(direction))
+                self.carte.bouger(bloc, nouveau_rect) # bouger
         return reussite, bloc_collisione
 
     def faire_tomber(self, bloc):
@@ -504,5 +510,7 @@ class Jeu(object):
         #             blocs_a_traiter.remove(bloc)
         #             continuer = True
 
-        for bloc in self.carte.blocs:
+        self.carte.supprimer_morts()
+
+        for bloc in self.carte.blocs_tries:
             bloc.terminer_cycle()

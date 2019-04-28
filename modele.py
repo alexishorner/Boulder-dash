@@ -60,6 +60,18 @@ def enlever_extremites(chaine, caracteres_a_enlever=("\n", " ")):
     return _enlever_extremite(variable_temporaire, ORIENTATIONS.DROITE, caracteres_a_enlever)  # enleve l'extremite droite
 
 
+def trier(blocs):
+    if len(blocs) == 0:
+        return [None]
+
+    blocs_ = blocs
+    while None in blocs_ and len(blocs_) > 1:
+        blocs_.remove(None)  # On enleve les occurences inutiles de "None"
+    if None not in blocs_:
+        blocs_ = sorted(blocs_, key=lambda bloc: bloc.z)  # On trie les blocs par position z croissante
+    return blocs_
+
+
 def dimensions(liste):
     return max(array(liste).shape)
 
@@ -115,17 +127,9 @@ class Case(object):
         self._blocs.append(bloc)
         self._blocs = self.trier(self._blocs)
 
-    @staticmethod
-    def trier(blocs):
-        if len(blocs) == 0:
-            return [None]
-
-        blocs_ = blocs
-        while None in blocs_ and len(blocs_) > 1:
-            blocs_.remove(None)  # On enleve les occurences inutiles de "None"
-        if None not in blocs_:
-            blocs_ = sorted(blocs_, key=lambda bloc: bloc.z)  # On trie les blocs par position z
-        return blocs_
+    def enlever(self, bloc):
+        self._blocs.remove(bloc)
+        self._blocs = trier(self._blocs)
 
 
 class Niveau(object):
@@ -191,7 +195,7 @@ class Carte(object):
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, niveau):
-        self.blocs = []
+        self.blocs_tries = []
         self.blocs_uniques = dict()
         self.cailloux = dict()
         self.nombre_diamants = 0
@@ -233,22 +237,39 @@ class Carte(object):
         if not isinstance(valeur, dict):
             raise ValueError("Les cases doivent etre un dictionnaire.")
         self._cases = valeur
-        blocs = []
-        for case in valeur.itervalues():
-            blocs.extend(case.blocs)
-        while None in blocs:
-            blocs.remove(None)
+        self.actualiser_blocs()
         self.rectangle = self.rectangle_carte(self.cases)
         self.nombre_cases_largeur = self.rectangle.width / DIMENSIONS.LARGEUR_CASE
         self.nombre_cases_hauteur = self.rectangle.height / DIMENSIONS.LARGEUR_CASE
-        self.blocs = blocs
-        self.blocs_uniques = self.trouver_blocs_uniques(self.blocs)
-        self.nombre_diamants = self.compter_diamants(self.blocs)
-        self.cailloux = self.trouver_cailloux(self.blocs)
 
     @cases.deleter
     def cases(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
+
+    def actualiser_blocs(self):
+        blocs = []
+        for case in self.cases.itervalues():
+            blocs.extend(case.blocs)
+        while None in blocs:
+            blocs.remove(None)
+        self.blocs_tries = trier(blocs)
+        self.blocs_uniques = self.trouver_blocs_uniques(self.blocs_tries)
+        self.nombre_diamants = self.compter_diamants(self.blocs_tries)
+        self.cailloux = self.trouver_cailloux(self.blocs_tries)
+
+    def bouger(self, bloc, rect):
+        self.cases[bloc.rect_hashable].enlever(bloc)
+        self.cases[Rectangle(rect)].ajouter(bloc)
+        bloc.rect.x, bloc.rect.y = rect.x, rect.y
+
+    def supprimer(self, bloc):
+        self.cases[bloc.rect_hashable].enlever(bloc)
+        self.actualiser_blocs()
+
+    def supprimer_morts(self):
+        for bloc in self.blocs_tries:
+            if bloc.est_mort:
+                self.supprimer(bloc)
 
     @staticmethod
     def rectangle_carte(cases):
@@ -342,8 +363,5 @@ class Carte(object):
         :param ecran: Ecran sur lequel dessiner les blocs.
         :return: "None"
         """
-        for bloc in self.blocs:
-            if bloc is not self.personnage:
-                ecran.blit(bloc.image, bloc.rect)  # Dessine les blocs autres que le personnage en premier
-        self.blocs.append(self.personnage)
-        ecran.blit(self.personnage.image, self.personnage.rect)  # Dessine le personnage en dernier pour qu'il soit au premier plan
+        for bloc in self.blocs_tries:          # Puisque les blocs sont tries par position z, les blocs les plus en
+            ecran.blit(bloc.image, bloc.rect)  # avant sont dessines en dernier
