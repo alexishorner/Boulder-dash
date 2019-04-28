@@ -4,6 +4,7 @@ Module gerant la logique du jeu.
 from modele import *
 import time
 import math
+import random
 # import ctypes
 
 # ctypes.windll.user32.SetProcessDPIAware()
@@ -304,6 +305,7 @@ class Jeu(object):
         self.minuteur = Minuteur(0.2, 0.01)
         self.mouvement_en_cours = None
         self.actions_a_effectuer = []
+        self.debut_mouvements = False
 
     @property
     def mouvement_detecte(self):
@@ -406,89 +408,113 @@ class Jeu(object):
                 elif derniere_touche_pressee in TOUCHES.DROITE:
                     self.mouvement_en_cours = ORIENTATIONS.DROITE
 
+    def gerer_collisions(self):
+        for case in self.carte.cases.itervalues():
+            if len(case.blocs) == 2:
+                for bloc in case.blocs:
+                    if isinstance(bloc, BlocTombant):
+                        if self.personnage in case.blocs:
+                            self.personnage.tuer()
+                        else:
+                            raise RuntimeError("Seul le personnage peut etre sur la meme case qu'un autre bloc.")
+
     def terminer_mouvements(self):
+        self.debut_mouvements = False
         for action in self.actions_a_effectuer:
             action.effectuer()
         self.actions_a_effectuer = []
+        self.gerer_collisions()
         self.carte.supprimer_morts()
         for bloc in self.carte.blocs_tries:
             bloc.terminer_cycle()
 
-    def bloc_collisione(self, bloc, directions):
+    def bloc_collisionne(self, bloc, directions):
         v = vecteur(directions)
         rect = bloc.rect_hashable.move(v)
-        blocs_collisiones = self.carte.cases[rect].blocs
-        if len(blocs_collisiones) == 1:
-            bloc_collisione = blocs_collisiones[0]
+        blocs_collisionnes = self.carte.cases[rect].blocs
+        if len(blocs_collisionnes) == 1:
+            bloc_collisionne = blocs_collisionnes[0]
         else:  # len == 2
-            bloc_collisione = None
-            for b in blocs_collisiones:
+            bloc_collisionne = None
+            for b in blocs_collisionnes:
                 if b is not self.personnage:  # On renvoie que la porte et pas le personnage, car la porte protege le personnage
-                    bloc_collisione = b  # Porte
-        return bloc_collisione
+                    bloc_collisionne = b  # Porte
+        return bloc_collisionne
 
     def _bouger_personnage(self, personnage, direction):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
+        personnage.doit_bouger = False
         reussite = False
-        bloc_collisione = self.bloc_collisione(personnage, direction)
-        if isinstance(bloc_collisione, BlocTombant):
-            if direction == ORIENTATIONS.BAS:
-                self.actions_a_effectuer.append(Action(self.faire_bouger(personnage, direction)))
+        bloc_collisionne = self.bloc_collisionne(personnage, direction)
+        if isinstance(bloc_collisionne, BlocTombant):
+            if direction == ORIENTATIONS.BAS and self.debut_mouvements:
+                self.actions_a_effectuer.append(Action(self._bouger_personnage, personnage, direction))
+                self.personnage.doit_bouger = True
                 # FIXME: problemes quand personnage bouge vers le bas en meme temps que caillou ou diamant tombe (peut-etre regle maintenant)
             else:
-                if isinstance(bloc_collisione, Caillou):
-                    if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):  # TODO: attendre avant de pousser caillou
-                        reussite = self.faire_bouger(bloc_collisione, direction)  # On fait bouger le caillou et on regarde
-                elif isinstance(bloc_collisione, Diamant):
-                    if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) or not bloc_collisione.tombe:
-                        personnage.ramasser_diamant()
+                if isinstance(bloc_collisionne, Caillou):
+                    if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):
+                        if bloc_collisionne.coups_avant_etre_pousse == 0:
+                            reussite = self.faire_bouger(bloc_collisionne, direction)  # On pousse le caillou
+                        personnage.pousser(bloc_collisionne, direction)
+                elif isinstance(bloc_collisionne, Diamant):
+                    if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) or not bloc_collisionne.tombe:
+                        personnage.ramasser_diamant(bloc_collisionne)
                         reussite = True
-                # On ne gere pas les cas ou le personnage est tue, ils seront traites avec les blocs
+                    elif bloc_collisionne.tombe:
+                        personnage.tuer()
+        elif isinstance(bloc_collisionne, Terre):
+            personnage.creuser_terre(bloc_collisionne)
+            reussite = True
+        elif bloc_collisionne is None:
+            reussite = True
         return reussite
 
     def _bouger_bloc_tombant(self, bloc, direction):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
-        personnage_mort = False
+        bloc.doit_bouger = False  # Pour eviter les bugs
         reussite = False
-        bloc_collisione = self.bloc_collisione(bloc, direction)
-        if isinstance(bloc_collisione, Personnage):
-            if bloc.tombe:
-                personnage_mort = True
-                reussite = True
-        return reussite, personnage_mort, bloc_collisione
+        bloc_collisionne = self.bloc_collisionne(bloc, direction)
+        if bloc_collisionne is None:
+            reussite = True
+        else:
+            if bloc_collisionne.doit_bouger:
+                self.actions_a_effectuer.append(Action(self._bouger_bloc_tombant, bloc, direction))  # On attend que le bloc bouge pour bouger
+                bloc.doit_bouger = True
+            else:
+                if isinstance(bloc_collisionne, Personnage):
+                    if bloc.tombe:
+                        bloc_collisionne.tuer()
+                        reussite = True
+
+        return reussite
 
     def faire_bouger(self, bloc, direction):
-        personnage_mort = False
+        bloc.doit_bouger = False
         reussite = False
-        bloc_collisione = None
+        bloc_collisionne = None
         if bloc.PEUT_BOUGER:
-            bloc_collisione = self.bloc_collisione(bloc, direction)
+            bloc_collisionne = self.bloc_collisionne(bloc, direction)
 
-            if bloc_collisione is None:
+            if bloc_collisionne is None:
                 reussite = True
             else:
                 if isinstance(bloc, Personnage):
-                    pass # bouger personnage
+                    reussite = self._bouger_personnage(bloc, direction)
                 elif isinstance(bloc, BlocTombant):
-                    pass
-            if personnage_mort:
-                print("mort") # tuer personnage  # TODO: gerer mort, faire exploser
+                    reussite = self._bouger_bloc_tombant(bloc, direction)
+            if self.personnage.est_mort:
+                print("mort")
             elif reussite:
                 nouveau_rect = bloc.rect.move(vecteur(direction))
-                self.carte.bouger(bloc, nouveau_rect) # bouger
-        return reussite, bloc_collisione
+                self.carte.bouger(bloc, nouveau_rect)
+        return reussite, bloc_collisionne
 
     def faire_tomber(self, bloc):
-        rect = bloc.rect_hashable
-        bas = vecteur(ORIENTATIONS.BAS)
-        nouveau_rect = rect.move(bas)
-        blocs_collisiones = self.carte.cases[nouveau_rect].blocs
-        if len(blocs_collisiones) == 1:
-            bloc_collisione = blocs_collisiones[0]
-        else:  # len == 2
-            bloc_collisione = None
-            for b in blocs_collisiones:
-                if b is not self.personnage:
-                    bloc_collisione = b
-        if bloc_collisione is None or isinstance(bloc_collisione, ())
+        reussite, bloc_collisionne = self.faire_bouger(bloc, ORIENTATIONS.BAS)
+        if not reussite:
+            if not bloc.doit_bouger:
+                if isinstance(bloc_collisionne, (BlocTombant, Mur, Porte)):
+                    direction = random.choice((ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE))
+                    # TODO: finir methode
 
     def effectuer_mouvements(self):
         """
@@ -497,40 +523,36 @@ class Jeu(object):
         :return: "None"
         """
         # On fait bouger le personnage
+        self.debut_mouvements = True
         if self.mouvement_detecte:  # Si un mouvement doit etre effectue
-            rect_personnage = self.personnage.rect_hashable
-            rect_personnage.move_ip(vecteur(self.mouvement_en_cours))
-            blocs_collisiones = self.carte.cases[rect_personnage].blocs  # TODO: finir cette partie (collisions, mouvement)
-
-            self.personnage.bouger(self.mouvement_en_cours)  # On fait avancer le personnage
-            self.personnage.etait_en_mouvement = True  # FIXME: Personnage peut pousser cailloux dans vide
+            self.faire_bouger(self.personnage, self.mouvement_en_cours)  # On fait avancer le personnage
+            self.personnage.etait_en_mouvement = True
             self.mouvement_en_cours = None
         else:
             self.personnage.etait_en_mouvement = False
             self.personnage.caillou_pousse = None
 
-
         for x in range(self.carte.nombre_cases_largeur - 1, -1, -1):
             for y in range(self.carte.nombre_cases_hauteur - 1, -1, -1):  # On parcourt les blocs de droite a gauche et de bas en haut
                 rect = rectangle_a(x, y)
-                blocs = self.carte.cases[rect]
+                blocs = self.carte.cases[rect].blocs
                 if len(blocs) == 1:
                     bloc = blocs[0]
                     if isinstance(bloc, BlocTombant):
                         self.faire_tomber(bloc)
 
-                elif len(blocs) == 2:
-                    bloc = None
-                    if self.personnage in blocs:
-                        for b in blocs:
-                            if b is not self.personnage:
-                                bloc = b
-                        if not isinstance(bloc, Porte):
-                            raise RuntimeError("Le personnage n'a le droit d'etre que sur des cases vides ou occuppe par une porte.")
+                # elif len(blocs) == 2:
+                #     bloc = None
+                #     if self.personnage in blocs:
+                #         for b in blocs:
+                #             if b is not self.personnage:
+                #                 bloc = b
                     else:
-                        raise RuntimeError("Le personnage est le seul bloc ayant le droit d'etre sur une case occuppee.")
+                        pass
+                        # raise RuntimeError("Le personnage est le seul bloc ayant le droit d'etre sur une case occuppee.")
                 else:
-                    raise RuntimeError("Il n'est pas cense y avoir plus de deux blocs a la meme position.")
+                    pass
+                    # raise RuntimeError("Il n'est pas cense y avoir plus de deux blocs a la meme position.")
 
         # blocs_a_traiter = self.carte.blocs
         # continuer = True
@@ -541,6 +563,5 @@ class Jeu(object):
         #         if bloc.a_deja_bouge:
         #             blocs_a_traiter.remove(bloc)
         #             continuer = True
-
 
         self.terminer_mouvements()

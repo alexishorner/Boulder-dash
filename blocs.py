@@ -104,6 +104,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
         self.nombre_actions_cycle = 0
         self.orientation = ORIENTATIONS.DROITE
         self.est_mort = False
+        self.doit_bouger = False
 
     @property
     def rect_hashable(self):
@@ -190,7 +191,7 @@ class Personnage(Bloc):
     #     :return: "None"
     #     """
     #     est_revenu = False
-    #     blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le personnage
+    #     blocs = self.blocs_collisionnes(groupe)  # cherches les blocs qui sont en collision avec le personnage
     #     for bloc in blocs:
     #         type_de_bloc = bloc.__class__
     #         if type_de_bloc == Caillou:
@@ -258,7 +259,7 @@ class BlocTombant(Bloc):
     #     Bloc.revenir(self)
 
     # def collision(self, groupe):
-    #     blocs = self.blocs_collisiones(groupe)  # cherches les blocs qui sont en collision avec le caillou
+    #     blocs = self.blocs_collisionnes(groupe)  # cherches les blocs qui sont en collision avec le caillou
     #     if len(blocs) != 0:
     #         for bloc in blocs:
     #             type_de_bloc = bloc.__class__

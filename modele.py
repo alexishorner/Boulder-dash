@@ -117,7 +117,7 @@ class Case(object):
     @blocs.setter
     def blocs(self, nouveaux):
         blocs = list(nouveaux)
-        self._blocs = self.trier(blocs)
+        self._blocs = trier(blocs)
 
     @blocs.deleter
     def blocs(self):
@@ -125,7 +125,7 @@ class Case(object):
 
     def ajouter(self, bloc):
         self._blocs.append(bloc)
-        self._blocs = self.trier(self._blocs)
+        self._blocs = trier(self._blocs)
 
     def enlever(self, bloc):
         self._blocs.remove(bloc)
