@@ -531,6 +531,11 @@ class Jeu(object):
                     if isinstance(bloc_collisionne, (BlocTombant, Mur, Porte)):
                         direction = random.choice((ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE))
                         # TODO: finir methode
+        if not essai:
+            if reussite:
+                bloc.tomber()
+            else:
+                bloc.tombe = False
         return reussite, bloc_collisionne
 
     def effectuer_mouvements(self):
