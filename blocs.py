@@ -90,7 +90,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
     """
     Classe de base pour tous les blocs.
     """
-    PEUT_BOUGER = False
+    BOUGEABLE = False
 
     def __init__(self, rect):
         pygame.sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
@@ -101,7 +101,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
         self.rect.y = rect.y
         self.ancien_rect = self.rect.copy()
         self.z = 0
-        self.nombre_actions_cycle = 0
+        self.a_deja_bouge = False
         self.orientation = ORIENTATIONS.DROITE
         self.est_mort = False
         self.doit_bouger = False
@@ -122,25 +122,13 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
     @rect_hashable.deleter
     def rect_hashable(self):
         raise AttributeError("L'attribut ne peut pas etre supprime.")
-        
-    @property
-    def a_deja_bouge(self):
-        return bool(self.nombre_actions_cycle)
-
-    @a_deja_bouge.setter
-    def a_deja_bouge(self):
-        raise AttributeError("L'attribut ne peut pas etre modifie.")
-
-    @a_deja_bouge.deleter
-    def a_deja_bouge(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
 
     def actualiser(self):
         pass
     # TODO : gerer les autres actions (comme tomber)
 
     def terminer_cycle(self):
-        self.nombre_actions_cycle = 0
+        self.a_deja_bouge = False
 
     def bouger(self, direction):
         """
@@ -172,7 +160,7 @@ class Personnage(Bloc):
     """
     Classe permettant de representer un personnage.
     """
-    PEUT_BOUGER = True
+    BOUGEABLE = True
 
     def __init__(self, rect):
         super(Personnage, self).__init__(rect)
@@ -221,11 +209,8 @@ class Personnage(Bloc):
         self.diamants_ramasses += 1
 
     def pousser(self, caillou, direction):
-        self.orientation = direction
-        peut_bouger = caillou.coups_avant_etre_pousse == 0
-        caillou.etre_pousse(direction)
-        if peut_bouger:
-            self.bouger(direction)
+        caillou.etre_pousse()
+        self.bouger(direction)
 
     def bouger(self, direction):
         super(Personnage, self).bouger(direction)
@@ -245,7 +230,7 @@ class BlocTombant(Bloc):
     """
     Classe permettant de gerer les blocs qui tombent (caillou et diamant)
     """
-    PEUT_BOUGER = True
+    BOUGEABLE = True
 
     def __init__(self, rect):
         super(BlocTombant, self).__init__(rect)
@@ -285,17 +270,23 @@ class Caillou(BlocTombant):
     def __init__(self, rect):
         super(Caillou, self).__init__(rect)
         self.coups_avant_etre_pousse = None
+        self.est_pousse = False
 
     def bouger(self, direction):
         super(Caillou, self).bouger(direction)
 
-    def etre_pousse(self, direction):
+    def etre_pousse(self):
+        self.est_pousse = True
         if self.coups_avant_etre_pousse is None:
             self.coups_avant_etre_pousse = 1
         elif self.coups_avant_etre_pousse > 0:
             self.coups_avant_etre_pousse -= 1
-        else:
-            self.bouger(direction)
+
+    def terminer_cycle(self):
+        super(Caillou, self).terminer_cycle()
+        if not self.est_pousse:
+            self.coups_avant_etre_pousse = None
+        self.est_pousse = False
 
 
 class Diamant(BlocTombant):

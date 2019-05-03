@@ -258,9 +258,11 @@ class Carte(object):
         self.cailloux = self.trouver_cailloux(self.blocs_tries)
 
     def bouger(self, bloc, rect):
-        self.cases[bloc.rect_hashable].enlever(bloc)
-        self.cases[Rectangle(rect)].ajouter(bloc)
-        bloc.rect.x, bloc.rect.y = rect.x, rect.y
+        if rect != bloc.rect:
+            self.cases[bloc.rect_hashable].enlever(bloc)
+            self.cases[Rectangle(rect)].ajouter(bloc)
+            bloc.rect.x, bloc.rect.y = rect.x, rect.y
+            bloc.a_deja_bouge = True
 
     def supprimer(self, bloc):
         self.cases[bloc.rect_hashable].enlever(bloc)
