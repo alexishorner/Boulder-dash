@@ -467,6 +467,8 @@ class Jeu(object):
             reussite = True
         elif bloc_collisionne is None:
             reussite = True
+        elif isinstance(bloc_collisionne, Porte):
+            reussite = True
         if not essai:
             for action in actions:
                 action.effectuer()
@@ -561,8 +563,7 @@ class Jeu(object):
             for y in range(self.carte.nombre_cases_hauteur - 1, -1, -1):  # On parcourt les blocs de droite a gauche et de bas en haut
                 rect = rectangle_a(x, y)
                 blocs = self.carte.cases[rect].blocs
-                if len(blocs) == 1:
-                    bloc = blocs[0]
+                for bloc in blocs:
                     if isinstance(bloc, Personnage):
                         if self.mouvement_detecte:
                             self.faire_bouger(self.personnage, self.mouvement_en_cours)  # On fait avancer le personnage
@@ -570,18 +571,6 @@ class Jeu(object):
                             self.mouvement_en_cours = None
                     elif isinstance(bloc, BlocTombant):
                         self.faire_tomber(bloc)
-                # elif len(blocs) == 2:
-                #     bloc = None
-                #     if self.personnage in blocs:
-                #         for b in blocs:
-                #             if b is not self.personnage:
-                #                 bloc = b
-                    else:
-                        pass
-                        # raise RuntimeError("Le personnage est le seul bloc ayant le droit d'etre sur une case occuppee.")
-                else:
-                    pass
-                    # raise RuntimeError("Il n'est pas cense y avoir plus de deux blocs a la meme position.")
 
         # blocs_a_traiter = self.carte.blocs
         # continuer = True

@@ -170,6 +170,7 @@ class Personnage(Bloc):
         self.diamants_ramasses = 0
         self.terre_creusee = 0
         self.caillou_pousse = None
+        self.z = 1
 
     # def collision(self, groupe):
     #     """
