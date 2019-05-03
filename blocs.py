@@ -139,14 +139,6 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
             """
         self.orientation = direction
 
-    # def revenir(self):
-    #     """
-    #     Annule le dernier mouvement du personnage.
-    #
-    #     :return: "None"
-    #     """
-    #     self.rect.x, self.rect.y = self.ancien_rect.x, self.ancien_rect.y
-
     def tuer(self):
         """
         Methode appelee lorsque le bloc se fait tuer.
@@ -171,35 +163,6 @@ class Personnage(Bloc):
         self.terre_creusee = 0
         self.caillou_pousse = None
         self.z = 1
-
-    # def collision(self, groupe):
-    #     """
-    #     Methode gerant les collisions entre le personnage et les autres blocs.
-    #
-    #     :param groupe: groupe de blocs potentiellement collisionnes
-    #     :return: "None"
-    #     """
-    #     est_revenu = False
-    #     blocs = self.blocs_collisionnes(groupe)  # cherches les blocs qui sont en collision avec le personnage
-    #     for bloc in blocs:
-    #         type_de_bloc = bloc.__class__
-    #         if type_de_bloc == Caillou:
-    #             succes = self.pousser_caillou(bloc, groupe)
-    #             if not succes:
-    #                 self.revenir()
-    #                 est_revenu = True
-    #         elif type_de_bloc == Terre:
-    #             self.creuser_terre(bloc)
-    #         elif type_de_bloc == Mur:
-    #             self.revenir()
-    #             est_revenu = True
-    #         elif type_de_bloc == Diamant:
-    #             self.ramasser_diamant(bloc)
-    #         elif type_de_bloc == Porte:
-    #             if not bloc.est_activee:
-    #                 self.revenir()
-    #                 est_revenu = True
-    #     return est_revenu
 
     def creuser_terre(self, terre):
         terre.tuer()
@@ -236,29 +199,6 @@ class BlocTombant(Bloc):
     def __init__(self, rect):
         super(BlocTombant, self).__init__(rect)
         self.tombe = False
-
-    # def actualiser(self):
-    #     Bloc.actualiser(self)
-    #     self.tomber()
-
-    # def revenir(self):
-    #     Bloc.revenir(self)
-
-    # def collision(self, groupe):
-    #     blocs = self.blocs_collisionnes(groupe)  # cherches les blocs qui sont en collision avec le caillou
-    #     if len(blocs) != 0:
-    #         for bloc in blocs:
-    #             type_de_bloc = bloc.__class__
-    #             if type_de_bloc in (Caillou, Diamant, Entree, Sortie):
-    #                 pass
-    #             elif type_de_bloc == Personnage:
-    #                 if self.tombe:
-    #                     bloc.tuer()
-    #         self.revenir()
-    #         est_revenu = True
-    #     else:
-    #         est_revenu = False
-    #     return est_revenu
 
     def tomber(self):
         self.tombe = True

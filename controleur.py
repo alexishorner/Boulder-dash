@@ -531,7 +531,13 @@ class Jeu(object):
             if not reussite:
                 if not bloc.doit_bouger:
                     if isinstance(bloc_collisionne, (BlocTombant, Mur, Porte)):
-                        direction = random.choice((ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE))
+                        directions = [ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE]
+                        while len(directions) > 0 and not reussite:
+                            direction = random.choice(directions)
+                            directions.remove(direction)
+                            bloc_diagonale = self.bloc_collisionne(bloc, (direction, ORIENTATIONS.BAS))
+                            if bloc_diagonale is None:
+                                reussite, bloc_collisionne = self.faire_bouger(bloc, direction, essai)
                         # TODO: finir methode
         if not essai:
             if reussite:
@@ -571,15 +577,5 @@ class Jeu(object):
                             self.mouvement_en_cours = None
                     elif isinstance(bloc, BlocTombant):
                         self.faire_tomber(bloc)
-
-        # blocs_a_traiter = self.carte.blocs
-        # continuer = True
-        # while continuer:
-        #     continuer = False
-        #     for bloc in blocs_a_traiter:
-        #         bloc.actualiser(self.carte.cases)  # On gere les collisions entre les blocs
-        #         if bloc.a_deja_bouge:
-        #             blocs_a_traiter.remove(bloc)
-        #             continuer = True
 
         self.terminer_mouvements()
