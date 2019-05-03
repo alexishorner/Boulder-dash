@@ -90,7 +90,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
     """
     Classe de base pour tous les blocs.
     """
-    BOUGEABLE = False
+    PEUT_SE_DEPLACER = False
 
     def __init__(self, rect):
         pygame.sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
@@ -194,7 +194,7 @@ class BlocTombant(Bloc):
     """
     Classe permettant de gerer les blocs qui tombent (caillou et diamant)
     """
-    BOUGEABLE = True
+    PEUT_SE_DEPLACER = True
 
     def __init__(self, rect):
         super(BlocTombant, self).__init__(rect)
