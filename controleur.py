@@ -461,8 +461,6 @@ class Jeu(object):
             if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) or not bloc_collisionne.tombe:
                 actions.append(Action(personnage.ramasser_diamant, bloc_collisionne))
                 reussite = True
-            elif bloc_collisionne.tombe:
-                actions.append(Action(personnage.tuer))
         elif isinstance(bloc_collisionne, Terre):
             actions.append(Action(personnage.creuser_terre, bloc_collisionne))
             reussite = True
