@@ -448,7 +448,8 @@ class Jeu(object):
         bloc_collisionne = self.bloc_collisionne(personnage, direction)
         if isinstance(bloc_collisionne, Caillou):
             if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):
-                if not self.faire_tomber(bloc_collisionne, essai)[0]:  # On s'assure de faire tomber le bloc avant de le faire tomber
+                reussite = self.faire_tomber(bloc_collisionne, essai)[0]  # On s'assure de faire tomber le bloc avant de le faire tomber
+                if not reussite:
                     if bloc_collisionne.coups_avant_etre_pousse == 0:
                         reussite = self.faire_bouger(bloc_collisionne, direction, essai)[0]  # On pousse le caillou
                         actions.append(Action(personnage.pousser, bloc_collisionne, direction))
@@ -505,7 +506,7 @@ class Jeu(object):
         bloc.doit_bouger = False
         reussite = False
         bloc_collisionne = None
-        if bloc.BOUGEABLE:
+        if bloc.PEUT_SE_DEPLACER:
             bloc_collisionne = self.bloc_collisionne(bloc, direction)
 
             if bloc_collisionne is None:

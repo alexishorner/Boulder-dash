@@ -152,7 +152,7 @@ class Personnage(Bloc):
     """
     Classe permettant de representer un personnage.
     """
-    BOUGEABLE = True
+    PEUT_SE_DEPLACER = True
 
     def __init__(self, rect):
         super(Personnage, self).__init__(rect)
