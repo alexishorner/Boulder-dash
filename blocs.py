@@ -195,13 +195,32 @@ class BlocTombant(Bloc):
     Classe permettant de gerer les blocs qui tombent (caillou et diamant)
     """
     PEUT_SE_DEPLACER = True
+    INERTIE = 1
 
     def __init__(self, rect):
         super(BlocTombant, self).__init__(rect)
-        self.tombe = False
+        self._tombe = False
+        self.coups_avant_tomber = self.INERTIE
+
+    @property
+    def tombe(self):
+        return self._tombe
+
+    @tombe.setter
+    def tombe(self, valeur):
+        self._tombe = valeur
+        if not valeur:
+            self.coups_avant_tomber = self.INERTIE
+
+    @tombe.deleter
+    def tombe(self):
+        raise AttributeError("L'attribut ne peut pas etre supprime.")
 
     def tomber(self):
-        self.tombe = True
+        if self.coups_avant_tomber > 0:
+            self.coups_avant_tomber -= 1
+        else:
+            self.tombe = True
 
 
 class Caillou(BlocTombant):
@@ -210,7 +229,7 @@ class Caillou(BlocTombant):
     """
     def __init__(self, rect):
         super(Caillou, self).__init__(rect)
-        self.coups_avant_etre_pousse = None
+        self.coups_avant_etre_pousse = self.INERTIE
         self.est_pousse = False
 
     def bouger(self, direction):
@@ -218,15 +237,13 @@ class Caillou(BlocTombant):
 
     def etre_pousse(self):
         self.est_pousse = True
-        if self.coups_avant_etre_pousse is None:
-            self.coups_avant_etre_pousse = 1
-        elif self.coups_avant_etre_pousse > 0:
+        if self.coups_avant_etre_pousse > 0:
             self.coups_avant_etre_pousse -= 1
 
     def terminer_cycle(self):
         super(Caillou, self).terminer_cycle()
         if not self.est_pousse:
-            self.coups_avant_etre_pousse = None
+            self.coups_avant_etre_pousse = self.INERTIE
         self.est_pousse = False
 
 

@@ -13,6 +13,10 @@ import random
 # vraie_resolution = (info.current_w, info.current_h)
 
 
+# FIXME:
+#   - Personnage peut mourir en poussant vers la gauche caillou qui tombe
+#   - Personnage peut mourir quand caillou se deplace sur cote
+
 def modulo(num, div):
     """
     Fonction permettant de calculer le reste de la division de deux nombres sans avoir d'erreur due a l'arrondi des ordinateurs.
@@ -487,7 +491,7 @@ class Jeu(object):
                     bloc.doit_bouger = True
             else:
                 if isinstance(bloc_collisionne, Personnage):
-                    if bloc.tombe:
+                    if bloc.tombe and direction == ORIENTATIONS.BAS:
                         if not essai:
                             bloc_collisionne.tuer()
                         reussite = True
@@ -517,6 +521,8 @@ class Jeu(object):
             if not essai:
                 if self.personnage.est_mort:
                     print("mort")
+                    while 1:
+                        time.sleep(1)
                 elif reussite:
                     nouveau_rect = bloc.rect.move(vecteur(direction))
                     self.carte.bouger(bloc, nouveau_rect)
@@ -526,7 +532,8 @@ class Jeu(object):
         reussite = False
         bloc_collisionne = None
         if not bloc.a_deja_bouge:
-            reussite, bloc_collisionne = self.faire_bouger(bloc, ORIENTATIONS.BAS, essai)
+            reussite, bloc_collisionne = self.faire_bouger(bloc, ORIENTATIONS.BAS, essai=True)
+            tomber = Action(self.faire_bouger, bloc, ORIENTATIONS.BAS, essai)
             if not reussite:
                 if not bloc.doit_bouger:
                     if isinstance(bloc_collisionne, (BlocTombant, Mur, Porte)):
@@ -536,10 +543,13 @@ class Jeu(object):
                             directions.remove(direction)
                             bloc_diagonale = self.bloc_collisionne(bloc, (direction, ORIENTATIONS.BAS))
                             if bloc_diagonale is None:
-                                reussite, bloc_collisionne = self.faire_bouger(bloc, direction, essai)
+                                reussite, bloc_collisionne = self.faire_bouger(bloc, direction, essai=True)
+                                tomber = Action(self.faire_bouger, bloc, direction, essai)
                         # TODO: finir methode
         if not essai:
             if reussite:
+                if bloc.coups_avant_tomber == 0:
+                    tomber.effectuer()
                 bloc.tomber()
             else:
                 bloc.tombe = False
