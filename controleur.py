@@ -73,7 +73,7 @@ class Action(object):
         self.kwargs = kwargs
 
     def effectuer(self):
-        self.fonction(*self.args, **self.kwargs)
+        return self.fonction(*self.args, **self.kwargs)
 
     def reinitialiser(self):
         self.fonction = lambda *_: None
@@ -529,31 +529,31 @@ class Jeu(object):
         return reussite, bloc_collisionne
 
     def faire_tomber(self, bloc, essai=False):
-        reussite = False
+        peut_tomber = False
         bloc_collisionne = None
         if not bloc.a_deja_bouge:
-            reussite, bloc_collisionne = self.faire_bouger(bloc, ORIENTATIONS.BAS, essai=True)
+            peut_tomber, bloc_collisionne = self.faire_bouger(bloc, ORIENTATIONS.BAS, essai=True)
             tomber = Action(self.faire_bouger, bloc, ORIENTATIONS.BAS, essai)
-            if not reussite:
+            if not peut_tomber:
                 if not bloc.doit_bouger:
                     if isinstance(bloc_collisionne, (BlocTombant, Mur, Porte)):
                         directions = [ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE]
-                        while len(directions) > 0 and not reussite:
+                        while len(directions) > 0 and not peut_tomber:
                             direction = random.choice(directions)
                             directions.remove(direction)
                             bloc_diagonale = self.bloc_collisionne(bloc, (direction, ORIENTATIONS.BAS))
                             if bloc_diagonale is None:
-                                reussite, bloc_collisionne = self.faire_bouger(bloc, direction, essai=True)
+                                peut_tomber, bloc_collisionne = self.faire_bouger(bloc, direction, essai=True)
                                 tomber = Action(self.faire_bouger, bloc, direction, essai)
                         # TODO: finir methode
         if not essai:
-            if reussite:
+            if peut_tomber:
                 if bloc.coups_avant_tomber == 0:
                     tomber.effectuer()
                 bloc.tomber()
             else:
                 bloc.tombe = False
-        return reussite, bloc_collisionne
+        return peut_tomber, bloc_collisionne
 
     def effectuer_mouvements(self):
         """
