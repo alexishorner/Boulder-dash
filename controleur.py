@@ -14,8 +14,9 @@ import random
 
 
 # FIXME:
-#   - Personnage peut mourir en poussant vers la gauche caillou qui tombe
-#   - Personnage peut mourir quand caillou se deplace sur cote
+#   - Blocs qui tombent vers la gauche attendent un tour de trop avant de tomber : ~O               ~O
+#   -                                                                              ~#    raison :   O#
+#   -                                                                              O~               ~~
 
 def modulo(num, div):
     """
@@ -562,6 +563,8 @@ class Jeu(object):
         :return: "None"
         """
         # On fait bouger le personnage
+        if self.mouvement_en_cours == ORIENTATIONS.DROITE:
+            pass
         if self.mouvement_detecte:  # Si un mouvement doit etre effectue
             pass
             # self.faire_bouger(self.personnage, self.mouvement_en_cours)  # On fait avancer le personnage
@@ -574,8 +577,8 @@ class Jeu(object):
         if self.personnage.etait_en_mouvement:
             pass
 
-        for x in range(self.carte.nombre_cases_largeur - 1, -1, -1):
-            for y in range(self.carte.nombre_cases_hauteur - 1, -1, -1):  # On parcourt les blocs de droite a gauche et de bas en haut
+        for y in range(self.carte.nombre_cases_hauteur - 1, -1, -1):
+            for x in range(self.carte.nombre_cases_largeur - 1, -1, -1):  # On parcourt les blocs de droite a gauche et de bas en haut
                 rect = rectangle_a(x, y)
                 blocs = self.carte.cases[rect].blocs
                 for bloc in blocs:
