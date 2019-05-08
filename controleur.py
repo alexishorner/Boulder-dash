@@ -445,27 +445,39 @@ class Jeu(object):
                     bloc_collisionne = b  # Porte
         return bloc_collisionne
 
-    def _bouger_personnage(self, personnage, direction, essai=False):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
+    def _collision_personnage_caillou(self, personnage, caillou, direction, essai=False):
+        reussite = False
+        actions = []
+        if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):
+                reussite = self.faire_tomber(caillou, essai)[0]  # On s'assure de faire tomber le bloc avant de le faire tomber
+                if not reussite:
+                    if caillou.coups_avant_etre_pousse == 0:
+                        reussite = self.faire_bouger(caillou, direction, essai)[0]  # On pousse le caillou
+                        actions.append(Action(personnage.pousser, caillou, direction))
+                    elif self.peut_bouger(caillou, direction):
+                        actions.append(Action(personnage.pousser, caillou, direction))
+                    else:
+                        actions.append(Action(personnage.bouger, direction))
+        return reussite, actions
+
+    def _collision_personnage_diamant(self, personnage, diamant, direction, essai=False):
+        reussite = False
+        actions = []
+        if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) or not diamant.tombe:
+            if not essai:
+                actions.append(Action(personnage.ramasser_diamant, diamant))
+            reussite = True
+        return reussite, actions
+
+    def _collision_personnage(self, personnage, bloc_collisionne, direction, essai=False):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
         if not essai:
             personnage.doit_bouger = False
         actions = []
         reussite = False
-        bloc_collisionne = self.bloc_collisionne(personnage, direction)
         if isinstance(bloc_collisionne, Caillou):
-            if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):
-                reussite = self.faire_tomber(bloc_collisionne, essai)[0]  # On s'assure de faire tomber le bloc avant de le faire tomber
-                if not reussite:
-                    if bloc_collisionne.coups_avant_etre_pousse == 0:
-                        reussite = self.faire_bouger(bloc_collisionne, direction, essai)[0]  # On pousse le caillou
-                        actions.append(Action(personnage.pousser, bloc_collisionne, direction))
-                    elif self.peut_bouger(bloc_collisionne, direction):
-                        actions.append(Action(personnage.pousser, bloc_collisionne, direction))
-                    else:
-                        actions.append(Action(personnage.bouger, direction))
+            reussite, actions = self._collision_personnage_caillou(personnage, bloc_collisionne, direction, essai)
         elif isinstance(bloc_collisionne, Diamant):
-            if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) or not bloc_collisionne.tombe:
-                actions.append(Action(personnage.ramasser_diamant, bloc_collisionne))
-                reussite = True
+            reussite, actions = self._collision_personnage_diamant(personnage, bloc_collisionne, direction, essai)
         elif isinstance(bloc_collisionne, Terre):
             actions.append(Action(personnage.creuser_terre, bloc_collisionne))
             reussite = True
@@ -478,24 +490,20 @@ class Jeu(object):
                 action.effectuer()
         return reussite
 
-    def _bouger_bloc_tombant(self, bloc, direction, essai=False):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
+    def _collision_bloc_tombant(self, bloc, bloc_collisionne, direction, essai=False):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
         if not essai:
             bloc.doit_bouger = False  # Pour eviter les bugs
         reussite = False
-        bloc_collisionne = self.bloc_collisionne(bloc, direction)
-        if bloc_collisionne is None:
-            reussite = True
+        if bloc_collisionne.doit_bouger:
+            if not essai:
+                self.actions_a_effectuer.append(Action(self.faire_bouger, bloc, direction))  # On attend que le bloc bouge pour bouger
+                bloc.doit_bouger = True
         else:
-            if bloc_collisionne.doit_bouger:
-                if not essai:
-                    self.actions_a_effectuer.append(Action(self._bouger_bloc_tombant, bloc, direction))  # On attend que le bloc bouge pour bouger
-                    bloc.doit_bouger = True
-            else:
-                if isinstance(bloc_collisionne, Personnage):
-                    if bloc.tombe and direction == ORIENTATIONS.BAS:
-                        if not essai:
-                            bloc_collisionne.tuer()
-                        reussite = True
+            if isinstance(bloc_collisionne, Personnage):
+                if bloc.tombe and direction == ORIENTATIONS.BAS:
+                    if not essai:
+                        bloc_collisionne.tuer()
+                    reussite = True
 
         return reussite
 
@@ -516,9 +524,9 @@ class Jeu(object):
                 reussite = True
             else:
                 if isinstance(bloc, Personnage):
-                    reussite = self._bouger_personnage(bloc, direction, essai)
+                    reussite = self._collision_personnage(bloc, bloc_collisionne, direction, essai)
                 elif isinstance(bloc, BlocTombant):
-                    reussite = self._bouger_bloc_tombant(bloc, direction, essai)
+                    reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction, essai)
             if not essai:
                 if self.personnage.est_mort:
                     print("mort")
