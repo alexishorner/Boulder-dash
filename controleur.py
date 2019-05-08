@@ -309,7 +309,7 @@ class Jeu(object):
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.15, 0.01)
         self.mouvement_en_cours = None
-        self.actions_a_effectuer = []  # FIXME: peut-etre inutile
+        self.actions_a_effectuer = []
 
     @property
     def mouvement_detecte(self):
@@ -445,7 +445,9 @@ class Jeu(object):
                     bloc_collisionne = b  # Porte
         return bloc_collisionne
 
-    def bouger_plus_tard(self, bloc, direction, ):  # TODO: finir methode
+    def bouger_plus_tard(self, bloc, direction):
+        self.actions_a_effectuer.append(Action(self.faire_bouger, bloc, direction))  # On attend que le bloc bouge pour bouger
+        bloc.mouvement_deja_traite = False
 
     def _collision_personnage_caillou(self, personnage, caillou, direction, essai=False):
         reussite = False
@@ -475,14 +477,11 @@ class Jeu(object):
         actions = []
         reussite = False
         if isinstance(bloc_collisionne, Caillou):
-            if bloc_collisionne.
             reussite, actions = self._collision_personnage_caillou(personnage, bloc_collisionne, direction, essai)
         elif isinstance(bloc_collisionne, Diamant):
             reussite, actions = self._collision_personnage_diamant(personnage, bloc_collisionne, direction, essai)
         elif isinstance(bloc_collisionne, Terre):
             actions.append(Action(personnage.creuser_terre, bloc_collisionne))
-            reussite = True
-        elif bloc_collisionne is None:
             reussite = True
         elif isinstance(bloc_collisionne, Porte):
             reussite = True
@@ -495,8 +494,8 @@ class Jeu(object):
         reussite = False
         if not bloc_collisionne.mouvement_deja_traite:
             if not essai:
-                self.actions_a_effectuer.append(Action(self.faire_bouger, bloc, direction))  # On attend que le bloc bouge pour bouger
-                bloc.mouvement_deja_traite = False
+
+                self.bouger_plus_tard(bloc, direction)
         else:
             if isinstance(bloc_collisionne, Personnage):
                 if bloc.tombe and direction == ORIENTATIONS.BAS:
@@ -530,7 +529,7 @@ class Jeu(object):
                         reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction, essai)
                 else:
                     if not essai:
-                        self.actions_a_effectuer.append(Action(self.faire_bouger, bloc, direction))
+                        self.bouger_plus_tard(bloc, direction)
             if not essai:
                 if self.personnage.est_mort:
                     print("mort")
@@ -599,7 +598,9 @@ class Jeu(object):
                             self.faire_bouger(self.personnage, self.mouvement_en_cours)  # On fait avancer le personnage
                             self.personnage.etait_en_mouvement = True
                             self.mouvement_en_cours = None
+                        else:
+                            bloc.mouvement_deja_traite = True
                     elif isinstance(bloc, BlocTombant):
                         self.faire_tomber(bloc)
 
-        self.terminer_mouvements()
+        self.terminer_mouvements()  # TODO: regler l'ordre de resolution des mouvements
