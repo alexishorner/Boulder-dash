@@ -101,7 +101,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
         self.rect.y = rect.y
         self.ancien_rect = self.rect.copy()
         self.z = 0
-        self.a_deja_bouge = False
+        self.mouvement_deja_traite = False
         self.orientation = ORIENTATIONS.DROITE
         self.est_mort = False
         self.doit_bouger = False
@@ -128,7 +128,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
     # TODO : gerer les autres actions (comme tomber)
 
     def terminer_cycle(self):
-        self.a_deja_bouge = False
+        self.mouvement_deja_traite = False
 
     def bouger(self, direction):
         """

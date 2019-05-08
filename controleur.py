@@ -307,7 +307,7 @@ class Jeu(object):
 
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
-        self.minuteur = Minuteur(0.2, 0.01)
+        self.minuteur = Minuteur(0.15, 0.01)
         self.mouvement_en_cours = None
         self.actions_a_effectuer = []  # FIXME: peut-etre inutile
 
@@ -445,6 +445,8 @@ class Jeu(object):
                     bloc_collisionne = b  # Porte
         return bloc_collisionne
 
+    def bouger_plus_tard(self, bloc, direction, ):  # TODO: finir methode
+
     def _collision_personnage_caillou(self, personnage, caillou, direction, essai=False):
         reussite = False
         actions = []
@@ -470,11 +472,10 @@ class Jeu(object):
         return reussite, actions
 
     def _collision_personnage(self, personnage, bloc_collisionne, direction, essai=False):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
-        if not essai:
-            personnage.doit_bouger = False
         actions = []
         reussite = False
         if isinstance(bloc_collisionne, Caillou):
+            if bloc_collisionne.
             reussite, actions = self._collision_personnage_caillou(personnage, bloc_collisionne, direction, essai)
         elif isinstance(bloc_collisionne, Diamant):
             reussite, actions = self._collision_personnage_diamant(personnage, bloc_collisionne, direction, essai)
@@ -491,13 +492,11 @@ class Jeu(object):
         return reussite
 
     def _collision_bloc_tombant(self, bloc, bloc_collisionne, direction, essai=False):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
-        if not essai:
-            bloc.doit_bouger = False  # Pour eviter les bugs
         reussite = False
-        if bloc_collisionne.doit_bouger:
+        if not bloc_collisionne.mouvement_deja_traite:
             if not essai:
                 self.actions_a_effectuer.append(Action(self.faire_bouger, bloc, direction))  # On attend que le bloc bouge pour bouger
-                bloc.doit_bouger = True
+                bloc.mouvement_deja_traite = False
         else:
             if isinstance(bloc_collisionne, Personnage):
                 if bloc.tombe and direction == ORIENTATIONS.BAS:
@@ -512,9 +511,10 @@ class Jeu(object):
         return reussite
 
     def faire_bouger(self, bloc, direction, essai=False):
-        if bloc.a_deja_bouge:
+        if bloc.mouvement_deja_traite:
             return False, None
-        bloc.doit_bouger = False
+        if not essai:
+            bloc.mouvement_deja_traite = True
         reussite = False
         bloc_collisionne = None
         if bloc.PEUT_SE_DEPLACER:
@@ -523,10 +523,14 @@ class Jeu(object):
             if bloc_collisionne is None:
                 reussite = True
             else:
-                if isinstance(bloc, Personnage):
-                    reussite = self._collision_personnage(bloc, bloc_collisionne, direction, essai)
-                elif isinstance(bloc, BlocTombant):
-                    reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction, essai)
+                if bloc_collisionne.mouvement_deja_traite:
+                    if isinstance(bloc, Personnage):
+                        reussite = self._collision_personnage(bloc, bloc_collisionne, direction, essai)
+                    elif isinstance(bloc, BlocTombant):
+                        reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction, essai)
+                else:
+                    if not essai:
+                        self.actions_a_effectuer.append(Action(self.faire_bouger, bloc, direction))
             if not essai:
                 if self.personnage.est_mort:
                     print("mort")
@@ -540,20 +544,20 @@ class Jeu(object):
     def faire_tomber(self, bloc, essai=False):
         peut_tomber = False
         bloc_collisionne = None
-        if not bloc.a_deja_bouge:
-            peut_tomber, bloc_collisionne = self.faire_bouger(bloc, ORIENTATIONS.BAS, essai=True)
+        if not bloc.mouvement_deja_traite:
+            bloc_collisionne = self.bloc_collisionne(bloc, ORIENTATIONS.BAS)
+            peut_tomber = self.peut_bouger(bloc, ORIENTATIONS.BAS)
             tomber = Action(self.faire_bouger, bloc, ORIENTATIONS.BAS, essai)
             if not peut_tomber:
-                if not bloc.doit_bouger:
-                    if isinstance(bloc_collisionne, (BlocTombant, Mur, Porte)):
-                        directions = [ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE]
-                        while len(directions) > 0 and not peut_tomber:
-                            direction = random.choice(directions)
-                            directions.remove(direction)
-                            bloc_diagonale = self.bloc_collisionne(bloc, (direction, ORIENTATIONS.BAS))
-                            if bloc_diagonale is None:
-                                peut_tomber, bloc_collisionne = self.faire_bouger(bloc, direction, essai=True)
-                                tomber = Action(self.faire_bouger, bloc, direction, essai)
+                if isinstance(bloc_collisionne, (BlocTombant, Mur, Porte)):
+                    directions = [ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE]
+                    while len(directions) > 0 and not peut_tomber:
+                        direction = random.choice(directions)
+                        directions.remove(direction)
+                        bloc_diagonale = self.bloc_collisionne(bloc, (direction, ORIENTATIONS.BAS))
+                        if bloc_diagonale is None:
+                            peut_tomber, bloc_collisionne = self.faire_bouger(bloc, direction, essai=True)
+                            tomber = Action(self.faire_bouger, bloc, direction, essai)
                         # TODO: finir methode
         if not essai:
             if peut_tomber:
