@@ -43,6 +43,21 @@ class ORIENTATIONS(IntEnum):
     """
     GAUCHE, DROITE, HAUT, BAS = range(4)
 
+    @staticmethod
+    def opposee(oritentation):
+        if oritentation == ORIENTATIONS.GAUCHE:
+            return ORIENTATIONS.DROITE
+        elif oritentation == ORIENTATIONS.DROITE:
+            return ORIENTATIONS.GAUCHE
+        elif oritentation == ORIENTATIONS.HAUT:
+            return ORIENTATIONS.BAS
+        elif oritentation == ORIENTATIONS.BAS:
+            return ORIENTATIONS.BAS
+        return None
+
+    @staticmethod
+    def sont_opposees(orientation_1, orientation_2):
+        return orientation_1 == ORIENTATIONS.opposee(orientation_2)
 
 class DIMENSIONS:
     X_MIN = 0

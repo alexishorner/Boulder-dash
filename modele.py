@@ -3,6 +3,7 @@ Module stockant les donnees du jeu.
 """
 from blocs import *
 import itertools
+import time
 
 
 def _enlever_extremite(chaine, extremite=ORIENTATIONS.GAUCHE, caracteres_a_enlever=("\n", " ")):
@@ -271,6 +272,9 @@ class Carte(object):
     def supprimer_morts(self):
         for bloc in self.blocs_tries:
             if bloc.est_mort:
+                if isinstance(bloc, Personnage):
+                    print("mort")
+                    while 1: time.sleep(1)
                 self.supprimer(bloc)
 
     @staticmethod

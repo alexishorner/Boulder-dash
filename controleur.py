@@ -18,6 +18,12 @@ import random
 #   -                                                                              ~#    raison :   O#
 #   -                                                                              O~               ~~
 
+
+# TODO: resolution des mouvements :
+#   - blocs qui tombent tout droit
+#   - blocs qui tombent sur les cotes
+#   - personnage
+
 def modulo(num, div):
     """
     Fonction permettant de calculer le reste de la division de deux nombres sans avoir d'erreur due a l'arrondi des ordinateurs.
@@ -308,8 +314,6 @@ class Jeu(object):
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.15, 0.01)
-        self.mouvement_en_cours = None
-        self.actions_a_effectuer = []
 
     @property
     def mouvement_detecte(self):
@@ -318,7 +322,7 @@ class Jeu(object):
 
         :return: booleen indiquant si un mouvement a ete detecte
         """
-        return self.mouvement_en_cours is not None
+        return self.personnage.mouvement_en_cours is not None
 
     @mouvement_detecte.setter
     def mouvement_detecte(self, nouveau):
@@ -404,13 +408,13 @@ class Jeu(object):
 
                 # On regarde quelle touche est pressee et on stocke le mouvement en consequence
                 if derniere_touche_pressee in TOUCHES.HAUT:
-                    self.mouvement_en_cours = ORIENTATIONS.HAUT
+                    self.personnage.mouvement_en_cours = ORIENTATIONS.HAUT
                 elif derniere_touche_pressee in TOUCHES.BAS:
-                    self.mouvement_en_cours = ORIENTATIONS.BAS
+                    self.personnage.mouvement_en_cours = ORIENTATIONS.BAS
                 elif derniere_touche_pressee in TOUCHES.GAUCHE:
-                    self.mouvement_en_cours = ORIENTATIONS.GAUCHE
+                    self.personnage.mouvement_en_cours = ORIENTATIONS.GAUCHE
                 elif derniere_touche_pressee in TOUCHES.DROITE:
-                    self.mouvement_en_cours = ORIENTATIONS.DROITE
+                    self.personnage.mouvement_en_cours = ORIENTATIONS.DROITE
 
     def gerer_collisions(self):
         for case in self.carte.cases.itervalues():
@@ -423,16 +427,13 @@ class Jeu(object):
                             raise RuntimeError("Seul le personnage peut etre sur la meme case qu'un autre bloc.")
 
     def terminer_mouvements(self):
-        for action in self.actions_a_effectuer:
-            action.effectuer()
-        self.actions_a_effectuer = []
-        self.carte.supprimer_morts()  # On supprime les morts car ils ne peuvent pas avoir de collisions
+        self.carte.supprimer_morts()
         self.gerer_collisions()
         self.carte.supprimer_morts()  # On supprime les morts lors de la collision
         for bloc in self.carte.blocs_tries:
             bloc.terminer_cycle()
 
-    def bloc_collisionne(self, bloc, directions):
+    def bloc_collisionne(self, bloc, directions=tuple()):
         v = vecteur(directions)
         rect = bloc.rect_hashable.move(v)
         blocs_collisionnes = self.carte.cases[rect].blocs
@@ -445,23 +446,17 @@ class Jeu(object):
                     bloc_collisionne = b  # Porte
         return bloc_collisionne
 
-    def bouger_plus_tard(self, bloc, direction):
-        self.actions_a_effectuer.append(Action(self.faire_bouger, bloc, direction))  # On attend que le bloc bouge pour bouger
-        bloc.mouvement_deja_traite = False
-
     def _collision_personnage_caillou(self, personnage, caillou, direction, essai=False):
         reussite = False
         actions = []
         if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):
-                reussite = self.faire_tomber(caillou, essai)[0]  # On s'assure de faire tomber le bloc avant de le faire tomber
-                if not reussite:
-                    if caillou.coups_avant_etre_pousse == 0:
-                        reussite = self.faire_bouger(caillou, direction, essai)[0]  # On pousse le caillou
-                        actions.append(Action(personnage.pousser, caillou, direction))
-                    elif self.peut_bouger(caillou, direction):
-                        actions.append(Action(personnage.pousser, caillou, direction))
-                    else:
-                        actions.append(Action(personnage.bouger, direction))
+            if caillou.coups_avant_etre_pousse == 0:
+                reussite = self.faire_bouger(caillou, direction, essai)[0]  # On pousse le caillou
+                actions.append(Action(personnage.pousser, caillou, direction))
+            elif self.peut_bouger(caillou, direction):
+                actions.append(Action(personnage.pousser, caillou, direction))
+            else:
+                actions.append(Action(personnage.bouger, direction))
         return reussite, actions
 
     def _collision_personnage_diamant(self, personnage, diamant, direction, essai=False):
@@ -490,19 +485,13 @@ class Jeu(object):
                 action.effectuer()
         return reussite
 
-    def _collision_bloc_tombant(self, bloc, bloc_collisionne, direction, essai=False):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
+    def _collision_bloc_tombant(self, bloc, bloc_collisionne, direction):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
         reussite = False
-        if not bloc_collisionne.mouvement_deja_traite:
-            if not essai:
-
-                self.bouger_plus_tard(bloc, direction)
-        else:
-            if isinstance(bloc_collisionne, Personnage):
-                if bloc.tombe and direction == ORIENTATIONS.BAS:
-                    if not essai:
-                        bloc_collisionne.tuer()
-                    reussite = True
-
+        if isinstance(bloc_collisionne, Personnage):
+            if bloc.tombe and direction == ORIENTATIONS.BAS:
+                reussite = True
+                if ORIENTATIONS.sont_opposees(direction, self.personnage.mouvement_en_cours):
+                    self.personnage.tuer()
         return reussite
 
     def peut_bouger(self, bloc, direction):
@@ -510,10 +499,8 @@ class Jeu(object):
         return reussite
 
     def faire_bouger(self, bloc, direction, essai=False):
-        if bloc.mouvement_deja_traite:
+        if bloc.a_deja_bouge:
             return False, None
-        if not essai:
-            bloc.mouvement_deja_traite = True
         reussite = False
         bloc_collisionne = None
         if bloc.PEUT_SE_DEPLACER:
@@ -522,50 +509,38 @@ class Jeu(object):
             if bloc_collisionne is None:
                 reussite = True
             else:
-                if bloc_collisionne.mouvement_deja_traite:
-                    if isinstance(bloc, Personnage):
-                        reussite = self._collision_personnage(bloc, bloc_collisionne, direction, essai)
-                    elif isinstance(bloc, BlocTombant):
-                        reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction, essai)
-                else:
-                    if not essai:
-                        self.bouger_plus_tard(bloc, direction)
+                if isinstance(bloc, Personnage):
+                    reussite = self._collision_personnage(bloc, bloc_collisionne, direction, essai)
+                elif isinstance(bloc, BlocTombant):
+                    reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction)
             if not essai:
-                if self.personnage.est_mort:
-                    print("mort")
-                    while 1:
-                        time.sleep(1)
-                elif reussite:
+               if reussite:
                     nouveau_rect = bloc.rect.move(vecteur(direction))
                     self.carte.bouger(bloc, nouveau_rect)
-        return reussite, bloc_collisionne
+                    bloc.a_deja_bouge = True
+        return reussite, bloc_collisionne  # Le bloc collisionne n'est juste que si reussite == False
 
-    def faire_tomber(self, bloc, essai=False):
-        peut_tomber = False
-        bloc_collisionne = None
-        if not bloc.mouvement_deja_traite:
+    def faire_tomber_droit(self, bloc, essai=False):
+        reussite = self.faire_bouger(bloc, ORIENTATIONS.BAS, essai)[0]
+        if reussite:
+            bloc.tomber()
+        return reussite
+
+    def faire_tomber_cotes(self, bloc, essai=False):
+        reussite = False
+        if not bloc.a_deja_bouge:
             bloc_collisionne = self.bloc_collisionne(bloc, ORIENTATIONS.BAS)
-            peut_tomber = self.peut_bouger(bloc, ORIENTATIONS.BAS)
-            tomber = Action(self.faire_bouger, bloc, ORIENTATIONS.BAS, essai)
-            if not peut_tomber:
-                if isinstance(bloc_collisionne, (BlocTombant, Mur, Porte)):
+            if isinstance(bloc_collisionne, (BlocTombant, Mur, Porte)):
                     directions = [ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE]
-                    while len(directions) > 0 and not peut_tomber:
+                    while len(directions) > 0 and not reussite:
                         direction = random.choice(directions)
                         directions.remove(direction)
                         bloc_diagonale = self.bloc_collisionne(bloc, (direction, ORIENTATIONS.BAS))
                         if bloc_diagonale is None:
-                            peut_tomber, bloc_collisionne = self.faire_bouger(bloc, direction, essai=True)
-                            tomber = Action(self.faire_bouger, bloc, direction, essai)
-                        # TODO: finir methode
-        if not essai:
-            if peut_tomber:
-                if bloc.coups_avant_tomber == 0:
-                    tomber.effectuer()
+                            reussite = self.faire_bouger(bloc, direction, essai)[0]
+            if reussite:
                 bloc.tomber()
-            else:
-                bloc.tombe = False
-        return peut_tomber, bloc_collisionne
+        return reussite
 
     def effectuer_mouvements(self):
         """
@@ -574,13 +549,13 @@ class Jeu(object):
         :return: "None"
         """
         # On fait bouger le personnage
-        if self.mouvement_en_cours == ORIENTATIONS.DROITE:
+        if self.personnage.mouvement_en_cours == ORIENTATIONS.DROITE:
             pass
         if self.mouvement_detecte:  # Si un mouvement doit etre effectue
             pass
-            # self.faire_bouger(self.personnage, self.mouvement_en_cours)  # On fait avancer le personnage
+            # self.faire_bouger(self.personnage, self.personnage.mouvement_en_cours)  # On fait avancer le personnage
             # self.personnage.etait_en_mouvement = True
-            # self.mouvement_en_cours = None
+            # self.personnage.mouvement_en_cours = None
         else:
             self.personnage.etait_en_mouvement = False
             self.personnage.caillou_pousse = None
@@ -588,19 +563,25 @@ class Jeu(object):
         if self.personnage.etait_en_mouvement:
             pass
 
-        for y in range(self.carte.nombre_cases_hauteur - 1, -1, -1):
-            for x in range(self.carte.nombre_cases_largeur - 1, -1, -1):  # On parcourt les blocs de droite a gauche et de bas en haut
-                rect = rectangle_a(x, y)
-                blocs = self.carte.cases[rect].blocs
-                for bloc in blocs:
-                    if isinstance(bloc, Personnage):
-                        if self.mouvement_detecte:
-                            self.faire_bouger(self.personnage, self.mouvement_en_cours)  # On fait avancer le personnage
-                            self.personnage.etait_en_mouvement = True
-                            self.mouvement_en_cours = None
-                        else:
-                            bloc.mouvement_deja_traite = True
-                    elif isinstance(bloc, BlocTombant):
-                        self.faire_tomber(bloc)
+        # On fait d'abord tomber les blocs tout droit et ensuite de cote
+        methodes_tomber = (self.faire_tomber_droit, self.faire_tomber_cotes)
+        for faire_tomber in methodes_tomber:
+            for y in range(self.carte.nombre_cases_hauteur - 1, -1, -1):
+                for x in range(self.carte.nombre_cases_largeur - 1, -1, -1):  # On parcourt les blocs de droite a gauche et de bas en haut
+                    rect = rectangle_a(x, y)
+                    blocs = self.carte.cases[rect].blocs
+                    for bloc in blocs:
+                        if isinstance(bloc, BlocTombant):
+                            essai = True
+                            if bloc.tombe or bloc.coups_avant_tomber == 0:
+                                essai = False
+                            faire_tomber(bloc, essai)
+
+        if self.mouvement_detecte:
+            self.faire_bouger(self.personnage, self.personnage.mouvement_en_cours)
+            self.personnage.etait_en_mouvement = True
+            self.personnage.mouvement_en_cours = None
+        else:
+            self.personnage.a_deja_bouge = True
 
         self.terminer_mouvements()  # TODO: regler l'ordre de resolution des mouvements

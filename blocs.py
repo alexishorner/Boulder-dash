@@ -101,7 +101,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
         self.rect.y = rect.y
         self.ancien_rect = self.rect.copy()
         self.z = 0
-        self.mouvement_deja_traite = not self.PEUT_SE_DEPLACER  # Les blocs ne pouvant pas se deplacer ont deja un mouvement traite
+        self.a_deja_bouge = not self.PEUT_SE_DEPLACER  # Les blocs ne pouvant pas se deplacer ont deja un mouvement traite
         self.orientation = ORIENTATIONS.DROITE
         self.est_mort = False
         self.doit_bouger = False
@@ -128,7 +128,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
     # TODO : gerer les autres actions (comme tomber)
 
     def terminer_cycle(self):
-        self.mouvement_deja_traite = not self.PEUT_SE_DEPLACER  # Les blocs ne pouvant pas se deplacer ont deja un mouvement traite
+        self.a_deja_bouge = not self.PEUT_SE_DEPLACER  # Les blocs ne pouvant pas se deplacer ont deja un mouvement traite
 
     def bouger(self, direction):
         """
@@ -156,7 +156,7 @@ class Personnage(Bloc):
 
     def __init__(self, rect):
         super(Personnage, self).__init__(rect)
-        self.est_mort = False
+        self.mouvement_en_cours = None
         self.orientation = ORIENTATIONS.DROITE
         self.etait_en_mouvement = False
         self.diamants_ramasses = 0
@@ -181,7 +181,6 @@ class Personnage(Bloc):
 
     def tuer(self):
         super(Personnage, self).tuer()
-        print("mort")
 
 
 class Terre(Bloc):
@@ -199,28 +198,24 @@ class BlocTombant(Bloc):
 
     def __init__(self, rect):
         super(BlocTombant, self).__init__(rect)
-        self._tombe = False
+        self.tombe = False
+        self.est_tombe = False
+        self.pouvait_tomber = False
         self.coups_avant_tomber = self.INERTIE
-
-    @property
-    def tombe(self):
-        return self._tombe
-
-    @tombe.setter
-    def tombe(self, valeur):
-        self._tombe = valeur
-        if not valeur:
-            self.coups_avant_tomber = self.INERTIE
-
-    @tombe.deleter
-    def tombe(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
 
     def tomber(self):
         if self.coups_avant_tomber > 0:
             self.coups_avant_tomber -= 1
         else:
-            self.tombe = True
+            self.est_tombe = True
+        self.pouvait_tomber = True
+
+    def terminer_cycle(self):
+        super(BlocTombant, self).terminer_cycle()
+        self.tombe = self.est_tombe
+        if not self.pouvait_tomber:
+            self.coups_avant_tomber = self.INERTIE
+        self.est_tombe = self.pouvait_tomber = False
 
 
 class Caillou(BlocTombant):
