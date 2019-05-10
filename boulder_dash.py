@@ -4,7 +4,7 @@ C'est ici que le jeu se lance.
 
 Utilisation : "python boulder_dash.py"
 """
-from controleur import *
+from th55upkép
 
 if __name__ == "__main__":
     jeu = Jeu()

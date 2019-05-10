@@ -308,7 +308,7 @@ class Jeu(object):
         self.ecran = pygame.display.set_mode((ECRAN.LARGEUR, ECRAN.HAUTEUR), RESIZABLE)  # TODO : permettre le mode plein ecran
         self.arriere_plan = pygame.Surface((ECRAN.LARGEUR, ECRAN.HAUTEUR))
         self.arriere_plan.fill((0, 0, 0))
-        self.carte = Carte(Niveau.niveau(1))
+        self.carte = Carte(Niveau.niveau(2))
         self.personnage = self.carte.personnage
 
         pygame.key.set_repeat(1, 1)
@@ -451,8 +451,12 @@ class Jeu(object):
         actions = []
         if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):
             if caillou.coups_avant_etre_pousse == 0:
-                reussite = self.faire_bouger(caillou, direction, essai)[0]  # On pousse le caillou
-                actions.append(Action(personnage.pousser, caillou, direction))
+                reussite = self.faire_tomber_droit(caillou)
+                if reussite:
+                    actions.append(Action(personnage.bouger, direction))
+                else:
+                    reussite = self.faire_bouger(caillou, direction, essai)[0]  # On pousse le caillou
+                    actions.append(Action(personnage.pousser, caillou, direction))
             elif self.peut_bouger(caillou, direction):
                 actions.append(Action(personnage.pousser, caillou, direction))
             else:
@@ -542,6 +546,14 @@ class Jeu(object):
                 bloc.tomber()
         return reussite
 
+    def bouger_personnage(self):
+        if self.mouvement_detecte:
+            self.faire_bouger(self.personnage, self.personnage.mouvement_en_cours)
+            self.personnage.etait_en_mouvement = True
+            self.personnage.mouvement_en_cours = None
+        else:
+            self.personnage.a_deja_bouge = True
+
     def effectuer_mouvements(self):
         """
         Fait bouger les differents blocs.
@@ -563,6 +575,8 @@ class Jeu(object):
         if self.personnage.etait_en_mouvement:
             pass
 
+        self.bouger_personnage()
+
         # On fait d'abord tomber les blocs tout droit et ensuite de cote
         methodes_tomber = (self.faire_tomber_droit, self.faire_tomber_cotes)
         for faire_tomber in methodes_tomber:
@@ -577,11 +591,6 @@ class Jeu(object):
                                 essai = False
                             faire_tomber(bloc, essai)
 
-        if self.mouvement_detecte:
-            self.faire_bouger(self.personnage, self.personnage.mouvement_en_cours)
-            self.personnage.etait_en_mouvement = True
-            self.personnage.mouvement_en_cours = None
-        else:
-            self.personnage.a_deja_bouge = True
+        self.bouger_personnage()
 
         self.terminer_mouvements()  # TODO: regler l'ordre de resolution des mouvements
