@@ -6,11 +6,20 @@ import pygame
 from pygame.locals import *
 from enum import IntEnum, unique
 import os
+import sys
+
+# On regarde si le jeu tourne sur Windows Vista ou une version de Windows plus recente
+if os.name == "nt" and sys.getwindowsversion()[0] >= 6:
+    import ctypes
+    # On desactive l'etirement de l'ecran pour empecher des bugs d'affichage
+    ctypes.windll.user32.SetProcessDPIAware()
 
 pygame.init()  # obligatoire pour utiliser une grande partie de pygame
-pygame.display.set_mode((0, 0))  # obligatoire pour pouvoir charger des images
-chemin = os.path.dirname(__file__)  # on recupere le chemin du module ci-present
-os.chdir(chemin)  # on change de repertoire pour pouvoir utiliser des chemins relatifs
+_info = pygame.display.Info()
+RESOLUTION = _info.current_w, _info.current_h
+ECRAN = pygame.display.set_mode(RESOLUTION, FULLSCREEN)  # obligatoire pour pouvoir charger des images
+_chemin = os.path.dirname(__file__)  # on recupere le chemin du module ci-present
+os.chdir(_chemin)  # on change de repertoire pour pouvoir utiliser des chemins relatifs
 
 
 def charger(image):
@@ -27,8 +36,8 @@ CHEMIN_IMAGES = "img/"
 IMAGES = {"Bloc": "mono-unknown.png", "Personnage": "personnage.png",
           "Diamant": "diamant.jpg", "Terre": "terre.PNG", "Mur": "mur.png", "Caillou": "caillou.jpg"}
 
-for classe, chemin in IMAGES.iteritems():
-    IMAGES[classe] = charger(CHEMIN_IMAGES + chemin)  # on charge les images
+for classe, _chemin in IMAGES.iteritems():
+    IMAGES[classe] = charger(CHEMIN_IMAGES + _chemin)  # on charge les images
 
 image_porte = charger(CHEMIN_IMAGES + "porte.png")  # on s'occupe de la porte separement pour ne pas la charger trois
                                                     # fois au lieu d'une
@@ -63,11 +72,6 @@ class DIMENSIONS:
     X_MIN = 0
     Y_MIN = 0
     LARGEUR_CASE = 75
-
-
-class ECRAN:
-    LARGEUR = 1920  # TODO : adapter resolution a chaque ecran
-    HAUTEUR = 1080
 
 
 class TOUCHES:

@@ -5,24 +5,7 @@ from modele import *
 import time
 import math
 import random
-# import ctypes
 
-# ctypes.windll.user32.SetProcessDPIAware()
-# vraie_resolution = (ctypes.windll.user32.GetSystemMetrics(0),ctypes.windll.user32.GetSystemMetrics(1))
-# info = pygame.display.Info()
-# vraie_resolution = (info.current_w, info.current_h)
-
-
-# FIXME:
-#   - Blocs qui tombent vers la gauche attendent un tour de trop avant de tomber : ~O               ~O
-#   -                                                                              ~#    raison :   O#
-#   -                                                                              O~               ~~
-
-
-# TODO: resolution des mouvements :
-#   - blocs qui tombent tout droit
-#   - blocs qui tombent sur les cotes
-#   - personnage
 
 def modulo(num, div):
     """
@@ -305,8 +288,8 @@ class Jeu(object):
     """
     def __init__(self):
         pygame.init()
-        self.ecran = pygame.display.set_mode((ECRAN.LARGEUR, ECRAN.HAUTEUR), RESIZABLE)  # TODO : permettre le mode plein ecran
-        self.arriere_plan = pygame.Surface((ECRAN.LARGEUR, ECRAN.HAUTEUR))
+        self.ecran = ECRAN
+        self.arriere_plan = pygame.Surface(RESOLUTION)
         self.arriere_plan.fill((0, 0, 0))
         self.carte = Carte(Niveau.niveau(1))
         self.personnage = self.carte.personnage

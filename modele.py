@@ -274,7 +274,10 @@ class Carte(object):
             if bloc.est_mort:
                 if isinstance(bloc, Personnage):
                     print("mort")
-                    while 1: time.sleep(1)
+                    while 1:
+                        for evenement in pygame.event.get():
+                            if evenement.type == QUIT:
+                                quit()
                 self.supprimer(bloc)
 
     @staticmethod
