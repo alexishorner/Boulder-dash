@@ -278,6 +278,9 @@ class Carte(object):
                         for evenement in pygame.event.get():
                             if evenement.type == QUIT:
                                 quit()
+                            if evenement.type == KEYDOWN:
+                                if evenement.key == K_q:
+                                    quit()
                 self.supprimer(bloc)
 
     @staticmethod

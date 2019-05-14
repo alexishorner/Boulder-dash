@@ -369,6 +369,9 @@ class Jeu(object):
         for evenement in pygame.event.get():
             if evenement.type == QUIT:
                 self.quitter()
+            if evenement.type == KEYDOWN:
+                if evenement.key == K_q:
+                    quit()
         self.gerer_mouvement()  # Pas besoin de verifier un KEYDOWN grace au gestionnaire de touches
                                 # KEYDOWN n'est parfois pas present alors qu'il devrait
 
