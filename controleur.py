@@ -308,7 +308,7 @@ class Jeu(object):
         self.ecran = pygame.display.set_mode((ECRAN.LARGEUR, ECRAN.HAUTEUR), RESIZABLE)  # TODO : permettre le mode plein ecran
         self.arriere_plan = pygame.Surface((ECRAN.LARGEUR, ECRAN.HAUTEUR))
         self.arriere_plan.fill((0, 0, 0))
-        self.carte = Carte(Niveau.niveau(2))
+        self.carte = Carte(Niveau.niveau(1))
         self.personnage = self.carte.personnage
 
         pygame.key.set_repeat(1, 1)
@@ -518,7 +518,7 @@ class Jeu(object):
                 elif isinstance(bloc, BlocTombant):
                     reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction)
             if not essai:
-               if reussite:
+                if reussite:
                     nouveau_rect = bloc.rect.move(vecteur(direction))
                     self.carte.bouger(bloc, nouveau_rect)
                     bloc.a_deja_bouge = True
@@ -591,6 +591,6 @@ class Jeu(object):
                                 essai = False
                             faire_tomber(bloc, essai)
 
-        self.bouger_personnage()
+        # self.bouger_personnage()
 
         self.terminer_mouvements()  # TODO: regler l'ordre de resolution des mouvements
