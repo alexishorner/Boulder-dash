@@ -68,11 +68,6 @@ class ORIENTATIONS(IntEnum):
     def sont_opposees(orientation_1, orientation_2):
         return orientation_1 == ORIENTATIONS.opposee(orientation_2)
 
-class DIMENSIONS:
-    X_MIN = 0
-    Y_MIN = 0
-    LARGEUR_CASE = 75
-
 
 class TOUCHES:
     MOUVEMENT = (K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d)

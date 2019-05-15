@@ -3,7 +3,7 @@ Module stockant les donnees du jeu.
 """
 from blocs import *
 import itertools
-import time
+from numpy import array
 
 
 def _enlever_extremite(chaine, extremite=ORIENTATIONS.GAUCHE, caracteres_a_enlever=("\n", " ")):
@@ -73,33 +73,8 @@ def trier(blocs):
     return blocs_
 
 
-def dimensions(liste):
-    return max(array(liste).shape)
-
-
-def aplatir(liste):
-    dim = dimensions(liste)
-    aplatie = liste
-    for i in range(dim - 1):
-        aplatie = itertools.chain.from_iterable(aplatie)
-    return list(aplatie)
-
-
-def index_vers_coordonnees(x, y):
-    x_min, y_min = DIMENSIONS.X_MIN, DIMENSIONS.Y_MIN
-    largeur = DIMENSIONS.LARGEUR_CASE
-    return x_min + x * largeur, y_min + y * largeur
-
-
-def coordonnees_vers_index(x, y):
-    x_min, y_min = DIMENSIONS.X_MIN, DIMENSIONS.Y_MIN
-    largeur = DIMENSIONS.LARGEUR_CASE
-    return (x - x_min) / largeur, (y - y_min) / largeur
-
-
-def rectangle_a(x, y):
-    pos_x, pos_y = index_vers_coordonnees(x, y)
-    largeur = DIMENSIONS.LARGEUR_CASE
+def rectangle_a(x, y, largeur):
+    pos_x, pos_y = x * largeur, y * largeur
     return Rectangle(pos_x, pos_y, largeur, largeur)
 
 
@@ -154,25 +129,43 @@ class Niveau(object):
         self.numero = numero  # Numero du niveau
         self.ascii = ascii  # Representation du niveau avec des caracteres ascii
 
+    @property
+    def ascii(self):
+        return self._ascii
+
+    @ascii.setter
+    def ascii(self, valeur):
+        # On enleve tous les espaces, ainsi que les retours a la ligne se trouvant au debut ou a la fin
+        self._ascii = enlever_extremites(valeur).replace(" ", "")
+
+    @property
+    def nombre_cases_largeur(self):
+        return len(self.ascii.split("\n")[0])
+
+    @property
+    def nombre_cases_hauteur(self):
+        return len(self.ascii.split("\n"))
+
+    @property
+    def largeur_case(self):
+        largeur_max_case = RESOLUTION[0] / self.nombre_cases_largeur
+        hauteur_max_case = RESOLUTION[1] / self.nombre_cases_hauteur
+        return min(largeur_max_case, hauteur_max_case)
+
     def vers_cases(self):
         """
         Prend en entree un niveau et cree un groupe de cases ayant chacun le type et la position dictee par le niveau.
 
         :return: groupe de cases initialises avec la bonne position et le bon type
         """
-        niveau_ascii = self.ascii
-        niveau_ascii = enlever_extremites(niveau_ascii).replace(" ", "")    # On enleve tous les espaces, ainsi que les
-                                                                            # retours a la ligne se trouvant au debut ou
-                                                                            # a la fin
-        lignes_ascii = niveau_ascii.split("\n")
-        longueur_ligne = len(lignes_ascii[0])
+        lignes_ascii = self.ascii.split("\n")
         cases = dict()
         for y, ligne_ascii in enumerate(lignes_ascii):
-            if len(ligne_ascii) != longueur_ligne:  # On teste si chaque ligne fait la meme longueur
+            if len(ligne_ascii) != self.nombre_cases_largeur:  # On teste si chaque ligne fait la meme longueur
                 raise ValueError("Le niveau a ete defini incorrectement.")
 
             for x, bloc_ascii in enumerate(ligne_ascii):
-                rect = rectangle_a(x, y)
+                rect = rectangle_a(x, y, self.largeur_case)
                 case = Case(rect)
                 bloc = self.ASCII_VERS_BLOC[bloc_ascii](rect)  # On convertit chaque caractere en bloc et leur attribue
                                                                # une position initiale
@@ -218,6 +211,7 @@ class Carte(object):
     @niveau.setter
     def niveau(self, valeur):
         self._niveau = valeur
+        self.largeur_case = valeur.largeur_case
         self.cases = valeur.vers_cases()
 
     @niveau.deleter
@@ -240,12 +234,28 @@ class Carte(object):
         self._cases = valeur
         self.actualiser_blocs()
         self.rectangle = self.rectangle_carte(self.cases)
-        self.nombre_cases_largeur = self.rectangle.width / DIMENSIONS.LARGEUR_CASE
-        self.nombre_cases_hauteur = self.rectangle.height / DIMENSIONS.LARGEUR_CASE
+        self.nombre_cases_largeur = self.rectangle.width / self.largeur_case
+        self.nombre_cases_hauteur = self.rectangle.height / self.largeur_case
 
     @cases.deleter
     def cases(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
+
+    def x_min(self):
+        largeur_jeu = self.largeur_case * self.nombre_cases_largeur
+        x_min_f = (RESOLUTION[0] - largeur_jeu) / 2.0
+        return int(round(x_min_f))
+
+    def y_min(self):
+        hauteur_jeu = self.largeur_case * self.nombre_cases_hauteur
+        y_min_exact = (RESOLUTION[1] - hauteur_jeu) / 2.0
+        return int(round(y_min_exact))
+
+    def index_vers_coordonnees(self, x, y):
+        return self.x_min() + x * self.largeur_case, self.y_min() + y * self.largeur_case
+
+    def coordonnees_vers_index(self, x, y):
+        return (x - self.x_min()) / self.largeur_case, (y - self.y_min()) / self.largeur_case
 
     def actualiser_blocs(self):
         blocs = []
@@ -286,23 +296,19 @@ class Carte(object):
     @staticmethod
     def rectangle_carte(cases):
         x_min = y_min = x_max = y_max = None
-        for cle in cases.keys():
-            if x_min is None:
-                x_min = x_max = cle.x
-                y_min = y_max = cle.y
-            else:
-                if cle.x < x_min:
-                    x_min = cle.x
-                if cle.x > x_max:
-                    x_max = cle.x
-                if cle.y < y_min:
-                    y_min = cle.y
-                if cle.y > y_max:
-                    y_max = cle.y
+        cles = cases.keys()
+        if cles:
+            xs = [cle.x for cle in cles]
+            x_min = min(xs)
+            x_max = max(xs)
+
+            ys = [cle.y for cle in cles]
+            y_min = min(ys)
+            y_max = max(ys)
         return Rectangle(x_min, y_min, x_max - x_min, y_max - y_min)
 
     def blocs_a(self, x, y):
-        rect = rectangle_a(x, y)
+        rect = rectangle_a(x, y, self.largeur_case)
         return self.cases[rect].blocs
 
     @staticmethod
@@ -354,19 +360,14 @@ class Carte(object):
         :param y: coordonne y de la case
         :return: instance de "Case" se situant a la position (x, y)
         """
-        rect = rectangle_a(x, y)
+        rect = rectangle_a(x, y, self.largeur_case)
         return self.cases[rect]
 
-    def blocs_adjacents(self, bloc):
-        adjacents = []
-        index_x, index_y = coordonnees_vers_index(bloc.rect.x, bloc.rect.y)
-        for i in range(-1, 1):
-            for j in range(-1, 1):
-                x = index_x + i
-                y = index_y + j
-                if x < len(self.cases) and y < len(self.cases[x]):
-                    adjacents.append(self.cases[x][y])
-        return aplatir(adjacents)
+    def rect_carte_vers_rect_ecran(self, rect):
+        rect_ = rect.copy()
+        rect_.x = self.x_min() + rect.x
+        rect_.y = self.y_min() + rect.y
+        return rect_
 
     def dessiner(self, ecran):
         """
@@ -376,4 +377,4 @@ class Carte(object):
         :return: "None"
         """
         for bloc in self.blocs_tries:          # Puisque les blocs sont tries par position z, les blocs les plus en
-            ecran.blit(bloc.image, bloc.rect)  # avant sont dessines en dernier
+            ecran.blit(bloc.image, self.rect_carte_vers_rect_ecran(bloc.rect))  # avant sont dessines en dernier

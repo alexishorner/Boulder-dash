@@ -35,7 +35,7 @@ def test_vers_cases():
     for case in cases.itervalues():
         for bloc in case.blocs:
             for sorte in nombre_de_blocs_par_sorte_2.keys():
-                rect = modele.rectangle_a(0, 0)
+                rect = modele.pygame.Rect()
                 if bloc is None and sorte(rect) is None:  # "sorte(rect)" cree un objet de sorte "sorte"
                     nombre_de_blocs_par_sorte_2[sorte] += 1
                 elif bloc.__class__ == sorte:

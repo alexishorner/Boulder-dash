@@ -39,10 +39,19 @@ def test_test():
 
 if __name__ == "__main__":
     # test_test()
-    tests = (test_coordonnees, test_adjacents)  # On cree un tuple avec toutes les fonctions de test
-    for test in tests:
-        print("")
-        chaine = " du test \"{0}\"".format(test.__name__)  # On recupere le nom de chaque fonction de test
-        print("Debut{0}...".format(chaine))  # Equivalent a "Debut du test \"" + nom_du_test + "\"..."
-        test()  # On effectue le test
-        print("Fin{0}".format(chaine))  # Equivalent a "Fin du test \"" + nom_du_test + "\""
+    # tests = (test_coordonnees, test_adjacents)  # On cree un tuple avec toutes les fonctions de test
+    # for test in tests:
+    #     print("")
+    #     chaine = " du test \"{0}\"".format(test.__name__)  # On recupere le nom de chaque fonction de test
+    #     print("Debut{0}...".format(chaine))  # Equivalent a "Debut du test \"" + nom_du_test + "\"..."
+    #     test()  # On effectue le test
+    #     print("Fin{0}".format(chaine))  # Equivalent a "Fin du test \"" + nom_du_test + "\""
+
+    class x:
+        def __init__(self, a):
+            self.a = a
+
+    foo = [x(1), x(12), x(-50), x(14), x(18), x(-17)]
+    f_a = lambda cle: cle.a
+    a_min = min(foo, key=f_a)
+    print a_min, a_min.a

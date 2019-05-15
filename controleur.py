@@ -32,7 +32,7 @@ def modulo(num, div):
     return (a / b - int(math.ceil(a / b * facteur) / facteur)) * b
 
 
-def vecteur(directions):
+def vecteur(directions, unite):
     try:
         len(directions)  # On verifie si "directions" est iterable
         directions_ = directions
@@ -50,7 +50,7 @@ def vecteur(directions):
             v += array([0, 1])
         else:
             raise ValueError("La direction est invalide")
-    v *= DIMENSIONS.LARGEUR_CASE  # On multiplie par la largeur d'une case pour avoir la bonne norme
+    v *= unite  # On multiplie par la largeur d'une case pour avoir la bonne norme
     return v
 
 
@@ -420,7 +420,7 @@ class Jeu(object):
             bloc.terminer_cycle()
 
     def bloc_collisionne(self, bloc, directions=tuple()):
-        v = vecteur(directions)
+        v = vecteur(directions, self.carte.largeur_case)
         rect = bloc.rect_hashable.move(v)
         blocs_collisionnes = self.carte.cases[rect].blocs
         if len(blocs_collisionnes) == 1:
@@ -505,7 +505,7 @@ class Jeu(object):
                     reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction)
             if not essai:
                 if reussite:
-                    nouveau_rect = bloc.rect.move(vecteur(direction))
+                    nouveau_rect = bloc.rect.move(vecteur(direction, self.carte.largeur_case))
                     self.carte.bouger(bloc, nouveau_rect)
                     bloc.a_deja_bouge = True
         return reussite, bloc_collisionne  # Le bloc collisionne n'est juste que si reussite == False
@@ -568,8 +568,7 @@ class Jeu(object):
         for faire_tomber in methodes_tomber:
             for y in range(self.carte.nombre_cases_hauteur - 1, -1, -1):
                 for x in range(self.carte.nombre_cases_largeur - 1, -1, -1):  # On parcourt les blocs de droite a gauche et de bas en haut
-                    rect = rectangle_a(x, y)
-                    blocs = self.carte.cases[rect].blocs
+                    blocs = self.carte.case_a(x, y).blocs
                     for bloc in blocs:
                         if isinstance(bloc, BlocTombant):
                             essai = True

@@ -15,7 +15,6 @@ Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 
 
 from constantes import *
-from numpy import array
 
 
 # class Coordonnees(list):
