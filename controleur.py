@@ -2,6 +2,7 @@
 Module gerant la logique du jeu.
 """
 from modele import *
+from vue import *
 import time
 import math
 import random
@@ -291,9 +292,7 @@ class Jeu(object):
 
     def __init__(self):
         pygame.init()
-        self.ecran = ECRAN
-        self.arriere_plan = pygame.Surface(RESOLUTION)
-        self.arriere_plan.fill((0, 0, 0))
+        self.interface = InterfaceGraphique(ECRAN)
         self. niveau = Niveau.niveau(1)
 
         pygame.key.set_repeat(1, 1)
@@ -364,7 +363,7 @@ class Jeu(object):
 
         :return: "None"
         """
-        self.actualiser_ecran()
+        self.interface.afficher(self.carte)
         self.minuteur.reinitialiser()
         while 1:  # FIXME : quand la fenetre est bougee le code est mis en pause
             self.minuteur.passage()
@@ -382,33 +381,22 @@ class Jeu(object):
             self.verifier_perdu()
             self.activer_sortie()
 
-            self.actualiser_ecran()
+            self.interface.afficher(self.carte)
 
             if self.doit_recommencer:
                 self.recommencer()
-
-            if self.minuteur.tics_restants() > 0:  # Si la periode n'est pas finie
-                self.minuteur.attendre_fin()
+            else:
+                if self.minuteur.tics_restants() > 0:  # Si la periode n'est pas finie
+                    self.minuteur.attendre_fin()
 
             print(time.time() - debut)
 
-    def actualiser_ecran(self):
-        """
-        Actualise l'ecran.
-
-        :return: "None"
-        """
-        self.ecran.blit(self.arriere_plan, (0, 0))  # Dessine l'arriere plan
-        self.carte.dessiner(self.ecran)  # Dessine les blocs
-        pygame.display.flip()  # Actualise l'ecran
-
-    def passer_en_plein_ecran(self):
-        resolution = self.ecran.get_size()
-        self.ecran = pygame.display.set_mode(resolution, FULLSCREEN)
-
-    def passer_en_fenetre(self):
-        resolution = self.ecran.get_size()
-        self.ecran = pygame.display.set_mode(resolution, RESIZABLE)
+    def editeur_niveau(self):
+        niveau = Carte(Niveau(("~"*10 + "\n")*10))
+        self.interface.afficher(niveau)
+        # TODO : finir
+        self.niveau = niveau
+        self.doit_recommencer = True
 
     def gerer_evenements(self):
         """
@@ -427,9 +415,9 @@ class Jeu(object):
                     # On regarde si la touche Maj est pressee et qu'aucun autre modificateur ne l'est, on utilise pour
                     # ce faire des operateurs bit a bit
                     if mods & KMOD_SHIFT and not mods & ~KMOD_SHIFT:
-                            self.passer_en_plein_ecran()
+                            self.interface.passer_en_plein_ecran()
                     elif not mods:
-                        self.passer_en_fenetre()
+                        self.interface.passer_en_fenetre()
         self.gerer_mouvement()  # Pas besoin de verifier un KEYDOWN grace au gestionnaire de touches
                                 # KEYDOWN n'est parfois pas present alors qu'il devrait
 
@@ -526,7 +514,7 @@ class Jeu(object):
         elif isinstance(bloc_collisionne, Terre):
             actions.append(Action(personnage.creuser_terre, bloc_collisionne))
             reussite = True
-        elif isinstance(bloc_collisionne, Porte):
+        elif isinstance(bloc_collisionne, Sortie):
             if bloc_collisionne.est_activee:
                 reussite = True
                 if isinstance(bloc_collisionne, Sortie):
@@ -581,7 +569,7 @@ class Jeu(object):
         reussite = False
         if not bloc.a_deja_bouge:
             bloc_collisionne = self.bloc_collisionne(bloc, ORIENTATIONS.BAS)
-            if isinstance(bloc_collisionne, (BlocTombant, Mur, Porte)):
+            if isinstance(bloc_collisionne, (BlocTombant, Mur, Sortie)):
                     directions = [ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE]
                     while len(directions) > 0 and not reussite:
                         direction = random.choice(directions)

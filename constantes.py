@@ -35,15 +35,11 @@ def charger(image):
 
 CHEMIN_IMAGES = "img/"
 IMAGES = {"Bloc": "mono-unknown.png", "Personnage": "personnage.png",
-          "Diamant": "diamant.jpg", "Terre": "terre.PNG", "Mur": "mur.png", "Caillou": "caillou.jpg"}
+          "Diamant": "diamant.jpg", "Terre": "terre.PNG", "Mur": "mur.png",
+          "Caillou": "caillou.jpg", "Sortie": "porte.png"}
 
 for classe, _chemin in IMAGES.iteritems():
     IMAGES[classe] = charger(CHEMIN_IMAGES + _chemin)  # on charge les images
-
-image_porte = charger(CHEMIN_IMAGES + "porte.png")  # on s'occupe de la porte separement pour ne pas la charger trois
-                                                    # fois au lieu d'une
-IMAGES.update({"Porte": image_porte, "Entree": image_porte, "Sortie": image_porte})     # on ajoute l'image de porte aux
-                                                                                        # autres images
 
 
 @unique
@@ -87,14 +83,14 @@ NIVEAUX = ("""
             #**********#
             #~~~~~~~~~P#
             #~~~~~~~~~~#
-            #~~~[~~~~~~#
+            #~~~~~~~~~~#
             #~~~~~~****#
             ############
             """,
             """
             ############
             #***O***O*$#
-            #***OOP**[##
+            #***OOP**~##
             #$$$#******#
             #OO*O*$]***#
             #**********#

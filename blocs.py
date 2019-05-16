@@ -81,6 +81,10 @@ class Rectangle(pygame.Rect):
         arguments = (self.x, self.y, self.width, self.height)
         return hash(arguments)
 
+    @staticmethod
+    def rectangle_defaut(x, y):
+        largeur = 50
+        return Rectangle(x, y, largeur, largeur)
 
 class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygame.sprite.Sprite" est une classe de nouveau style
     """
@@ -252,12 +256,12 @@ class Mur(Bloc):
     """
 
 
-class Porte(Bloc):
+class Sortie(Bloc):
     """
     Classe permettant de representer une porte de maniere generique.
     """
     def __init__(self, rect):
-        super(Porte, self).__init__(rect)
+        super(Sortie, self).__init__(rect)
         self._est_activee = False
 
     @property
@@ -294,22 +298,4 @@ class Porte(Bloc):
 
         :return: "None"
         """
-        self.est_activee = False
-
-
-class Entree(Porte):
-    """
-    Classe permettant de representer une porte d'entree.
-    """
-    def __init__(self, rect):
-        super(Entree, self).__init__(rect)
-        self.est_activee = True  # TODO : voir ce qu'on fait de la porte une fois que le personnage est entre
-
-
-class Sortie(Porte):
-    """
-    Classe permettant de representer une porte de sortie.
-    """
-    def __init__(self, rect):
-        super(Sortie, self).__init__(rect)
         self.est_activee = False

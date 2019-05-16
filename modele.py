@@ -119,7 +119,6 @@ class Niveau(object):
     ASCII_VERS_BLOC = {"O": Caillou,            # Ressemble a un caillou
                        "#": Mur,                # Ressemble a une barriere -> mur
                        "P": Personnage,         # "P" comme "Personnage"
-                       "[": Entree,             # Forme rectangulaire comme une porte. Crochet ouvrant -> entree
                        "]": Sortie,             # Forme rectangulaire comme une porte. Crochet fermant -> sortie
                        "*": Terre,              # Ressemble aux points dans Packman et est centre verticalement, contrairement au point "."
                        "$": Diamant,            # Dollar fait penser a argent -> diamant
@@ -241,22 +240,6 @@ class Carte(object):
     def cases(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
 
-    def x_min(self):
-        largeur_jeu = self.rectangle.width
-        x_min_exact = (RESOLUTION[0] - largeur_jeu) / 2.0
-        return int(round(x_min_exact))
-
-    def y_min(self):
-        hauteur_jeu = self.rectangle.height
-        y_min_exact = (RESOLUTION[1] - hauteur_jeu) / 2.0
-        return int(round(y_min_exact))
-
-    def index_vers_coordonnees(self, x, y):
-        return self.x_min() + x * self.largeur_case, self.y_min() + y * self.largeur_case
-
-    def coordonnees_vers_index(self, x, y):
-        return (x - self.x_min()) / self.largeur_case, (y - self.y_min()) / self.largeur_case
-
     def actualiser_blocs(self):
         blocs = []
         for case in self.cases.itervalues():
@@ -319,7 +302,7 @@ class Carte(object):
         :param blocs: Blocs dans lesquels chercher
         :return: Premiere occurrence d'un bloc de type "Personnage"
         """
-        blocs_uniques = {Personnage: None, Entree: None, Sortie: None}
+        blocs_uniques = {Personnage: None, Sortie: None}
         for bloc in blocs:
             if bloc.__class__ in blocs_uniques.keys():
                 blocs_uniques[bloc.__class__] = bloc
@@ -328,14 +311,14 @@ class Carte(object):
     @staticmethod
     def trouver_cailloux(blocs):
         """
-        cherche dans une liste de bloc tous les blocs de type "Caillou"
+        Cherche dans une liste de bloc tous les blocs de type "Caillou"
+
         :param blocs: Blocs dans lesquels chercher
         :return: liste des cailloux du jeu
         """
         blocs_cailloux = []
         for bloc in blocs:
-            type_de_bloc = bloc.__class__
-            if type_de_bloc == Caillou:
+            if isinstance(bloc, Caillou):
                 blocs_cailloux.append(bloc)
         return blocs_cailloux
 
@@ -349,7 +332,7 @@ class Carte(object):
         """
         nombre = 0
         for bloc in blocs:
-            if bloc.__class__ == Diamant:
+            if isinstance(bloc, Diamant):
                 nombre += 1
         return nombre
 
@@ -362,12 +345,6 @@ class Carte(object):
         """
         rect = rectangle_a(x, y, self.largeur_case)
         return self.cases[rect]
-
-    def rect_carte_vers_rect_ecran(self, rect):
-        rect_ = rect.copy()
-        rect_.x = self.x_min() + rect.x
-        rect_.y = self.y_min() + rect.y
-        return rect_
 
     def dessiner(self, ecran):
         """
