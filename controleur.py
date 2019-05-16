@@ -416,7 +416,6 @@ class Jeu(object):
 
         :return: Booleen informant si une touche a provoque une action dans le jeu
         """
-        # TODO : ajouter limite temps
         for evenement in pygame.event.get():
             if evenement.type == QUIT:
                 self.quitter()
