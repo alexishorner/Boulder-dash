@@ -124,6 +124,14 @@ class Niveau(object):
                        "$": Diamant,            # Dollar fait penser a argent -> diamant
                        "~": lambda *foo: None}  # Vague -> fluide -> air -> vide
 
+    BLOC_VERS_ASCII = {Caillou: "O",
+                       Mur: "#",
+                       Personnage: "P",
+                       Sortie: "]",
+                       Terre: "*",
+                       Diamant: "$",
+                       None: "~"}
+
     def __init__(self, ascii, numero=None):
         self.numero = numero  # Numero du niveau
         self.ascii = ascii  # Representation du niveau avec des caracteres ascii
@@ -171,6 +179,30 @@ class Niveau(object):
                 case.ajouter(bloc)
                 cases.update({rect: case})
         return cases
+
+    @classmethod
+    def depuis_carte(cls, carte):
+        colonne_ascii = ["~",] * carte.nombre_cases_hauteur
+        blocs_ascii = []
+        for i in range(carte.nombre_cases_largeur):
+            blocs_ascii.append(list(colonne_ascii))
+        for y in range(carte.nombre_cases_hauteur):
+            for x in range(carte.nombre_cases_largeur):
+                blocs = carte.blocs_a(x, y)
+                if len(blocs) != 1:
+                    raise RuntimeError("Pour convertir une carte vers un niveau il ne faut pas plus d'un bloc par case.")
+                else:
+                    bloc = blocs[0]
+                    if bloc is not None:
+                        caractere = cls.BLOC_VERS_ASCII[bloc.__class__]
+                        blocs_ascii[x][y] = caractere
+
+        niveau = ""
+        for y in range(carte.nombre_cases_hauteur):
+            for x in range(carte.nombre_cases_largeur):
+                niveau += blocs_ascii[x][y]
+            niveau += "\n"
+        return cls(niveau)
 
     @classmethod
     def niveau(cls, numero):
@@ -336,22 +368,15 @@ class Carte(object):
                 nombre += 1
         return nombre
 
-    def case_a(self, x, y):
+    def case_a(self, x, y, index=True):
         """
         Permet d'acceder a la case situee a la position (x, y).
         :param x: coordonnee x de la case
         :param y: coordonne y de la case
         :return: instance de "Case" se situant a la position (x, y)
         """
-        rect = rectangle_a(x, y, self.largeur_case)
+        if index:
+            rect = rectangle_a(x, y, self.largeur_case)
+        else:
+            rect = Rectangle(x, y, self.largeur_case, self.largeur_case)
         return self.cases[rect]
-
-    def dessiner(self, ecran):
-        """
-        Affiche les blocs sur l'ecran.
-
-        :param ecran: Ecran sur lequel dessiner les blocs.
-        :return: "None"
-        """
-        for bloc in self.blocs_tries:          # Puisque les blocs sont tries par position z, les blocs les plus en
-            ecran.blit(bloc.image, self.rect_carte_vers_rect_ecran(bloc.rect))  # avant sont dessines en dernier

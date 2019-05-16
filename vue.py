@@ -31,25 +31,25 @@ class InterfaceGraphique:
         return (x - cls.x_min(carte)) / carte.largeur_case, (y - cls.y_min(carte)) / carte.largeur_case
 
     @staticmethod
-    def appliquer_transformation(transformation, x=None, y=None, rect=None):
+    def appliquer_translation(translation, x=None, y=None, rect=None):
         if rect is not None:
             retour = rect.copy()
-            retour.x, retour.y = transformation(rect.x, rect.y)
+            retour.x, retour.y = translation(rect.x, rect.y)
         elif None not in (x, y):
-            retour = transformation(x, y)
+            retour = translation(x, y)
         else:
             raise TypeError("Les arguments de la methode ne peuvent pas tous etre None.")
         return retour
 
     @classmethod
     def coords_carte_vers_ecran(cls, carte, x=None, y=None, rect=None):
-        transformation = lambda x, y: (cls.x_min(carte) + x, cls.y_min(carte) + y)
-        return cls.appliquer_transformation(transformation, x, y, rect)
+        translation = lambda x, y: (cls.x_min(carte) + x, cls.y_min(carte) + y)
+        return cls.appliquer_translation(translation, x, y, rect)
 
     @classmethod
     def coords_ecran_vers_carte(cls, carte, x=None, y=None, rect=None):
-        transformation = lambda x, y: (cls.x_min(carte) + x, cls.y_min(carte) + y)
-        return cls.appliquer_transformation(transformation, x, y, rect)
+        translation = lambda x, y: (x - cls.x_min(carte), y - cls.y_min(carte))
+        return cls.appliquer_translation(translation, x, y, rect)
 
     def passer_en_plein_ecran(self):
         resolution = self.ecran.get_size()

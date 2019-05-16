@@ -256,16 +256,15 @@ class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style a une
 
         :return: "None"
         """
-        temps = self.temps_restant()
-        if temps > 0:
-            time.sleep(temps)  # On attend la fin de la periode numero "self.numero_periode"
+        if self.temps_restant() > 0:
+            time.sleep(self.temps_restant())  # On attend la fin de la periode numero "self.numero_periode"
 
     def temps_restant(self):
         nombre_periodes_ecoulees = self.nombre_periodes_ecoulees()
 
         # Dans l'eventualite ou le numero de la periode est superieur au nombre de periodes ecoulees (peut arriver si la
         # methode "self.passage" appelee deux fois de suite sans attendre)
-        if self.numero_periode is None or self.numero_periode < nombre_periodes_ecoulees:  # TODO : ameliorer commentaire
+        if self.numero_periode is None:  # TODO : ameliorer commentaire
             ecart = 0
         else:
             ecart = self.numero_periode - nombre_periodes_ecoulees
@@ -280,14 +279,7 @@ class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style a une
 
         :return: nombre de tics restant avant la fin de la periode
         """
-        if self.numero_periode is None:
-            ecart = 0
-        else:
-            ecart = self.numero_periode - self.nombre_periodes_ecoulees()
-        if ecart >= 0:
-            return (ecart * self.periode + self.periode - self.temps_ecoule_periode_actuelle()) / self.tic
-        else:
-            return 0
+        return self.temps_restant() / self.tic
 
 
 class Jeu(object):
@@ -393,14 +385,13 @@ class Jeu(object):
             if self.doit_recommencer:
                 self.recommencer()
             else:
-                if self.minuteur.tics_restants() > 0:  # Si la periode n'est pas finie
-                    self.minuteur.attendre_fin()
+                self.minuteur.attendre_fin()
 
             print(time.time() - debut)
 
     def editeur_niveau(self):
-        niveau = Carte(Niveau(("~"*10 + "\n")*10))
-        self.interface.afficher(niveau)
+        carte = Carte(Niveau((("~"*10 + "\n")*10)))
+        self.interface.afficher(carte)
         continuer = True
         minuteur = Minuteur(1/60.0, 0.005)
         while continuer:
@@ -408,17 +399,29 @@ class Jeu(object):
             while minuteur.tics_restants() > 1:
                 evenements = pygame.event.get()
                 self.gerer_evenements_fenetre(evenements)
+
                 bouttons_presses = pygame.mouse.get_pressed()
                 clic_gauche = bouttons_presses[CLIC.GAUCHE] and not bouttons_presses[CLIC.DROIT]
                 clic_droit = bouttons_presses[CLIC.DROIT] and not bouttons_presses[CLIC.GAUCHE]
+
                 position = pygame.mouse.get_pos()
-                InterfaceGraphique.coords_ecran_vers_carte()
+                position = InterfaceGraphique.coords_ecran_vers_carte(carte, *position)
+                try:
+                    case = carte.case_a(*position)
+                except LookupError:
+                    case = None  # Pas de case cliquee
+                if clic_gauche:
+                    pass
+                    # TODO : ajouter bloc dans case
+                elif clic_droit:
+                    pass
+                    # TODO : enlever bloc dans case
 
                 if minuteur.tics_restants() > 1:
                     minuteur.attendre_un_tic()
-            self.interface.afficher(niveau)
+            self.interface.afficher(carte)
             minuteur.attendre_fin()
-        self.niveau = niveau  # TODO : convertir "niveau" en niveau
+        self.niveau = Niveau.depuis_carte(carte)
         self.doit_recommencer = True
 
     def gerer_evenements_fenetre(self, evenements):
