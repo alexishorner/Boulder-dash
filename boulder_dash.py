@@ -8,4 +8,4 @@ from controleur import *
 
 if __name__ == "__main__":
     jeu = Jeu()
-    jeu.commencer()
+    jeu.boucle()

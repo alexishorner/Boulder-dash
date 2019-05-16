@@ -2,6 +2,7 @@
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
 # TODO :
+#   - recommencer
 #   - porte
 #   - animations
 #   - son
@@ -303,7 +304,7 @@ class Entree(Porte):
     """
     def __init__(self, rect):
         super(Entree, self).__init__(rect)
-        self.est_activee = True
+        self.est_activee = True  # TODO : voir ce qu'on fait de la porte une fois que le personnage est entre
 
 
 class Sortie(Porte):

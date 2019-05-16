@@ -17,7 +17,8 @@ if os.name == "nt" and sys.getwindowsversion()[0] >= 6:
 pygame.init()  # obligatoire pour utiliser une grande partie de pygame
 _info = pygame.display.Info()
 RESOLUTION = _info.current_w, _info.current_h
-ECRAN = pygame.display.set_mode(RESOLUTION, FULLSCREEN)  # obligatoire pour pouvoir charger des images
+ECRAN = pygame.display.set_mode(RESOLUTION, RESIZABLE)  # obligatoire pour pouvoir charger des images
+# ECRAN = pygame.display.set_mode(RESOLUTION, FULLSCREEN)  # obligatoire pour pouvoir charger des images
 _chemin = os.path.dirname(__file__)  # on recupere le chemin du module ci-present
 os.chdir(_chemin)  # on change de repertoire pour pouvoir utiliser des chemins relatifs
 

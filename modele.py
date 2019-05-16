@@ -233,7 +233,7 @@ class Carte(object):
             raise ValueError("Les cases doivent etre un dictionnaire.")
         self._cases = valeur
         self.actualiser_blocs()
-        self.rectangle = self.rectangle_carte(self.cases)
+        self.rectangle = self.rectangle_carte(self.cases, self.largeur_case)
         self.nombre_cases_largeur = self.rectangle.width / self.largeur_case
         self.nombre_cases_hauteur = self.rectangle.height / self.largeur_case
 
@@ -242,12 +242,12 @@ class Carte(object):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
 
     def x_min(self):
-        largeur_jeu = self.largeur_case * self.nombre_cases_largeur
-        x_min_f = (RESOLUTION[0] - largeur_jeu) / 2.0
-        return int(round(x_min_f))
+        largeur_jeu = self.rectangle.width
+        x_min_exact = (RESOLUTION[0] - largeur_jeu) / 2.0
+        return int(round(x_min_exact))
 
     def y_min(self):
-        hauteur_jeu = self.largeur_case * self.nombre_cases_hauteur
+        hauteur_jeu = self.rectangle.height
         y_min_exact = (RESOLUTION[1] - hauteur_jeu) / 2.0
         return int(round(y_min_exact))
 
@@ -282,29 +282,29 @@ class Carte(object):
     def supprimer_morts(self):
         for bloc in self.blocs_tries:
             if bloc.est_mort:
-                if isinstance(bloc, Personnage):
-                    print("mort")
-                    while 1:
-                        for evenement in pygame.event.get():
-                            if evenement.type == QUIT:
-                                quit()
-                            if evenement.type == KEYDOWN:
-                                if evenement.key == K_q:
-                                    quit()
+                # if isinstance(bloc, Personnage):
+                #     print("mort")
+                #     while 1:
+                #         for evenement in pygame.event.get():
+                #             if evenement.type == QUIT:
+                #                 quit()
+                #             if evenement.type == KEYDOWN:
+                #                 if evenement.key == K_q:
+                #                     quit()
                 self.supprimer(bloc)
 
     @staticmethod
-    def rectangle_carte(cases):
+    def rectangle_carte(cases, largeur_case):
         x_min = y_min = x_max = y_max = None
         cles = cases.keys()
         if cles:
             xs = [cle.x for cle in cles]
             x_min = min(xs)
-            x_max = max(xs)
+            x_max = max(xs) + largeur_case
 
             ys = [cle.y for cle in cles]
             y_min = min(ys)
-            y_max = max(ys)
+            y_max = max(ys) + largeur_case
         return Rectangle(x_min, y_min, x_max - x_min, y_max - y_min)
 
     def blocs_a(self, x, y):

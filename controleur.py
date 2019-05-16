@@ -286,18 +286,24 @@ class Jeu(object):
     """
     Classe gerant l'ensemble du jeu.
     """
+    NOMBRE_DIAMANTS_POUR_SORTIR = 4
+    TEMPS_MAX = 120
+
     def __init__(self):
         pygame.init()
         self.ecran = ECRAN
         self.arriere_plan = pygame.Surface(RESOLUTION)
         self.arriere_plan.fill((0, 0, 0))
-        self.carte = Carte(Niveau.niveau(1))
-        self.personnage = self.carte.personnage
+        self. niveau = Niveau.niveau(1)
 
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.15, 0.01)
 
+        self.doit_recommencer = False
+        self.carte = None
+        self.personnage = None
+        self.recommencer()
     @property
     def mouvement_detecte(self):
         """
@@ -323,9 +329,38 @@ class Jeu(object):
         """
         exit()  # TODO : ajouter confirmation
 
-    def commencer(self):
+    def recommencer(self):
+        self.carte = Carte(self.niveau)
+        self.personnage = self.carte.personnage
+        self.minuteur.reinitialiser()
+        self.doit_recommencer = False
+
+    def verifier_perdu(self):
+        if self.personnage.est_mort or self.minuteur.temps_ecoule() > self.TEMPS_MAX:
+            self.doit_recommencer = True
+
+    def niveau_suivant(self):
+        i = self.niveau.numero
+        if i < len(NIVEAUX):
+            self.niveau = Niveau.niveau(i + 1)
+            self.doit_recommencer = True
+            return True
+        return False
+
+    def felicitations(self):
+        print("Felicitations, vous avez termine tous les niveaux.")  # TODO : remplacer par texte dans pygame
+
+    def gagne(self):
+        if not self.niveau_suivant():
+            self.felicitations()
+
+    def activer_sortie(self):
+        if self.personnage.diamants_ramasses >= self.NOMBRE_DIAMANTS_POUR_SORTIR:
+            self.carte.blocs_uniques[Sortie].activer()
+
+    def boucle(self):
         """
-        Commence le jeu et continue jusqu'a l'arret du programme
+        Fait fonctionner le jeu jusqu'a la fermeture du programme.
 
         :return: "None"
         """
@@ -336,14 +371,21 @@ class Jeu(object):
             debut = time.time()
             while self.minuteur.tics_restants() > 1:    # Verifie les evenements a intervalles regulier pour eviter de
                                                         # rater des evenements
-                self.gerer_evenements()  # Gere les evenements autres que les mouvements
+                self.gerer_evenements()
 
                 if self.minuteur.tics_restants() > 1:  # S'il reste de quoi attendre un tic
                     self.minuteur.attendre_un_tic()
             self.effectuer_mouvements()
             if self.carte.nombre_diamants == self.personnage.diamants_ramasses:
                 self.carte.sortie.activer()
+
+            self.verifier_perdu()
+            self.activer_sortie()
+
             self.actualiser_ecran()
+
+            if self.doit_recommencer:
+                self.recommencer()
 
             if self.minuteur.tics_restants() > 0:  # Si la periode n'est pas finie
                 self.minuteur.attendre_fin()
@@ -360,18 +402,35 @@ class Jeu(object):
         self.carte.dessiner(self.ecran)  # Dessine les blocs
         pygame.display.flip()  # Actualise l'ecran
 
+    def passer_en_plein_ecran(self):
+        resolution = self.ecran.get_size()
+        self.ecran = pygame.display.set_mode(resolution, FULLSCREEN)
+
+    def passer_en_fenetre(self):
+        resolution = self.ecran.get_size()
+        self.ecran = pygame.display.set_mode(resolution, RESIZABLE)
+
     def gerer_evenements(self):
         """
         Regarde les evenements et effectue les actions associees a chacun d'entre eux.
 
         :return: Booleen informant si une touche a provoque une action dans le jeu
         """
+        # TODO : ajouter limite temps
         for evenement in pygame.event.get():
             if evenement.type == QUIT:
                 self.quitter()
-            if evenement.type == KEYDOWN:
+            if evenement.type == KEYUP:
                 if evenement.key == K_q:
-                    quit()
+                    self.quitter()
+                if evenement.key == K_ESCAPE:
+                    mods = pygame.key.get_mods()
+                    # On regarde si la touche Maj est pressee et qu'aucun autre modificateur ne l'est, on utilise pour
+                    # ce faire des operateurs bit a bit
+                    if mods & KMOD_SHIFT and not mods & ~KMOD_SHIFT:
+                            self.passer_en_plein_ecran()
+                    elif not mods:
+                        self.passer_en_fenetre()
         self.gerer_mouvement()  # Pas besoin de verifier un KEYDOWN grace au gestionnaire de touches
                                 # KEYDOWN n'est parfois pas present alors qu'il devrait
 
@@ -469,7 +528,10 @@ class Jeu(object):
             actions.append(Action(personnage.creuser_terre, bloc_collisionne))
             reussite = True
         elif isinstance(bloc_collisionne, Porte):
-            reussite = True
+            if bloc_collisionne.est_activee:
+                reussite = True
+                if isinstance(bloc_collisionne, Sortie):
+                    self.gagne()
         if not essai:
             for action in actions:
                 action.effectuer()
