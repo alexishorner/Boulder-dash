@@ -76,10 +76,13 @@ class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe
     """
     Classe permettant de gerer les evenements de pression des touches.
 
-    Dans pygame, si nous voulons savoir les touches pressees il faut appeler "pygame.key.get_pressed()", cette methode
-    renvoie une liste de booleens indiquant pour chaque touche possible si elle est pressee. Pour ordonner les touches
-    pressees dans l'ordre de pressage il est plus simple de conserver une liste des indexes des touches pressees, ce qui
-    est a l'origine des differentes conversions presentes dans les methode de cette classe.
+    Contrairement a "pygame.key.get_pressed()", elle permet de savoir dans quel ordre les differentes touches ont ete
+    pressees.
+
+    La methode "pygame.key.get_pressed()" renvoie une liste de booleens indiquant pour chaque touche possible si elle
+    est pressee. Pour ordonner les touches pressees dans l'ordre de pressage il est plus simple de conserver une liste
+    des indexes des touches pressees, ce qui est a l'origine des differentes conversions presentes dans les methode de
+    cette classe.
     """
     def __init__(self, touches_pressees_booleens=None):
         if touches_pressees_booleens is None:
@@ -253,19 +256,23 @@ class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style a une
 
         :return: "None"
         """
-        nombre_periodes_ecoulees = self.nombre_periodes_ecoulees()  # On stocke le nombre de periode ecoulees, car il
-                                                                    # varie en fonction du temps
-        if self.numero_periode is None:  # Si on est au premier tour apres la reinitialisation
+        temps = self.temps_restant()
+        if temps > 0:
+            time.sleep(temps)  # On attend la fin de la periode numero "self.numero_periode"
+
+    def temps_restant(self):
+        nombre_periodes_ecoulees = self.nombre_periodes_ecoulees()
+
+        # Dans l'eventualite ou le numero de la periode est superieur au nombre de periodes ecoulees (peut arriver si la
+        # methode "self.passage" appelee deux fois de suite sans attendre)
+        if self.numero_periode is None or self.numero_periode < nombre_periodes_ecoulees:  # TODO : ameliorer commentaire
             ecart = 0
-        elif self.numero_periode >= nombre_periodes_ecoulees:   # Dans l'eventualite ou le numero de la periode est
-                                                                # superieur au nombre de periodes ecoulees (peut arriver
-                                                                # si la methode "self.passage" appelee deux fois de
-                                                                # suite sans attendre)
-            ecart = self.numero_periode - nombre_periodes_ecoulees
         else:
-            return
-        temps = ecart * self.periode + (self.periode - self.temps_ecoule_periode_actuelle())
-        time.sleep(temps)  # On attend la fin de la periode numero "self.numero_periode"
+            ecart = self.numero_periode - nombre_periodes_ecoulees
+        if ecart >= 0:
+            return ecart * self.periode + (self.periode - self.temps_ecoule_periode_actuelle())
+        else:
+            return 0
 
     def tics_restants(self):
         """
@@ -394,17 +401,28 @@ class Jeu(object):
     def editeur_niveau(self):
         niveau = Carte(Niveau(("~"*10 + "\n")*10))
         self.interface.afficher(niveau)
-        # TODO : finir
-        self.niveau = niveau
+        continuer = True
+        minuteur = Minuteur(1/60.0, 0.005)
+        while continuer:
+            minuteur.passage()
+            while minuteur.tics_restants() > 1:
+                evenements = pygame.event.get()
+                self.gerer_evenements_fenetre(evenements)
+                bouttons_presses = pygame.mouse.get_pressed()
+                clic_gauche = bouttons_presses[CLIC.GAUCHE] and not bouttons_presses[CLIC.DROIT]
+                clic_droit = bouttons_presses[CLIC.DROIT] and not bouttons_presses[CLIC.GAUCHE]
+                position = pygame.mouse.get_pos()
+                InterfaceGraphique.coords_ecran_vers_carte()
+
+                if minuteur.tics_restants() > 1:
+                    minuteur.attendre_un_tic()
+            self.interface.afficher(niveau)
+            minuteur.attendre_fin()
+        self.niveau = niveau  # TODO : convertir "niveau" en niveau
         self.doit_recommencer = True
 
-    def gerer_evenements(self):
-        """
-        Regarde les evenements et effectue les actions associees a chacun d'entre eux.
-
-        :return: Booleen informant si une touche a provoque une action dans le jeu
-        """
-        for evenement in pygame.event.get():
+    def gerer_evenements_fenetre(self, evenements):
+        for evenement in evenements:
             if evenement.type == QUIT:
                 self.quitter()
             if evenement.type == KEYUP:
@@ -412,12 +430,21 @@ class Jeu(object):
                     self.quitter()
                 if evenement.key == K_ESCAPE:
                     mods = pygame.key.get_mods()
+
                     # On regarde si la touche Maj est pressee et qu'aucun autre modificateur ne l'est, on utilise pour
                     # ce faire des operateurs bit a bit
                     if mods & KMOD_SHIFT and not mods & ~KMOD_SHIFT:
-                            self.interface.passer_en_plein_ecran()
+                        self.interface.passer_en_plein_ecran()
                     elif not mods:
                         self.interface.passer_en_fenetre()
+
+    def gerer_evenements(self):
+        """
+        Regarde les evenements et effectue les actions associees a chacun d'entre eux.
+
+        :return: Booleen informant si une touche a provoque une action dans le jeu
+        """
+        self.gerer_evenements_fenetre(pygame.event.get())
         self.gerer_mouvement()  # Pas besoin de verifier un KEYDOWN grace au gestionnaire de touches
                                 # KEYDOWN n'est parfois pas present alors qu'il devrait
 

@@ -30,11 +30,26 @@ class InterfaceGraphique:
     def coordonnees_vers_index(cls, carte, x, y):
         return (x - cls.x_min(carte)) / carte.largeur_case, (y - cls.y_min(carte)) / carte.largeur_case
 
-    def rect_carte_vers_rect_ecran(self, carte, rect):
-        rect_ = rect.copy()
-        rect_.x = self.x_min(carte) + rect.x
-        rect_.y = self.y_min(carte) + rect.y
-        return rect_
+    @staticmethod
+    def appliquer_transformation(transformation, x=None, y=None, rect=None):
+        if rect is not None:
+            retour = rect.copy()
+            retour.x, retour.y = transformation(rect.x, rect.y)
+        elif None not in (x, y):
+            retour = transformation(x, y)
+        else:
+            raise TypeError("Les arguments de la methode ne peuvent pas tous etre None.")
+        return retour
+
+    @classmethod
+    def coords_carte_vers_ecran(cls, carte, x=None, y=None, rect=None):
+        transformation = lambda x, y: (cls.x_min(carte) + x, cls.y_min(carte) + y)
+        return cls.appliquer_transformation(transformation, x, y, rect)
+
+    @classmethod
+    def coords_ecran_vers_carte(cls, carte, x=None, y=None, rect=None):
+        transformation = lambda x, y: (cls.x_min(carte) + x, cls.y_min(carte) + y)
+        return cls.appliquer_transformation(transformation, x, y, rect)
 
     def passer_en_plein_ecran(self):
         resolution = self.ecran.get_size()
@@ -49,5 +64,5 @@ class InterfaceGraphique:
 
         # On dessine les blocs par ordre de position z
         for bloc in carte.blocs_tries:
-            self.ecran.blit(bloc.image, self.rect_carte_vers_rect_ecran(carte, bloc.rect))
+            self.ecran.blit(bloc.image, self.coords_carte_vers_ecran(carte, rect=bloc.rect))
         pygame.display.flip()  # Actualise l'ecran
