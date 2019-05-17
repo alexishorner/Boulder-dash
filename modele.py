@@ -227,8 +227,8 @@ class Carte(object):
         self.niveau = niveau
         self.personnage = self.blocs_uniques[Personnage]
         self.sortie = self.blocs_uniques[Sortie]
-        if self.personnage is None:  # On oblige la presence d'un personnage, car on ne peut pas jouer sans
-            raise LookupError("Pas de personnage trouve.")
+        # if self.personnage is None:  # On oblige la presence d'un personnage, car on ne peut pas jouer sans
+        #     raise LookupError("Pas de personnage trouve.")
 
     @property
     def niveau(self):
@@ -271,6 +271,9 @@ class Carte(object):
     @cases.deleter
     def cases(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
+
+    def set_blocs(self, case, blocs):
+        pass  # TODO : implementer
 
     def actualiser_blocs(self):
         blocs = []
@@ -371,6 +374,7 @@ class Carte(object):
     def case_a(self, x, y, index=True):
         """
         Permet d'acceder a la case situee a la position (x, y).
+
         :param x: coordonnee x de la case
         :param y: coordonne y de la case
         :return: instance de "Case" se situant a la position (x, y)
@@ -380,3 +384,18 @@ class Carte(object):
         else:
             rect = Rectangle(x, y, self.largeur_case, self.largeur_case)
         return self.cases[rect]
+
+    def case_vers(self, x, y):
+        for case in self.cases.itervalues():
+            rect = case.rect
+            if rect.collidepoint(x, y):
+                return case
+        return None
+
+    def valider(self):
+        erreurs = []
+        if self.personnage is None:
+            erreurs.append(None)
+        if self.sortie is None:
+            erreurs.append(None)
+        return len(erreurs) == 0, erreurs # TODO : implementer

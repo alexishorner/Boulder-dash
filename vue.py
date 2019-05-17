@@ -59,10 +59,14 @@ class InterfaceGraphique:
         resolution = self.ecran.get_size()
         self.ecran = pygame.display.set_mode(resolution, RESIZABLE)
 
-    def afficher(self, carte):
+    def afficher(self, carte=None, *autres_objets):
         self.ecran.blit(self.arriere_plan, (0, 0))  # Dessine l'arriere plan
 
         # On dessine les blocs par ordre de position z
-        for bloc in carte.blocs_tries:
-            self.ecran.blit(bloc.image, self.coords_carte_vers_ecran(carte, rect=bloc.rect))
+        if carte is not None:
+            for bloc in carte.blocs_tries:
+                if bloc is not None:
+                    self.ecran.blit(bloc.image, self.coords_carte_vers_ecran(carte, rect=bloc.rect))
+        for objet in autres_objets:
+            self.ecran.blit(objet.image, objet.rect)
         pygame.display.flip()  # Actualise l'ecran

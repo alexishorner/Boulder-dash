@@ -74,8 +74,8 @@ class TOUCHES:
     DROITE = (K_RIGHT, K_d)
 
 class CLIC:
-    GAUCHE = 1
-    DROIT = 3
+    GAUCHE = 0
+    DROIT = 2
 
 
 NIVEAUX = ("""

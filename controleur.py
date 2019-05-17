@@ -389,8 +389,36 @@ class Jeu(object):
 
             print(time.time() - debut)
 
+    def carte_vide(self, largeur, hauteur):
+        derniere_ligne = "#" * largeur
+        premiere_ligne = derniere_ligne + "\n"
+        ligne_millieu = "#" + "~" * (largeur - 2) + "#\n"
+        niveau_ascii = premiere_ligne + ligne_millieu * (hauteur - 2) + derniere_ligne
+        return Carte(Niveau(niveau_ascii))
+
+    def blocs_selectionnables(self, x, y, largeur):
+        blocs_selectionnables = [Terre, Mur, Caillou, Diamant, Personnage, Sortie]
+        for i, bloc in enumerate(blocs_selectionnables):
+            rect = pygame.Rect(x, y + i * largeur, largeur, largeur)
+            blocs_selectionnables[i] = bloc(rect)
+        return blocs_selectionnables
+
+    def objet_clique(self, pos, *objets):
+        for objet in objets:
+            if objet.rect.collidepoint(pos):
+                return objet
+
+    def selectionner(self, bloc):
+        pass
+
     def editeur_niveau(self):
-        carte = Carte(Niveau((("~"*10 + "\n")*10)))
+        carte = self.carte_vide(10, 10)
+        x = 0
+        y = 0
+        blocs_selectionnables = self.blocs_selectionnables(x, y, carte.largeur_case)
+        bloc_selectionne = blocs_selectionnables[0]
+        del x, y
+
         self.interface.afficher(carte)
         continuer = True
         minuteur = Minuteur(1/60.0, 0.005)
@@ -399,27 +427,31 @@ class Jeu(object):
             while minuteur.tics_restants() > 1:
                 evenements = pygame.event.get()
                 self.gerer_evenements_fenetre(evenements)
+                for evenement in evenements:
+                    if evenement.type in (MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION):
+                        boutons_presses = pygame.mouse.get_pressed()
+                        clic_gauche = boutons_presses[CLIC.GAUCHE] and not boutons_presses[CLIC.DROIT]
+                        clic_droit = boutons_presses[CLIC.DROIT] and not boutons_presses[CLIC.GAUCHE]
+                        position_souris = pygame.mouse.get_pos()
+                        position = InterfaceGraphique.coords_ecran_vers_carte(carte, *position_souris)
 
-                bouttons_presses = pygame.mouse.get_pressed()
-                clic_gauche = bouttons_presses[CLIC.GAUCHE] and not bouttons_presses[CLIC.DROIT]
-                clic_droit = bouttons_presses[CLIC.DROIT] and not bouttons_presses[CLIC.GAUCHE]
-
-                position = pygame.mouse.get_pos()
-                position = InterfaceGraphique.coords_ecran_vers_carte(carte, *position)
-                try:
-                    case = carte.case_a(*position)
-                except LookupError:
-                    case = None  # Pas de case cliquee
-                if clic_gauche:
-                    pass
-                    # TODO : ajouter bloc dans case
-                elif clic_droit:
-                    pass
-                    # TODO : enlever bloc dans case
-
-                if minuteur.tics_restants() > 1:
-                    minuteur.attendre_un_tic()
-            self.interface.afficher(carte)
+                        case = carte.case_vers(*position)
+                        if clic_gauche:
+                            if case is None:  # Pas de case touchee sur la carte
+                                bloc_clique = self.objet_clique(position_souris, *blocs_selectionnables)
+                                if bloc_clique is not None:
+                                    bloc_selectionne = bloc_clique
+                            else:
+                                rect = case.rect
+                                if len(case.blocs) != 1 or case.blocs[0].__class__ != bloc_selectionne.__class__:
+                                    case.blocs = [bloc_selectionne.__class__(rect)]  # On construit un bloc du bon type
+                        elif clic_droit:
+                            if case is not None:
+                                case.blocs = [None]
+                        carte.actualiser_blocs()
+                        if minuteur.tics_restants() > 1:
+                            minuteur.attendre_un_tic()
+            self.interface.afficher(carte, *blocs_selectionnables)
             minuteur.attendre_fin()
         self.niveau = Niveau.depuis_carte(carte)
         self.doit_recommencer = True
@@ -431,7 +463,7 @@ class Jeu(object):
             if evenement.type == KEYUP:
                 if evenement.key == K_q:
                     self.quitter()
-                if evenement.key == K_ESCAPE:
+                elif evenement.key == K_ESCAPE:
                     mods = pygame.key.get_mods()
 
                     # On regarde si la touche Maj est pressee et qu'aucun autre modificateur ne l'est, on utilise pour
@@ -440,6 +472,8 @@ class Jeu(object):
                         self.interface.passer_en_plein_ecran()
                     elif not mods:
                         self.interface.passer_en_fenetre()
+                elif evenement.key == K_F12:
+                    self.editeur_niveau()
 
     def gerer_evenements(self):
         """
@@ -498,7 +532,10 @@ class Jeu(object):
     def bloc_collisionne(self, bloc, directions=tuple()):
         v = vecteur(directions, self.carte.largeur_case)
         rect = bloc.rect_hashable.move(v)
-        blocs_collisionnes = self.carte.cases[rect].blocs
+        try:
+            blocs_collisionnes = self.carte.cases[rect].blocs
+        except KeyError:  # bloc pas dans la carte
+            blocs_collisionnes = [False]
         if len(blocs_collisionnes) == 1:
             bloc_collisionne = blocs_collisionnes[0]
         else:  # len == 2
@@ -575,18 +612,19 @@ class Jeu(object):
         if bloc.PEUT_SE_DEPLACER:
             bloc_collisionne = self.bloc_collisionne(bloc, direction)
 
-            if bloc_collisionne is None:
-                reussite = True
-            else:
-                if isinstance(bloc, Personnage):
-                    reussite = self._collision_personnage(bloc, bloc_collisionne, direction, essai)
-                elif isinstance(bloc, BlocTombant):
-                    reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction)
-            if not essai:
-                if reussite:
-                    nouveau_rect = bloc.rect.move(vecteur(direction, self.carte.largeur_case))
-                    self.carte.bouger(bloc, nouveau_rect)
-                    bloc.a_deja_bouge = True
+            if bloc_collisionne is not False:  # Si le bloc n'est pas hors de la carte
+                if bloc_collisionne is None:
+                    reussite = True
+                else:
+                    if isinstance(bloc, Personnage):
+                        reussite = self._collision_personnage(bloc, bloc_collisionne, direction, essai)
+                    elif isinstance(bloc, BlocTombant):
+                        reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction)
+                if not essai:
+                    if reussite:
+                        nouveau_rect = bloc.rect.move(vecteur(direction, self.carte.largeur_case))
+                        self.carte.bouger(bloc, nouveau_rect)
+                        bloc.a_deja_bouge = True
         return reussite, bloc_collisionne  # Le bloc collisionne n'est juste que si reussite == False
 
     def faire_tomber_droit(self, bloc, essai=False):
