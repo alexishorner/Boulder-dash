@@ -339,10 +339,7 @@ class Jeu(object):
         exit()  # TODO : ajouter confirmation
 
     def recommencer(self):
-        decalage = None
-        if self.mode == MODE.EDITEUR:
-            decalage = (self.carte.largeur_case + self.interface.marge, 0)
-        rect = self.interface.rect_carte(self.niveau, decalage)
+        rect = self.interface.rect_carte(self.niveau)
         self.carte = Carte(rect, self.niveau)
         self.minuteur.reinitialiser()
         self.doit_recommencer = False
@@ -405,7 +402,10 @@ class Jeu(object):
         ligne_millieu = "#" + "~" * (largeur - 2) + "#\n"
         niveau_ascii = premiere_ligne + ligne_millieu * (hauteur - 2) + derniere_ligne
         niveau = Niveau(niveau_ascii)
-        rect = self.interface.rect_carte(niveau)
+        decalage = None
+        if self.mode == MODE.EDITEUR:
+            decalage = (self.carte.largeur_case + self.interface.marge, 0)
+        rect = self.interface.rect_carte(niveau, decalage)
         return Carte(rect, niveau)
 
     def blocs_selectionnables(self, x, y, largeur, hauteur):
