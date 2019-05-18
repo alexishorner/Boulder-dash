@@ -3,7 +3,7 @@ Module stockant les donnees du jeu.
 """
 from blocs import *
 import itertools
-from numpy import array
+from numpy import matrix
 
 
 def _enlever_extremite(chaine, extremite=ORIENTATIONS.GAUCHE, caracteres_a_enlever=("\n", " ")):
@@ -73,18 +73,14 @@ def trier(blocs):
     return blocs_
 
 
-def rectangle_a(x, y, largeur):
-    pos_x, pos_y = x * largeur, y * largeur
-    return Rectangle(pos_x, pos_y, largeur, largeur)
-
-
 class Case(object):
     """
     Classe permettant de stocker des blocs partageant la meme position.
     """
-    def __init__(self, rect, blocs=tuple()):
+    def __init__(self, rect, index, blocs=tuple()):
+        self.blocs = blocs
+        self.index = Coordonnees(index[0], index[1])
         self.rect = Rectangle(rect)
-        self.blocs = list(blocs)
 
     @property
     def blocs(self):
@@ -98,6 +94,18 @@ class Case(object):
     @blocs.deleter
     def blocs(self):
         raise AttributeError("L'attribut ne peut pas etre supprime.")
+
+    @property
+    def rect(self):
+        return self._rect
+
+    @rect.setter
+    def rect(self, nouveau):
+        rect = pygame.Rect(nouveau)
+        for bloc in self.blocs:
+            if bloc is not None:
+                bloc.rect = rect
+        self._rect = rect
 
     def ajouter(self, bloc):
         self._blocs.append(bloc)
@@ -134,6 +142,8 @@ class Niveau(object):
 
     def __init__(self, ascii, numero=None):
         self.numero = numero  # Numero du niveau
+        self.nombre_cases_largeur = 0
+        self.nombre_cases_hauteur = 0
         self.ascii = ascii  # Representation du niveau avec des caracteres ascii
 
     @property
@@ -143,42 +153,15 @@ class Niveau(object):
     @ascii.setter
     def ascii(self, valeur):
         # On enleve tous les espaces, ainsi que les retours a la ligne se trouvant au debut ou a la fin
-        self._ascii = enlever_extremites(valeur).replace(" ", "")
-
-    @property
-    def nombre_cases_largeur(self):
-        return len(self.ascii.split("\n")[0])
-
-    @property
-    def nombre_cases_hauteur(self):
-        return len(self.ascii.split("\n"))
-
-    @property
-    def largeur_case(self):
-        largeur_max_case = RESOLUTION[0] / self.nombre_cases_largeur
-        hauteur_max_case = RESOLUTION[1] / self.nombre_cases_hauteur
-        return min(largeur_max_case, hauteur_max_case)
-
-    def vers_cases(self):
-        """
-        Prend en entree un niveau et cree un groupe de cases ayant chacun le type et la position dictee par le niveau.
-
-        :return: groupe de cases initialises avec la bonne position et le bon type
-        """
-        lignes_ascii = self.ascii.split("\n")
-        cases = dict()
-        for y, ligne_ascii in enumerate(lignes_ascii):
-            if len(ligne_ascii) != self.nombre_cases_largeur:  # On teste si chaque ligne fait la meme longueur
+        ascii = enlever_extremites(valeur).replace(" ", "")
+        lignes = ascii.split("\n")
+        longueur_premiere_ligne = len(lignes[0])
+        for ligne in lignes:
+            if len(ligne) != longueur_premiere_ligne:  # On teste si chaque ligne fait la meme longueur
                 raise ValueError("Le niveau a ete defini incorrectement.")
-
-            for x, bloc_ascii in enumerate(ligne_ascii):
-                rect = rectangle_a(x, y, self.largeur_case)
-                case = Case(rect)
-                bloc = self.ASCII_VERS_BLOC[bloc_ascii](rect)  # On convertit chaque caractere en bloc et leur attribue
-                                                               # une position initiale
-                case.ajouter(bloc)
-                cases.update({rect: case})
-        return cases
+        self.nombre_cases_hauteur = len(lignes)
+        self.nombre_cases_largeur = longueur_premiere_ligne
+        self._ascii = ascii
 
     @classmethod
     def depuis_carte(cls, carte):
@@ -219,16 +202,15 @@ class Carte(object):
     """
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
-    def __init__(self, niveau):
+    def __init__(self, rect, niveau):
         self.blocs_tries = []
         self.blocs_uniques = dict()
         self.cailloux = dict()
         self.nombre_diamants = 0
+        self.nombre_cases_hauteur = 0
+        self.nombre_cases_largeur = 0
+        self._rect = rect
         self.niveau = niveau
-        self.personnage = self.blocs_uniques[Personnage]
-        self.sortie = self.blocs_uniques[Sortie]
-        # if self.personnage is None:  # On oblige la presence d'un personnage, car on ne peut pas jouer sans
-        #     raise LookupError("Pas de personnage trouve.")
 
     @property
     def niveau(self):
@@ -242,8 +224,7 @@ class Carte(object):
     @niveau.setter
     def niveau(self, valeur):
         self._niveau = valeur
-        self.largeur_case = valeur.largeur_case
-        self.cases = valeur.vers_cases()
+        self.sur_changement_niveau()
 
     @niveau.deleter
     def niveau(self):
@@ -263,14 +244,64 @@ class Carte(object):
         if not isinstance(valeur, dict):
             raise ValueError("Les cases doivent etre un dictionnaire.")
         self._cases = valeur
-        self.actualiser_blocs()
-        self.rectangle = self.rectangle_carte(self.cases, self.largeur_case)
-        self.nombre_cases_largeur = self.rectangle.width / self.largeur_case
-        self.nombre_cases_hauteur = self.rectangle.height / self.largeur_case
+        self.actualiser_blocs()  # FIXME : attention on n'actualise pas le nombre de cases dans la largeur et la hauteur
 
     @cases.deleter
     def cases(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
+
+    @property
+    def rect(self):
+        return self._rect
+
+    @rect.setter
+    def rect(self, nouveau):
+        self._rect = nouveau
+        self.actualiser_dimensions_cases()
+
+    @property
+    def largeur_case(self):
+        return self.rect.width / self.nombre_cases_largeur
+
+    @property
+    def hauteur_case(self):
+        return self.rect.height / self.nombre_cases_hauteur
+
+    def index_vers_coordonnees(self, x, y):
+        return self.rect.x + x * self.largeur_case, self.rect.y + y * self.hauteur_case
+
+    def coordonnees_vers_index(self, x, y):
+        return (x - self.rect.x) / self.largeur_case, (y - self.rect.y) / self.hauteur_case
+
+    def actualiser_dimensions_cases(self):
+        cases = dict()
+        for case in self.cases.itervalues():
+            rect = case.rect.copy()  # On modifie une copie du rectangle pour que la case soit au courant du changement
+            rect.x, rect.y = self.index_vers_coordonnees(*case.index)
+            case.rect = rect  # La case sait qu'on change de rectangle
+            cases.update({rect: case})
+
+    def sur_changement_niveau(self):
+        """
+        Actualise la carte apres un changement de niveau.
+
+        :return: "None"
+        """
+        self.nombre_cases_hauteur = self.niveau.nombre_cases_hauteur
+        self.nombre_cases_largeur = self.niveau.nombre_cases_largeur
+        lignes_ascii = self.niveau.ascii.split("\n")
+        cases = dict()
+        for index_y, ligne_ascii in enumerate(lignes_ascii):
+            for index_x, bloc_ascii in enumerate(ligne_ascii):
+                x, y = self.index_vers_coordonnees(index_x, index_y)
+                rect = Rectangle(x, y, self.largeur_case, self.hauteur_case)
+                case = Case(rect, (index_x, index_y))
+
+                # On convertit chaque caractere en bloc et leur attribue une position initiale
+                bloc = self.niveau.ASCII_VERS_BLOC[bloc_ascii](rect)
+                case.ajouter(bloc)
+                cases.update({rect: case})
+        self.cases = cases
 
     def set_blocs(self, case, blocs):
         pass  # TODO : implementer
@@ -283,6 +314,9 @@ class Carte(object):
             blocs.remove(None)
         self.blocs_tries = trier(blocs)
         self.blocs_uniques = self.trouver_blocs_uniques(self.blocs_tries)
+        self.personnage = self.blocs_uniques[Personnage]
+        self.sortie = self.blocs_uniques[Sortie]
+        self.nombre_diamants_pour_sortir = 4
         self.nombre_diamants = self.compter_diamants(self.blocs_tries)
         self.cailloux = self.trouver_cailloux(self.blocs_tries)
 
@@ -297,37 +331,54 @@ class Carte(object):
         self.cases[bloc.rect_hashable].enlever(bloc)
         self.actualiser_blocs()
 
+    def ajouter_ligne(self, y):
+        ligne = []
+        for i in range(self.nombre_cases_largeur):
+            case = Case()
+
     def supprimer_morts(self):
         for bloc in self.blocs_tries:
             if bloc.est_mort:
-                # if isinstance(bloc, Personnage):
-                #     print("mort")
-                #     while 1:
-                #         for evenement in pygame.event.get():
-                #             if evenement.type == QUIT:
-                #                 quit()
-                #             if evenement.type == KEYDOWN:
-                #                 if evenement.key == K_q:
-                #                     quit()
                 self.supprimer(bloc)
 
-    @staticmethod
-    def rectangle_carte(cases, largeur_case):
-        x_min = y_min = x_max = y_max = None
-        cles = cases.keys()
-        if cles:
-            xs = [cle.x for cle in cles]
-            x_min = min(xs)
-            x_max = max(xs) + largeur_case
+    # @staticmethod
+    # def rectangle_carte(cases, largeur_case):
+    #     x_min = y_min = x_max = y_max = None
+    #     cles = cases.keys()
+    #     if cles:
+    #         xs = [cle.x for cle in cles]
+    #         x_min = min(xs)
+    #         x_max = max(xs) + largeur_case
+    #
+    #         ys = [cle.y for cle in cles]
+    #         y_min = min(ys)
+    #         y_max = max(ys) + largeur_case
+    #     return Rectangle(x_min, y_min, x_max - x_min, y_max - y_min)
 
-            ys = [cle.y for cle in cles]
-            y_min = min(ys)
-            y_max = max(ys) + largeur_case
-        return Rectangle(x_min, y_min, x_max - x_min, y_max - y_min)
+    def blocs_a(self, x, y, index=True):
+        return self.case_a(x, y, index).blocs
 
-    def blocs_a(self, x, y):
-        rect = rectangle_a(x, y, self.largeur_case)
-        return self.cases[rect].blocs
+    def case_a(self, x, y, index=True):
+        """
+        Permet d'acceder a la case situee a la position (x, y).
+
+        :param x: coordonnee x de la case
+        :param y: coordonne y de la case
+        :return: instance de "Case" se situant a la position (x, y)
+        """
+        if index:
+            x_, y_ = self.index_vers_coordonnees(x, y)
+        else:
+            x_, y_ = x, y
+        rect = Rectangle(x_, y_, self.largeur_case, self.hauteur_case)
+        return self.cases[rect]
+
+    def case_vers(self, x, y):
+        for case in self.cases.itervalues():
+            rect = case.rect
+            if rect.collidepoint(x, y):
+                return case
+        return None
 
     @staticmethod
     def trouver_blocs_uniques(blocs):
@@ -371,31 +422,15 @@ class Carte(object):
                 nombre += 1
         return nombre
 
-    def case_a(self, x, y, index=True):
-        """
-        Permet d'acceder a la case situee a la position (x, y).
-
-        :param x: coordonnee x de la case
-        :param y: coordonne y de la case
-        :return: instance de "Case" se situant a la position (x, y)
-        """
-        if index:
-            rect = rectangle_a(x, y, self.largeur_case)
-        else:
-            rect = Rectangle(x, y, self.largeur_case, self.largeur_case)
-        return self.cases[rect]
-
-    def case_vers(self, x, y):
-        for case in self.cases.itervalues():
-            rect = case.rect
-            if rect.collidepoint(x, y):
-                return case
-        return None
+    def activer_sortie(self):
+        if self.personnage is not None:
+            if self.personnage.diamants_ramasses >= self.nombre_diamants_pour_sortir:
+                self.sortie.activer()
 
     def valider(self):
         erreurs = []
         if self.personnage is None:
-            erreurs.append(None)
+            erreurs.append(ERREUR.PERSONNAGE_MANQUANT)
         if self.sortie is None:
-            erreurs.append(None)
-        return len(erreurs) == 0, erreurs # TODO : implementer
+            erreurs.append(ERREUR.PORTE_MANQUANTE)
+        return len(erreurs) == 0, erreurs  # TODO : verifier si le personnage et la porte ne sont pas bloques par des cailloux ou des murs

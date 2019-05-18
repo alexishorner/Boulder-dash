@@ -17,39 +17,39 @@ Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 from constantes import *
 
 
-# class Coordonnees(list):
-#     def __init__(self, x, y):
-#         super(Coordonnees, self).__init__([x, y])
-#
-#     @property
-#     def x(self):
-#         return self[0]
-#
-#     @x.setter
-#     def x(self, valeur):
-#         self[0] = valeur
-#
-#     @x.deleter
-#     def x(self):
-#         raise AttributeError("L'attribut ne peut pas etre supprime.")
-#
-#     @property
-#     def y(self):
-#         return self[1]
-#
-#     @y.setter
-#     def y(self, valeur):
-#         self[1] = valeur
-#
-#     @y.deleter
-#     def y(self):
-#         raise AttributeError("L'attribut ne peut pas etre supprime.")
-#
-#     def __mul__(self, autre):
-#         return Coordonnees(self.x * autre, self.y * autre)
-#
-#     def __div__(self, autre):
-#         return Coordonnees(self.x / autre, self.y / autre)
+class Coordonnees(list):
+    def __init__(self, x, y):
+        super(Coordonnees, self).__init__([x, y])
+
+    @property
+    def x(self):
+        return self[0]
+
+    @x.setter
+    def x(self, valeur):
+        self[0] = valeur
+
+    @x.deleter
+    def x(self):
+        raise AttributeError("L'attribut ne peut pas etre supprime.")
+
+    @property
+    def y(self):
+        return self[1]
+
+    @y.setter
+    def y(self, valeur):
+        self[1] = valeur
+
+    @y.deleter
+    def y(self):
+        raise AttributeError("L'attribut ne peut pas etre supprime.")
+
+    def __mul__(self, autre):
+        return Coordonnees(self.x * autre, self.y * autre)
+
+    def __div__(self, autre):
+        return Coordonnees(self.x / autre, self.y / autre)
 
 
 class Rectangle(pygame.Rect):
@@ -86,6 +86,7 @@ class Rectangle(pygame.Rect):
         largeur = 50
         return Rectangle(x, y, largeur, largeur)
 
+
 class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygame.sprite.Sprite" est une classe de nouveau style
     """
     Classe de base pour tous les blocs.
@@ -99,7 +100,6 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
         self.rect = self.image.get_rect()
         self.rect.x = rect.x
         self.rect.y = rect.y
-        self.ancien_rect = self.rect.copy()
         self.z = 0
         self.a_deja_bouge = not self.PEUT_SE_DEPLACER  # Les blocs ne pouvant pas se deplacer ont deja un mouvement traite
         self.orientation = ORIENTATIONS.DROITE

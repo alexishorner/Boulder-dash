@@ -77,6 +77,15 @@ class CLIC:
     GAUCHE = 0
     DROIT = 2
 
+@unique
+class MODE(IntEnum):
+    JEU, EDITEUR = range(2)
+
+
+@unique
+class ERREUR(IntEnum):
+    PERSONNAGE_MANQUANT, PORTE_MANQUANTE, DIAMANTS_INSUFFISANTS, PERSONNAGE_BLOQUE, PORTE_BLOQUEE = range(5)
+
 
 NIVEAUX = ("""
             ############
@@ -90,8 +99,7 @@ NIVEAUX = ("""
             #~~~~~~~~~~#
             #~~~~~~****#
             ############
-            """,
-            """
+            ""","""
             ############
             #***O***O*$#
             #***OOP**~##

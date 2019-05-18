@@ -7,8 +7,22 @@ from constantes import *
 class InterfaceGraphique:
     def __init__(self, ecran):
         self.ecran = ecran
+        self._mode = None
         self.arriere_plan = pygame.Surface(RESOLUTION)
         self.arriere_plan.fill((0, 0, 0))
+        self.marge = int(RESOLUTION[0] * 0.01)
+        self.rect = pygame.Rect(self.marge, self.marge, RESOLUTION[0] - 2 * self.marge, RESOLUTION[1] - 2 * self.marge)
+
+    def rect_carte(self, niveau):
+        nombre_cases_largeur = niveau.nombre_cases_largeur
+        nombre_cases_hauteur = niveau.nombre_cases_hauteur
+        cote_case = int(round(min(self.rect.width / float(nombre_cases_largeur), self.rect.height / float(nombre_cases_hauteur))))
+        largeur = cote_case * nombre_cases_largeur
+        hauteur = cote_case * nombre_cases_hauteur
+        x = self.rect.x + int(round((self.rect.width - largeur) / 2.0))
+        y = self.rect.y + int(round((self.rect.height - hauteur) / 2.0))
+        return pygame.Rect(x, y, largeur, hauteur)
+
 
     @staticmethod
     def x_min(carte):
@@ -24,11 +38,11 @@ class InterfaceGraphique:
 
     @classmethod
     def index_vers_coordonnees(cls, carte, x, y):
-        return cls.x_min(carte) + x * carte.largeur_case, cls.y_min(carte) + y * carte.largeur_case
+        return cls.x_min(carte) + x * carte.largeur_case, cls.y_min(carte) + y * carte.hauteur_case
 
     @classmethod
     def coordonnees_vers_index(cls, carte, x, y):
-        return (x - cls.x_min(carte)) / carte.largeur_case, (y - cls.y_min(carte)) / carte.largeur_case
+        return (x - cls.x_min(carte)) / carte.largeur_case, (y - cls.y_min(carte)) / carte.hauteur_case
 
     @staticmethod
     def appliquer_translation(translation, x=None, y=None, rect=None):
@@ -41,17 +55,8 @@ class InterfaceGraphique:
             raise TypeError("Les arguments de la methode ne peuvent pas tous etre None.")
         return retour
 
-    @classmethod
-    def coords_carte_vers_ecran(cls, carte, x=None, y=None, rect=None):
-        translation = lambda x, y: (cls.x_min(carte) + x, cls.y_min(carte) + y)
-        return cls.appliquer_translation(translation, x, y, rect)
-
-    @classmethod
-    def coords_ecran_vers_carte(cls, carte, x=None, y=None, rect=None):
-        translation = lambda x, y: (x - cls.x_min(carte), y - cls.y_min(carte))
-        return cls.appliquer_translation(translation, x, y, rect)
-
     def passer_en_plein_ecran(self):
+        if not
         resolution = self.ecran.get_size()
         self.ecran = pygame.display.set_mode(resolution, FULLSCREEN)
 
@@ -66,7 +71,7 @@ class InterfaceGraphique:
         if carte is not None:
             for bloc in carte.blocs_tries:
                 if bloc is not None:
-                    self.ecran.blit(bloc.image, self.coords_carte_vers_ecran(carte, rect=bloc.rect))
+                    self.ecran.blit(bloc.image, bloc.rect)
         for objet in autres_objets:
             self.ecran.blit(objet.image, objet.rect)
         pygame.display.flip()  # Actualise l'ecran

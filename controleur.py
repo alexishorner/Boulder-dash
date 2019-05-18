@@ -33,25 +33,32 @@ def modulo(num, div):
     return (a / b - int(math.ceil(a / b * facteur) / facteur)) * b
 
 
-def vecteur(directions, unite):
+def vecteur(directions, e_x, e_y):
     try:
         len(directions)  # On verifie si "directions" est iterable
         directions_ = directions
     except TypeError:
         directions_ = [directions]  # S'il n'y a qu'une seule direction on la transforme en liste
-    v = array([0, 0])  # On commence avec un vecteur nul
+    v = matrix([[0],
+               [0]])  # On commence avec un vecteur nul
     for direction in directions_:  # On ajoute le vecteur correspondant a chaque direction
         if direction == ORIENTATIONS.DROITE:
-            v += array([1, 0])
+            v += matrix([[1],
+                         [0]])
         elif direction == ORIENTATIONS.GAUCHE:
-            v += array([-1, 0])
+            v += matrix([[-1],
+                         [0]])
         elif direction == ORIENTATIONS.HAUT:
-            v += array([0, -1])
+            v += matrix([[0],
+                         [-1]])
         elif direction == ORIENTATIONS.BAS:
-            v += array([0, 1])
+            v += matrix([[0],
+                         [1]])
         else:
             raise ValueError("La direction est invalide")
-    v *= unite  # On multiplie par la largeur d'une case pour avoir la bonne norme
+    matrice = matrix([[e_x, 0],
+                     [0, e_y]])
+    v = matrice * v  # On multiplie chaque composante du vecteur pour passer dans la base {(e_x, 0), (0, e_y)}
     return v
 
 
@@ -286,13 +293,12 @@ class Jeu(object):
     """
     Classe gerant l'ensemble du jeu.
     """
-    NOMBRE_DIAMANTS_POUR_SORTIR = 4
     TEMPS_MAX = 120
 
     def __init__(self):
         pygame.init()
         self.interface = InterfaceGraphique(ECRAN)
-        self. niveau = Niveau.niveau(1)
+        self.niveau = Niveau.niveau(1)
 
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
@@ -300,8 +306,13 @@ class Jeu(object):
 
         self.doit_recommencer = False
         self.carte = None
-        self.personnage = None
+        self.mode = MODE.JEU
         self.recommencer()
+
+    @property
+    def personnage(self):
+        return self.carte.personnage
+
     @property
     def mouvement_detecte(self):
         """
@@ -328,21 +339,22 @@ class Jeu(object):
         exit()  # TODO : ajouter confirmation
 
     def recommencer(self):
-        self.carte = Carte(self.niveau)
-        self.personnage = self.carte.personnage
+        rect = self.interface.rect_carte(self.niveau)
+        self.carte = Carte(rect, self.niveau)
         self.minuteur.reinitialiser()
         self.doit_recommencer = False
 
     def verifier_perdu(self):
-        if self.personnage.est_mort or self.minuteur.temps_ecoule() > self.TEMPS_MAX:
+        if self.personnage is None or self.minuteur.temps_ecoule() > self.TEMPS_MAX:
             self.doit_recommencer = True
 
     def niveau_suivant(self):
         i = self.niveau.numero
-        if i < len(NIVEAUX):
-            self.niveau = Niveau.niveau(i + 1)
-            self.doit_recommencer = True
-            return True
+        if i is not None:
+            if i < len(NIVEAUX):
+                self.niveau = Niveau.niveau(i + 1)
+                self.doit_recommencer = True
+                return True
         return False
 
     def felicitations(self):
@@ -352,10 +364,6 @@ class Jeu(object):
         if not self.niveau_suivant():
             self.felicitations()
 
-    def activer_sortie(self):
-        if self.personnage.diamants_ramasses >= self.NOMBRE_DIAMANTS_POUR_SORTIR:
-            self.carte.blocs_uniques[Sortie].activer()
-
     def boucle(self):
         """
         Fait fonctionner le jeu jusqu'a la fermeture du programme.
@@ -364,7 +372,7 @@ class Jeu(object):
         """
         self.interface.afficher(self.carte)
         self.minuteur.reinitialiser()
-        while 1:  # FIXME : quand la fenetre est bougee le code est mis en pause
+        while 1:
             self.minuteur.passage()
             debut = time.time()
             while self.minuteur.tics_restants() > 1:    # Verifie les evenements a intervalles regulier pour eviter de
@@ -374,18 +382,17 @@ class Jeu(object):
                 if self.minuteur.tics_restants() > 1:  # S'il reste de quoi attendre un tic
                     self.minuteur.attendre_un_tic()
             self.effectuer_mouvements()
-            if self.carte.nombre_diamants == self.personnage.diamants_ramasses:
-                self.carte.sortie.activer()
 
             self.verifier_perdu()
-            self.activer_sortie()
+            self.carte.activer_sortie()
 
-            self.interface.afficher(self.carte)
 
             if self.doit_recommencer:
                 self.recommencer()
             else:
                 self.minuteur.attendre_fin()
+
+            self.interface.afficher(self.carte)
 
             print(time.time() - debut)
 
@@ -394,12 +401,14 @@ class Jeu(object):
         premiere_ligne = derniere_ligne + "\n"
         ligne_millieu = "#" + "~" * (largeur - 2) + "#\n"
         niveau_ascii = premiere_ligne + ligne_millieu * (hauteur - 2) + derniere_ligne
-        return Carte(Niveau(niveau_ascii))
+        niveau = Niveau(niveau_ascii)
+        rect = self.interface.rect_carte(niveau)
+        return Carte(rect, niveau)
 
-    def blocs_selectionnables(self, x, y, largeur):
+    def blocs_selectionnables(self, x, y, largeur, hauteur):
         blocs_selectionnables = [Terre, Mur, Caillou, Diamant, Personnage, Sortie]
         for i, bloc in enumerate(blocs_selectionnables):
-            rect = pygame.Rect(x, y + i * largeur, largeur, largeur)
+            rect = pygame.Rect(x, y + i * hauteur, largeur, hauteur)
             blocs_selectionnables[i] = bloc(rect)
         return blocs_selectionnables
 
@@ -415,14 +424,13 @@ class Jeu(object):
         carte = self.carte_vide(10, 10)
         x = 0
         y = 0
-        blocs_selectionnables = self.blocs_selectionnables(x, y, carte.largeur_case)
+        blocs_selectionnables = self.blocs_selectionnables(x, y, carte.largeur_case, carte.hauteur_case)
         bloc_selectionne = blocs_selectionnables[0]
         del x, y
 
         self.interface.afficher(carte)
-        continuer = True
         minuteur = Minuteur(1/60.0, 0.005)
-        while continuer:
+        while self.mode == MODE.EDITEUR:
             minuteur.passage()
             while minuteur.tics_restants() > 1:
                 evenements = pygame.event.get()
@@ -433,9 +441,8 @@ class Jeu(object):
                         clic_gauche = boutons_presses[CLIC.GAUCHE] and not boutons_presses[CLIC.DROIT]
                         clic_droit = boutons_presses[CLIC.DROIT] and not boutons_presses[CLIC.GAUCHE]
                         position_souris = pygame.mouse.get_pos()
-                        position = InterfaceGraphique.coords_ecran_vers_carte(carte, *position_souris)
 
-                        case = carte.case_vers(*position)
+                        case = carte.case_vers(*position_souris)
                         if clic_gauche:
                             if case is None:  # Pas de case touchee sur la carte
                                 bloc_clique = self.objet_clique(position_souris, *blocs_selectionnables)
@@ -473,7 +480,11 @@ class Jeu(object):
                     elif not mods:
                         self.interface.passer_en_fenetre()
                 elif evenement.key == K_F12:
-                    self.editeur_niveau()
+                    if self.mode == MODE.JEU:
+                        self.mode = MODE.EDITEUR
+                        self.editeur_niveau()
+                    else:
+                        self.mode = MODE.JEU
 
     def gerer_evenements(self):
         """
@@ -530,7 +541,7 @@ class Jeu(object):
             bloc.terminer_cycle()
 
     def bloc_collisionne(self, bloc, directions=tuple()):
-        v = vecteur(directions, self.carte.largeur_case)
+        v = vecteur(directions, self.carte.largeur_case, self.carte.hauteur_case)
         rect = bloc.rect_hashable.move(v)
         try:
             blocs_collisionnes = self.carte.cases[rect].blocs
@@ -622,7 +633,7 @@ class Jeu(object):
                         reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction)
                 if not essai:
                     if reussite:
-                        nouveau_rect = bloc.rect.move(vecteur(direction, self.carte.largeur_case))
+                        nouveau_rect = bloc.rect.move(vecteur(direction, self.carte.largeur_case, self.carte.hauteur_case))
                         self.carte.bouger(bloc, nouveau_rect)
                         bloc.a_deja_bouge = True
         return reussite, bloc_collisionne  # Le bloc collisionne n'est juste que si reussite == False
