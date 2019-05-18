@@ -415,7 +415,9 @@ class Jeu(object):
             blocs_selectionnables[i] = bloc(rect)
         return blocs_selectionnables
 
-    def objet_clique(self, pos, *objets):
+    def objet_survole(self, pos, *objets):
+        if len(objets) == 0:
+            raise RuntimeError("Nombre d'arguments insuffisant.")
         for objet in objets:
             if objet.rect.collidepoint(pos):
                 return objet
@@ -428,8 +430,14 @@ class Jeu(object):
         carte = self.carte_vide(34, 20)
         x = 0
         y = 0
+        # Les blocs selectionnables sont les blocs sur lesquels on peut cliquer pour choisir le type de blocs a ajouter
+        # sur la carte
         blocs_selectionnables = self.blocs_selectionnables(x, y, carte.largeur_case, carte.hauteur_case)
         bloc_selectionne = blocs_selectionnables[0]
+        position_souris = pygame.mouse.get_pos()
+        bloc_pointeur = bloc_selectionne.__class__(pygame.Rect(position_souris, bloc_selectionne.rect.size))
+        clic_gauche = clic_droit = False
+        case = None
         del x, y
 
         self.interface.afficher(carte)
@@ -445,25 +453,35 @@ class Jeu(object):
                         clic_gauche = boutons_presses[CLIC.GAUCHE] and not boutons_presses[CLIC.DROIT]
                         clic_droit = boutons_presses[CLIC.DROIT] and not boutons_presses[CLIC.GAUCHE]
 
+                        position_souris = pygame.mouse.get_pos()
+                        # On regarde quelle case est survolee par la souris
+                        case = self.objet_survole(position_souris, *carte.tuple_cases)
                         if clic_gauche or clic_droit:
-                            position_souris = pygame.mouse.get_pos()
-                            case = self.objet_clique(position_souris, *carte.tuple_cases)
                             if clic_gauche:
-                                if case is None:  # Pas de case touchee sur la carte
-                                    bloc_clique = self.objet_clique(position_souris, *blocs_selectionnables)
-                                    if bloc_clique is not None:
+                                if case is None:  # Pas de case cliquee sur la carte
+                                    # On regarde si un bloc selectionnable a ete clique
+                                    bloc_clique = self.objet_survole(position_souris, *blocs_selectionnables)
+                                    if bloc_clique is not None:  # Si bloc clique
                                         bloc_selectionne = bloc_clique
-                                else:
+                                        # On change le bloc affiche sous le pointeur de la souris
+                                        bloc_pointeur = bloc_selectionne.__class__(pygame.Rect(position_souris, bloc_selectionne.rect.size))
+                                else:  # Si une case de la carte a ete cliquee
                                     rect = case.rect
-                                    if case.blocs[0].__class__ != bloc_selectionne.__class__ or len(case.blocs) != 1:
+                                    # Si le nouveau bloc est d'un autre type que l'ancien ou que la case contient
+                                    # plusieurs blocs
+                                    if bloc_selectionne.__class__ != case.blocs[0].__class__ or len(case.blocs) != 1:
                                         case.blocs = [bloc_selectionne.__class__(rect)]  # On construit un bloc du bon type
                             elif clic_droit:
-                                if case is not None:
-                                    case.blocs = [None]
+                                if case is not None:  # Si une case de la carte a recu un clic droit
+                                    case.blocs = [None]  # On supprime les blocs de la case
                             carte.actualiser_blocs()
                         if minuteur.tics_restants() > 1:
                             minuteur.attendre_un_tic()
-            self.interface.afficher(carte, *blocs_selectionnables)
+            objets_a_afficher = list(blocs_selectionnables)
+            if case is not None and not clic_droit:  # Si la souris survole la carte et qu'il n'y a pas de clic droit
+                bloc_pointeur.rect = case.rect
+                objets_a_afficher.append(bloc_pointeur)
+            self.interface.afficher(carte, *objets_a_afficher)
             minuteur.attendre_fin()
         self.niveau = Niveau.depuis_carte(carte)
         self.doit_recommencer = True

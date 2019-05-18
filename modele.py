@@ -312,7 +312,7 @@ class Carte(object):
         self.cases = cases
 
     def set_blocs(self, case, blocs):
-        pass  # TODO : implementer
+        pass  # TODO : implementer (peut-etre)
 
     def actualiser_blocs(self):
         blocs = []
