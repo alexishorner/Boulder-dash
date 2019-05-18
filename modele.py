@@ -340,31 +340,39 @@ class Carte(object):
         self.actualiser_blocs()
 
     def ajouter_ligne(self, y):
-        ligne = []
-        for i in range(self.nombre_cases_largeur):
-            case = Case()  # TODO : implementer
+        cases = self.cases.copy()
+        for x in range(self.nombre_cases_largeur):
+            index = (x, y)
+            rect = self.rect_a(*index)
+            blocs = (Mur(rect),)
+            case = Case(rect, index, blocs)
+            cases.update({rect: case})
+        self.cases = cases
+
+    def ajouter_colonne(self, x):
+        cases = self.cases.copy()
+        for y in range(self.nombre_cases_hauteur):
+            index = (x, y)
+            rect = self.rect_a(*index)
+            blocs = (Mur(rect),)
+            case = Case(rect, index, blocs)
+            cases.update({rect: case})
+        self.cases = cases
 
     def supprimer_morts(self):
         for bloc in self.blocs_tries:
             if bloc.est_mort:
                 self.supprimer(bloc)
 
-    # @staticmethod
-    # def rectangle_carte(cases, largeur_case):
-    #     x_min = y_min = x_max = y_max = None
-    #     cles = cases.keys()
-    #     if cles:
-    #         xs = [cle.x for cle in cles]
-    #         x_min = min(xs)
-    #         x_max = max(xs) + largeur_case
-    #
-    #         ys = [cle.y for cle in cles]
-    #         y_min = min(ys)
-    #         y_max = max(ys) + largeur_case
-    #     return Rectangle(x_min, y_min, x_max - x_min, y_max - y_min)
-
     def blocs_a(self, x, y, index=True):
         return self.case_a(x, y, index).blocs
+
+    def rect_a(self, x, y, index=True):
+        if index:
+            x_, y_ = self.index_vers_coordonnees(x, y)
+        else:
+            x_, y_ = x, y
+        return Rectangle(x_, y_, self.largeur_case, self.hauteur_case)
 
     def case_a(self, x, y, index=True):
         """
@@ -372,13 +380,10 @@ class Carte(object):
 
         :param x: coordonnee x de la case
         :param y: coordonne y de la case
+        :param index: booleen specifiant si "x" et "y" representent l'index ou les coordonnees de la case
         :return: instance de "Case" se situant a la position (x, y)
         """
-        if index:
-            x_, y_ = self.index_vers_coordonnees(x, y)
-        else:
-            x_, y_ = x, y
-        rect = Rectangle(x_, y_, self.largeur_case, self.hauteur_case)
+        rect = self.rect_a(x, y, index)
         return self.cases[rect]
 
     @staticmethod
