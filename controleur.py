@@ -339,7 +339,10 @@ class Jeu(object):
         exit()  # TODO : ajouter confirmation
 
     def recommencer(self):
-        rect = self.interface.rect_carte(self.niveau)
+        decalage = None
+        if self.mode == MODE.EDITEUR:
+            decalage = (self.carte.largeur_case + self.interface.marge, 0)
+        rect = self.interface.rect_carte(self.niveau, decalage)
         self.carte = Carte(rect, self.niveau)
         self.minuteur.reinitialiser()
         self.doit_recommencer = False
@@ -421,7 +424,7 @@ class Jeu(object):
         pass
 
     def editeur_niveau(self):
-        carte = self.carte_vide(10, 10)
+        carte = self.carte_vide(20, 10)
         x = 0
         y = 0
         blocs_selectionnables = self.blocs_selectionnables(x, y, carte.largeur_case, carte.hauteur_case)
