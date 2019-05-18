@@ -419,12 +419,13 @@ class Jeu(object):
         for objet in objets:
             if objet.rect.collidepoint(pos):
                 return objet
+        return None
 
     def selectionner(self, bloc):
         pass
 
     def editeur_niveau(self):
-        carte = self.carte_vide(20, 10)
+        carte = self.carte_vide(34, 20)
         x = 0
         y = 0
         blocs_selectionnables = self.blocs_selectionnables(x, y, carte.largeur_case, carte.hauteur_case)
@@ -443,22 +444,23 @@ class Jeu(object):
                         boutons_presses = pygame.mouse.get_pressed()
                         clic_gauche = boutons_presses[CLIC.GAUCHE] and not boutons_presses[CLIC.DROIT]
                         clic_droit = boutons_presses[CLIC.DROIT] and not boutons_presses[CLIC.GAUCHE]
-                        position_souris = pygame.mouse.get_pos()
 
-                        case = carte.case_vers(*position_souris)
-                        if clic_gauche:
-                            if case is None:  # Pas de case touchee sur la carte
-                                bloc_clique = self.objet_clique(position_souris, *blocs_selectionnables)
-                                if bloc_clique is not None:
-                                    bloc_selectionne = bloc_clique
-                            else:
-                                rect = case.rect
-                                if len(case.blocs) != 1 or case.blocs[0].__class__ != bloc_selectionne.__class__:
-                                    case.blocs = [bloc_selectionne.__class__(rect)]  # On construit un bloc du bon type
-                        elif clic_droit:
-                            if case is not None:
-                                case.blocs = [None]
-                        carte.actualiser_blocs()
+                        if clic_gauche or clic_droit:
+                            position_souris = pygame.mouse.get_pos()
+                            case = self.objet_clique(position_souris, *carte.tuple_cases)
+                            if clic_gauche:
+                                if case is None:  # Pas de case touchee sur la carte
+                                    bloc_clique = self.objet_clique(position_souris, *blocs_selectionnables)
+                                    if bloc_clique is not None:
+                                        bloc_selectionne = bloc_clique
+                                else:
+                                    rect = case.rect
+                                    if case.blocs[0].__class__ != bloc_selectionne.__class__ or len(case.blocs) != 1:
+                                        case.blocs = [bloc_selectionne.__class__(rect)]  # On construit un bloc du bon type
+                            elif clic_droit:
+                                if case is not None:
+                                    case.blocs = [None]
+                            carte.actualiser_blocs()
                         if minuteur.tics_restants() > 1:
                             minuteur.attendre_un_tic()
             self.interface.afficher(carte, *blocs_selectionnables)
@@ -527,7 +529,7 @@ class Jeu(object):
                     self.personnage.mouvement_en_cours = ORIENTATIONS.DROITE
 
     def gerer_collisions(self):
-        for case in self.carte.cases.itervalues():
+        for case in self.carte.tuple_cases:
             if len(case.blocs) == 2:
                 for bloc in case.blocs:
                     if isinstance(bloc, BlocTombant):

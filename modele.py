@@ -209,6 +209,7 @@ class Carte(object):
         self.nombre_diamants = 0
         self.nombre_cases_hauteur = 0
         self.nombre_cases_largeur = 0
+        self._tuple_cases = tuple()
         self._rect = rect
         self.niveau = niveau
 
@@ -231,6 +232,10 @@ class Carte(object):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
 
     @property
+    def tuple_cases(self):
+        return self._tuple_cases
+
+    @property
     def cases(self):
         """
         Propriete permettant d'acceder aux cases.
@@ -244,6 +249,7 @@ class Carte(object):
         if not isinstance(valeur, dict):
             raise ValueError("Les cases doivent etre un dictionnaire.")
         self._cases = valeur
+        self._tuple_cases = tuple(valeur.itervalues())
         self.actualiser_blocs()  # FIXME : attention on n'actualise pas le nombre de cases dans la largeur et la hauteur
 
     @cases.deleter
@@ -257,7 +263,7 @@ class Carte(object):
     @rect.setter
     def rect(self, nouveau):
         self._rect = nouveau
-        self.actualiser_dimensions_cases()
+        self.actualiser_rects_cases()
 
     @property
     def largeur_case(self):
@@ -273,13 +279,15 @@ class Carte(object):
     def coordonnees_vers_index(self, x, y):
         return (x - self.rect.x) / self.largeur_case, (y - self.rect.y) / self.hauteur_case
 
-    def actualiser_dimensions_cases(self):
+    def actualiser_rects_cases(self):
         cases = dict()
-        for case in self.cases.itervalues():
+        for case in self.tuple_cases:
             rect = case.rect.copy()  # On modifie une copie du rectangle pour que la case soit au courant du changement
             rect.x, rect.y = self.index_vers_coordonnees(*case.index)
+            rect.width, rect.height = self.largeur_case, self.hauteur_case
             case.rect = rect  # La case sait qu'on change de rectangle
             cases.update({rect: case})
+        self.cases = cases
 
     def sur_changement_niveau(self):
         """
@@ -308,7 +316,7 @@ class Carte(object):
 
     def actualiser_blocs(self):
         blocs = []
-        for case in self.cases.itervalues():
+        for case in self.tuple_cases:
             blocs.extend(case.blocs)
         while None in blocs:
             blocs.remove(None)
@@ -334,7 +342,7 @@ class Carte(object):
     def ajouter_ligne(self, y):
         ligne = []
         for i in range(self.nombre_cases_largeur):
-            case = Case()
+            case = Case()  # TODO : implementer
 
     def supprimer_morts(self):
         for bloc in self.blocs_tries:
@@ -372,13 +380,6 @@ class Carte(object):
             x_, y_ = x, y
         rect = Rectangle(x_, y_, self.largeur_case, self.hauteur_case)
         return self.cases[rect]
-
-    def case_vers(self, x, y):
-        for case in self.cases.itervalues():
-            rect = case.rect
-            if rect.collidepoint(x, y):
-                return case
-        return None
 
     @staticmethod
     def trouver_blocs_uniques(blocs):

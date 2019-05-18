@@ -11,7 +11,7 @@ class InterfaceGraphique:
         self.passer_en_fenetre()
         self.arriere_plan = pygame.Surface(RESOLUTION)
         self.arriere_plan.fill((0, 0, 0))
-        self.marge = int(self.ecran.get_width() * 0.01)
+        self.marge = int(self.ecran.get_width() * 0.02)
 
     def rect(self, decalage=None):
         if decalage is None:
