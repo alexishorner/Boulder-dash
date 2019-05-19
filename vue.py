@@ -110,7 +110,6 @@ class InterfaceGraphique:
                 x_0 = self.marge
             if y_0 < self.marge:
                 y_0 = self.marge
-
         largeur = self.ecran.get_width() - x_0 - self.marge
         hauteur = self.ecran.get_height() - y_0 - self.marge
 
@@ -163,7 +162,13 @@ class InterfaceGraphique:
         for evenement in evenements:
             if evenement.type == QUIT:
                 self.quitter()
+            if evenement.type == VIDEORESIZE:
+                print(self.ecran.get_size())
+                self.ecran = pygame.display.set_mode(evenement.size)
+                print(self.ecran.get_size())
             if evenement.type == KEYUP:
+                if evenement.key == K_m:
+                    return MODES.MENU
                 if evenement.key == K_q:
                     self.quitter()
                 elif evenement.key == K_ESCAPE:
@@ -176,6 +181,9 @@ class InterfaceGraphique:
                             self.passer_en_plein_ecran()
                         else:
                             self.passer_en_fenetre()
+                elif evenement.key == K_F12:
+                    return MODES.EDITEUR
+            return None
 
     def objet_survole(self, pos, *objets):
         if len(objets) == 0:
@@ -205,7 +213,7 @@ class InterfaceGraphique:
         while 1:
             minuteur.passage()
             while minuteur.tics_restants() > 1:
-                evenements = pygame.event.get()
+                self.gerer_evenements(pygame.event.get())
                 if minuteur.tics_restants() > 1:
                     minuteur.attendre_un_tic()
 

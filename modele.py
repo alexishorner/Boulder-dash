@@ -88,7 +88,10 @@ class Case(object):
 
     @blocs.setter
     def blocs(self, nouveaux):
-        blocs = list(nouveaux)
+        try:
+            blocs = list(nouveaux)
+        except TypeError:
+            blocs = [nouveaux]
         self._blocs = trier(blocs)
 
     @blocs.deleter
@@ -331,9 +334,6 @@ class Carte(object):
                 cases.update({rect: case})
         self.cases = cases
 
-    def set_blocs(self, case, blocs):
-        pass  # TODO : implementer (peut-etre)
-
     def actualiser_blocs(self):
         blocs = []
         for case in self.tuple_cases:
@@ -457,7 +457,7 @@ class Carte(object):
     def valider(self):
         erreurs = []
         if self.personnage is None:
-            erreurs.append(ERREUR.PERSONNAGE_MANQUANT)
+            erreurs.append(ERREURS.PERSONNAGE_MANQUANT)
         if self.sortie is None:
-            erreurs.append(ERREUR.PORTE_MANQUANTE)
+            erreurs.append(ERREURS.PORTE_MANQUANTE)
         return len(erreurs) == 0, erreurs  # TODO : verifier si le personnage et la porte ne sont pas bloques par des cailloux ou des murs

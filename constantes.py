@@ -43,6 +43,7 @@ IMAGES = {"Bloc": "mono-unknown.png", "Personnage": "personnage.png",
 for _classe, _chemin in IMAGES.iteritems():
     IMAGES[_classe] = charger(CHEMIN_IMAGES + _chemin)  # on charge les images
 
+
 class SONS:
     """
     Attribue un son à une variable
@@ -98,22 +99,17 @@ class CLIC:
     DROIT = 2
 
 @unique
-class MODE(IntEnum):
-    JEU, EDITEUR = range(2)
+class MODES(IntEnum):
+    JEU, EDITEUR, MENU = range(3)
 
 
 @unique
-class ERREUR(IntEnum):
+class ERREURS(IntEnum):
     PERSONNAGE_MANQUANT, PORTE_MANQUANTE, DIAMANTS_INSUFFISANTS, PERSONNAGE_BLOQUE, PORTE_BLOQUEE = range(5)
 
 
 class POLICES:
     ARCADECLASSIC = freetype.Font("polices/arcadeclassic/ARCADECLASSIC.TTF")
-
-
-@unique
-class EVENEMENTS(IntEnum):
-    MENU, EDITEUR = range(2)
 
 
 NIVEAUX = ("""

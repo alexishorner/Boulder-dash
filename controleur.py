@@ -24,7 +24,7 @@ class Jeu(object):
         self.doit_recommencer_niveau = False
         self.vies = self.VIES_MAX
         self.carte = None
-        self.mode = MODE.JEU
+        self.mode = MODES.JEU
         self.recommencer_partie()
 
     @property
@@ -49,6 +49,7 @@ class Jeu(object):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
 
     def menu(self):
+        self.mode = MODES.MENU
         retour = self.interface.menu()
         ret = raw_input("\t\tMenu\n\t1. recommencer partie\n\t2.quitter\n\t3.editeur niveaux.\n>>>")  # TODO : vraie interface
         ret = int(ret)
@@ -110,7 +111,6 @@ class Jeu(object):
         """
         self.interface.afficher(self.carte)
         self.minuteur.reinitialiser()
-        self.diamanttombe = 0
         while 1:
             self.minuteur.passage()
             debut = time.time()
@@ -143,7 +143,7 @@ class Jeu(object):
         niveau_ascii = premiere_ligne + ligne_millieu * (hauteur - 2) + derniere_ligne
         niveau = Niveau(niveau_ascii)
         decalage = None
-        if self.mode == MODE.EDITEUR:
+        if self.mode == MODES.EDITEUR:
             decalage = (self.carte.largeur_case + self.interface.marge, 0)
         rect = self.interface.rect_carte(niveau, decalage)
         return Carte(rect, niveau)
@@ -162,7 +162,7 @@ class Jeu(object):
         self.interface.selectionner(bloc)
 
     def editeur_niveau(self):
-        self.mode = MODE.EDITEUR
+        self.mode = MODES.EDITEUR
         carte = self.carte_vide(34, 20)
         x = 0
         y = 0
@@ -185,7 +185,7 @@ class Jeu(object):
             self.interface.afficher(carte)
 
         minuteur = Minuteur(1/60.0, 0.005)
-        while self.mode == MODE.EDITEUR:
+        while self.mode == MODES.EDITEUR:
             minuteur.passage()
             while minuteur.tics_restants() > 1:
                 evenements = pygame.event.get()
@@ -235,15 +235,13 @@ class Jeu(object):
 
     def gerer_evenements_fenetre(self, evenements):
         retour = self.interface.gerer_evenements(evenements)
-        for evenement in evenements:
-            if evenement.type == KEYUP:
-                if evenement.key == K_m:
-                    self.menu()
-                elif evenement.key == K_F12:
-                    if self.mode == MODE.JEU:
-                        self.editeur_niveau()
-                    else:
-                        self.mode = MODE.JEU
+        if retour == MODES.MENU:
+            self.menu()
+        elif retour == MODES.EDITEUR:
+            if self.mode == MODES.JEU:
+                self.editeur_niveau()
+            else:
+                self.mode = MODES.JEU
 
     def gerer_evenements(self):
         """
@@ -428,6 +426,8 @@ class Jeu(object):
             self.personnage.mouvement_en_cours = None
         else:
             self.personnage.a_deja_bouge = True
+            self.personnage.etait_en_mouvement = False
+            self.personnage.caillou_pousse = None
 
     def effectuer_mouvements(self):
         """
@@ -436,21 +436,6 @@ class Jeu(object):
         :return: "None"
         """
         # On fait bouger le personnage
-
-        if self.personnage.mouvement_en_cours == ORIENTATIONS.DROITE:
-            pass
-        if self.mouvement_detecte:  # Si un mouvement doit etre effectue
-            pass
-            # self.faire_bouger(self.personnage, self.personnage.mouvement_en_cours)  # On fait avancer le personnage
-            # self.personnage.etait_en_mouvement = True
-            # self.personnage.mouvement_en_cours = None
-        else:
-            self.personnage.etait_en_mouvement = False
-            self.personnage.caillou_pousse = None
-
-        if self.personnage.etait_en_mouvement:
-            pass
-
         self.bouger_personnage()
 
         # On fait d'abord tomber les blocs tout droit et ensuite de cote

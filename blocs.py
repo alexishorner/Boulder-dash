@@ -202,6 +202,7 @@ class Diamant(BlocTombant):
     def __init__(self, rect):
         super(Diamant, self).__init__(rect)
         self.ramasse = False
+
     def tomber(self):
         super(Diamant, self).tomber()
         if self.ramasse == False: #comme ca on a pas le bruit du diamant qui tombe lorsqu'on le ramasse
@@ -261,7 +262,7 @@ class Sortie(Bloc):
         """
         self.est_activee = False
 
-class Explosion:
+class Explosion(Bloc):
     """
     Classe permettant de representer une explosion
     """
