@@ -353,7 +353,8 @@ class Carte(object):
             self.cases[bloc.rect_hashable].enlever(bloc)
             self.cases[Rectangle(rect)].ajouter(bloc)
             bloc.rect.x, bloc.rect.y = rect.x, rect.y
-            bloc.a_deja_bouge = True
+            direction = None  # TODO : changer
+            bloc.bouger(direction)
 
     def supprimer(self, bloc):
         self.cases[bloc.rect_hashable].enlever(bloc)

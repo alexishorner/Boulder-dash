@@ -72,6 +72,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
             :return: "None"
             """
         self.orientation = direction
+        self.a_deja_bouge = True
 
     def tuer(self):
         """
@@ -114,7 +115,6 @@ class Personnage(Bloc):
 
     def pousser(self, caillou, direction):
         caillou.etre_pousse()
-        SONS.POUSSER_CAILLOU.play()
         self.bouger(direction)
 
     def bouger(self, direction):
@@ -170,21 +170,21 @@ class Caillou(BlocTombant):
         super(Caillou, self).__init__(rect)
         self.coups_avant_etre_pousse = self.INERTIE
         self.est_pousse = False
-        self.a_collisionne = False
-
 
     def bouger(self, direction):
         super(Caillou, self).bouger(direction)
 
     def tomber(self):
         super(Caillou, self).tomber()
-        if (not self.est_tombe and not self.a_tue)  or self.a_collisionne:
+        if self.tombe and not self.est_tombe and not self.a_tue:
             SONS.CAILLOU_TOMBE.play()
 
     def etre_pousse(self):
         self.est_pousse = True
         if self.coups_avant_etre_pousse > 0:
             self.coups_avant_etre_pousse -= 1
+        else:
+            SONS.POUSSER_CAILLOU.play()
 
     def terminer_cycle(self):
         if self.tombe and not self.est_tombe:
@@ -205,8 +205,9 @@ class Diamant(BlocTombant):
 
     def tomber(self):
         super(Diamant, self).tomber()
-        if self.ramasse == False: #comme ca on a pas le bruit du diamant qui tombe lorsqu'on le ramasse
+        if (not self.est_tombe and not self.a_tue) and not self.ramasse: #comme ca on a pas le bruit du diamant qui tombe lorsqu'on le ramasse
             SONS.DIAMANT_TOMBE1.play()
+
     def terminer_cycle(self):
         if self.tombe and not self.est_tombe:
             SONS.DIAMANT_TOMBE1.play()

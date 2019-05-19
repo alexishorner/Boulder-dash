@@ -10,6 +10,8 @@ from enum import IntEnum, unique
 import os
 import sys
 
+pygame.mixer.init(22050, -16, 2, 64)
+
 # On regarde si le jeu tourne sur Windows Vista ou une version de Windows plus recente
 if os.name == "nt" and sys.getwindowsversion()[0] >= 6:
     import ctypes
