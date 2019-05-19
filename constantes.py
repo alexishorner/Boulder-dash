@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Module contenant toutes les constantes. Si des variables ne doivent pas etre importees avec le module, il faut commencer
 leur nom par un tiret bas ("_").
@@ -36,12 +37,26 @@ def charger(image):
 
 CHEMIN_IMAGES = "img/"
 IMAGES = {"Bloc": "mono-unknown.png", "Personnage": "personnage.png",
-          "Diamant": "diamant.jpg", "Terre": "terre.PNG", "Mur": "mur.png",
-          "Caillou": "caillou.jpg", "Sortie": "porte.png"}
+          "Diamant": "diamant.png", "Terre": "terre.PNG", "Mur": "mur.png",
+          "Caillou": "caillou.png", "Sortie": "porte.png", "Explosion": "explosion.png"}
 
 for classe, _chemin in IMAGES.iteritems():
     IMAGES[classe] = charger(CHEMIN_IMAGES + _chemin)  # on charge les images
 
+class SONS:
+    """
+    Attribue un son à une variable
+    """
+    CAILLOU_TOMBE = pygame.mixer.Sound("sounds/box_push.ogg")
+    POUSSER_CAILLOU = pygame.mixer.Sound("sounds/boulder.ogg")
+    RAMASSER_DIAMANT = pygame.mixer.Sound("sounds/collectdiamond.ogg")
+    BOUGER = pygame.mixer.Sound("sounds/walk_empty.ogg")
+    CREUSER_TERRE = pygame.mixer.Sound("sounds/walk_dirt.ogg")
+    FINI = pygame.mixer.Sound("sounds/finished.ogg")
+    TUER = pygame.mixer.Sound("sounds/explosion.ogg")
+    PERDU = pygame.mixer.Sound("sounds/game_over.ogg")
+    APPARAITRE = pygame.mixer.Sound("sounds/crack.ogg")
+    DIAMANT_TOMBE1 = pygame.mixer.Sound("sounds/diamond1.ogg")
 
 @unique
 class ORIENTATIONS(IntEnum):

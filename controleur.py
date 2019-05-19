@@ -482,6 +482,8 @@ class Jeu(object):
                 reussite = True
                 if ORIENTATIONS.sont_opposees(direction, self.personnage.mouvement_en_cours):
                     self.personnage.tuer()
+                    bloc_collisionne.a_tue = True
+                    SONS.TUER.play()
         return reussite
 
     def peut_bouger(self, bloc, direction):
@@ -493,6 +495,8 @@ class Jeu(object):
             return False, None
         reussite = False
         bloc_collisionne = None
+
+
         if bloc.PEUT_SE_DEPLACER:
             bloc_collisionne = self.bloc_collisionne(bloc, direction)
 
@@ -502,8 +506,10 @@ class Jeu(object):
                 else:
                     if isinstance(bloc, Personnage):
                         reussite = self._collision_personnage(bloc, bloc_collisionne, direction, essai)
+                        bloc.a_collisione = True
                     elif isinstance(bloc, BlocTombant):
                         reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction)
+                        bloc.a_collisione = True
                 if not essai:
                     if reussite:
                         nouveau_rect = bloc.rect.move(vecteur(direction, self.carte.largeur_case, self.carte.hauteur_case))

@@ -98,24 +98,32 @@ class Personnage(Bloc):
         self.caillou_pousse = None
         self.z = 1
 
+        # self.soncreuser = pygame.mixer.Sound()
+        # self.sontcaillou = pygame.mixer.Sound()
+        # self.sonbouger = pygame.mixer.Sound()e
     def creuser_terre(self, terre):
         terre.tuer()
+        SONS.CREUSER_TERRE.play()
         self.terre_creusee += 1
 
     def ramasser_diamant(self, diamant):
         diamant.tuer()
+        SONS.RAMASSER_DIAMANT.play()
+        diamant.ramasse = True
         self.diamants_ramasses += 1
 
     def pousser(self, caillou, direction):
         caillou.etre_pousse()
+        SONS.POUSSER_CAILLOU.play()
         self.bouger(direction)
 
     def bouger(self, direction):
         super(Personnage, self).bouger(direction)
+        SONS.BOUGER.play()
 
     def tuer(self):
         super(Personnage, self).tuer()
-
+        SONS.TUER.play()
 
 class Terre(Bloc):
     """
@@ -130,12 +138,14 @@ class BlocTombant(Bloc):
     PEUT_SE_DEPLACER = True
     INERTIE = 1
 
+
     def __init__(self, rect):
         super(BlocTombant, self).__init__(rect)
         self.tombe = False
         self.est_tombe = False
         self.pouvait_tomber = False
         self.coups_avant_tomber = self.INERTIE
+        self.a_tue = False
 
     def tomber(self):
         if self.coups_avant_tomber > 0:
@@ -160,9 +170,16 @@ class Caillou(BlocTombant):
         super(Caillou, self).__init__(rect)
         self.coups_avant_etre_pousse = self.INERTIE
         self.est_pousse = False
+        self.a_collisionne = False
+
 
     def bouger(self, direction):
         super(Caillou, self).bouger(direction)
+
+    def tomber(self):
+        super(Caillou, self).tomber()
+        if (not self.est_tombe and not self.a_tue)  or self.a_collisionne:
+            SONS.CAILLOU_TOMBE.play()
 
     def etre_pousse(self):
         self.est_pousse = True
@@ -182,6 +199,11 @@ class Diamant(BlocTombant):
     """
     def __init__(self, rect):
         super(Diamant, self).__init__(rect)
+        self.ramasse = False
+    def tomber(self):
+        super(Diamant, self).tomber()
+        if self.ramasse == False: #comme ca on a pas le bruit du diamant qui tombe lorsqu'on le ramasse
+            SONS.DIAMANT_TOMBE1.play()
 
 
 class Mur(Bloc):
@@ -233,3 +255,8 @@ class Sortie(Bloc):
         :return: "None"
         """
         self.est_activee = False
+
+class Explosion:
+    """
+    Classe permettant de representer une explosion
+    """
