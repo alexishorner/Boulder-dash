@@ -62,23 +62,6 @@ def vecteur(directions, e_x, e_y):
     return v
 
 
-class Action(object):
-    def __init__(self, fonction=None, *args, **kwargs):
-        self.reinitialiser()
-        if fonction is not None:
-            self.fonction = fonction
-        self.args = args
-        self.kwargs = kwargs
-
-    def effectuer(self):
-        return self.fonction(*self.args, **self.kwargs)
-
-    def reinitialiser(self):
-        self.fonction = lambda *_: None
-        self.args = tuple()
-        self.kwargs = dict()
-
-
 class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe de nouveau style.
     """
     Classe permettant de gerer les evenements de pression des touches.

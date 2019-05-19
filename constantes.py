@@ -3,6 +3,7 @@ Module contenant toutes les constantes. Si des variables ne doivent pas etre imp
 leur nom par un tiret bas ("_").
 """
 import pygame
+from pygame import freetype
 from pygame.locals import *
 from enum import IntEnum, unique
 import os
@@ -85,6 +86,9 @@ class MODE(IntEnum):
 @unique
 class ERREUR(IntEnum):
     PERSONNAGE_MANQUANT, PORTE_MANQUANTE, DIAMANTS_INSUFFISANTS, PERSONNAGE_BLOQUE, PORTE_BLOQUEE = range(5)
+
+class POLICES:
+    ARCADECLASSIC = freetype.Font("polices/arcadeclassic/ARCADECLASSIC.TTF")
 
 
 NIVEAUX = ("""

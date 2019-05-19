@@ -1,7 +1,7 @@
 """
 Fichier contenant du code gerant l'affichage.
 """
-from constantes import *
+from coeur import *
 
 
 class InterfaceGraphique:
