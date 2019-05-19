@@ -3,63 +3,7 @@ Module gerant la logique du jeu.
 """
 from modele import *
 from vue import *
-import time
-import math
 import random
-
-
-def modulo(num, div):
-    """
-    Fonction permettant de calculer le reste de la division de deux nombres sans avoir d'erreur due a l'arrondi des ordinateurs.
-
-    Cette fonction donne le meme resultat que l'operateur "%" pour les nombres entiers, mais donne des resultats
-    correspondants a la definition de modulo pour tous les nombres, y compris les nombres a virgule et les nombres negatifs.
-
-    Exemple :
-    7.5 % 0.05 donne 0.04999999999999992 (incorrect), alors que modulo(7.5, 0.05) donne 0.0 (correct)
-
-    Verification:
-    7.5 = 150.0 * 0.05 + 0.0
-
-    Le desavantage de cette fonction est qu'elle perd un peu de precision pour parer aux erreurs d'arrondi.
-
-    :param num: numerateur
-    :param div: diviseur
-    :return: reste de la division de "num" par "div"
-    """
-    a = float(num)  # Assure que la division sera flottante
-    b = float(div)
-    facteur = int(1e14)  # Facteur de precision
-    return (a / b - int(math.ceil(a / b * facteur) / facteur)) * b
-
-
-def vecteur(directions, e_x, e_y):
-    try:
-        len(directions)  # On verifie si "directions" est iterable
-        directions_ = directions
-    except TypeError:
-        directions_ = [directions]  # S'il n'y a qu'une seule direction on la transforme en liste
-    v = matrix([[0],
-               [0]])  # On commence avec un vecteur nul
-    for direction in directions_:  # On ajoute le vecteur correspondant a chaque direction
-        if direction == ORIENTATIONS.DROITE:
-            v += matrix([[1],
-                         [0]])
-        elif direction == ORIENTATIONS.GAUCHE:
-            v += matrix([[-1],
-                         [0]])
-        elif direction == ORIENTATIONS.HAUT:
-            v += matrix([[0],
-                         [-1]])
-        elif direction == ORIENTATIONS.BAS:
-            v += matrix([[0],
-                         [1]])
-        else:
-            raise ValueError("La direction est invalide")
-    matrice = matrix([[e_x, 0],
-                     [0, e_y]])
-    v = matrice * v  # On multiplie chaque composante du vecteur pour passer dans la base {(e_x, 0), (0, e_y)}
-    return v
 
 
 class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe de nouveau style.
@@ -152,131 +96,12 @@ class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe
         return len(pygame.key.get_pressed())
 
 
-class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style a une vraie utilite, puisque cela permet d'utiliser des proprietes
-    """
-    Classe permettant de simuler un minuteur. Le minuteur se remet a zero a intervalles fixes dont la duree est
-    determinee par "self._periode". La remise a zero est une illusion externe qui n'a jamais rellement lieu en interne ;
-    au lieu de cela le temps ecoule est reduit modulo "self._periode".
-    """
-    def __init__(self, periode, tic):
-        """
-        Constructeur de la classe "Minuteur".
-
-        :param periode: duree entre chaque remise a zero du minuteur
-        :param tic: plus petite unite de temps du minuteur
-        """
-        self._periode = periode
-        self.tic = tic
-        self.debut = time.time()
-        self.numero_periode = None
-
-    @property
-    def periode(self):
-        return self._periode
-
-    @periode.setter
-    def periode(self, nouvelle):
-        self._periode = nouvelle
-        self.reinitialiser()
-
-    @periode.deleter
-    def periode(self):
-        raise AttributeError("La classe \"{0}\" ne peut pas fonctionner "
-                             "sans l'attribut \"_periode\"".format(self.__class__.__name__))
-
-    def temps_ecoule(self):
-        """
-        Retourne le temps ecoule depuis la derniere reinitialisation du minuteur.
-
-        :return: temps ecoule
-        """
-        return time.time() - self.debut
-
-    def temps_ecoule_periode_actuelle(self):
-        """
-        Retourne le temps ecoule depuis la derniere fin de periode.
-
-        :return: nombre representant le temps ecoule depuis la derniere fin de periode
-        """
-        ecoule = self.temps_ecoule()
-        return modulo(ecoule, self.periode)
-
-    def reinitialiser(self):
-        """
-        Remet le minuteur a zero.
-
-        :return: "None"
-        """
-        self.debut = time.time()
-        self.numero_periode = None
-
-    def passage(self):
-        """
-        Methode appelee a chaque fin de boucle des evenements pour indiquer au minuteur qu'il peut commencer une
-        nouvelle periode.
-
-        :return: "None"
-        """
-        est_premier_tour = self.numero_periode is None
-        if est_premier_tour or self.numero_periode != self.nombre_periodes_ecoulees():
-            self.numero_periode = self.nombre_periodes_ecoulees()   # On actualise le numero de la periode en fonction
-                                                                    # du temps ecoule
-        else:  # Si la periode n'est tout juste pas finie (a cause de l'imprecision de la fonction "time.sleep")
-            self.numero_periode += 1  # On augmente quand meme le numero de la periode, car elle est censee etre finie
-
-    def nombre_periodes_ecoulees(self):
-        """
-        Determine le nombre de fois qu'une periode s'est ecoulee.
-
-        :return: numero de la periode actuelle
-        """
-        return int(self.temps_ecoule() / self.periode)
-
-    def attendre_un_tic(self):
-        """
-        Attends le temps d'un tic.
-
-        :return: "None"
-        """
-        time.sleep(self.tic)
-
-    def attendre_fin(self):
-        """
-        Attend jusqu'a la fin de la periode specifiee, "None" attend jusqu'a la fin de la periode actuelle.
-
-        :return: "None"
-        """
-        if self.temps_restant() > 0:
-            time.sleep(self.temps_restant())  # On attend la fin de la periode numero "self.numero_periode"
-
-    def temps_restant(self):
-        nombre_periodes_ecoulees = self.nombre_periodes_ecoulees()
-
-        # Dans l'eventualite ou le numero de la periode est superieur au nombre de periodes ecoulees (peut arriver si la
-        # methode "self.passage" appelee deux fois de suite sans attendre)
-        if self.numero_periode is None:  # TODO : ameliorer commentaire
-            ecart = 0
-        else:
-            ecart = self.numero_periode - nombre_periodes_ecoulees
-        if ecart >= 0:
-            return ecart * self.periode + (self.periode - self.temps_ecoule_periode_actuelle())
-        else:
-            return 0
-
-    def tics_restants(self):
-        """
-        Retourne le nombre de tics restants avant la fin de la periode.
-
-        :return: nombre de tics restant avant la fin de la periode
-        """
-        return self.temps_restant() / self.tic
-
-
 class Jeu(object):
     """
     Classe gerant l'ensemble du jeu.
     """
     TEMPS_MAX = 120
+    VIES_MAX = 3
 
     def __init__(self):
         pygame.init()
@@ -287,10 +112,12 @@ class Jeu(object):
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.15, 0.01)
 
-        self.doit_recommencer = False
+        self.doit_recommencer_partie = False
+        self.doit_recommencer_niveau = False
+        self.vies = self.VIES_MAX
         self.carte = None
         self.mode = MODE.JEU
-        self.recommencer()
+        self.recommencer_partie()
 
     @property
     def personnage(self):
@@ -321,25 +148,52 @@ class Jeu(object):
         """
         exit()  # TODO : ajouter confirmation
 
-    def recommencer(self):
+    def menu(self):
+        retour = self.interface.menu()
+        ret = raw_input("\t\tMenu\n\t1. recommencer partie\n\t2.quitter\n\t3.editeur niveaux.\n>>>")  # TODO : vraie interface
+        ret = int(ret)
+        if ret == 1:
+            self.doit_recommencer_partie = True
+        elif ret == 2:
+            self.quitter()
+        elif ret == 3:
+            self.editeur_niveau()
+
+    def recommencer_niveau(self):
         rect = self.interface.rect_carte(self.niveau)
         self.carte = Carte(rect, self.niveau)
         self.minuteur.reinitialiser()
-        self.doit_recommencer = False
+        self.doit_recommencer_niveau = False
+        print("vies restantes : {0}".format(self.vies))
+
+    def recommencer_partie(self, niveau=None):
+        if niveau is not None:
+            self.niveau = niveau
+        self.vies = self.VIES_MAX
+        self.recommencer_niveau()
+        self.doit_recommencer_partie = False
+
+    def sur_perdu(self):
+        ret = raw_input("recommencer? ")
+        if ret.lower() == "o":
+            self.recommencer_partie()
+        else:
+            self.menu()
 
     def verifier_perdu(self):
         if self.personnage.est_mort or self.minuteur.temps_ecoule() > self.TEMPS_MAX:
-            if self.personnage.vies <= 0:
-                print("perdu")
+            self.vies -= 1
+            if self.vies <= 0:
+                self.sur_perdu()
             else:
-                self.doit_recommencer = True
+                self.doit_recommencer_niveau = True
 
     def niveau_suivant(self):
         i = self.niveau.numero
         if i is not None:
             if i < len(NIVEAUX):
                 self.niveau = Niveau.niveau(i + 1)
-                self.doit_recommencer = True
+                self.doit_recommencer_partie = True
                 return True
         return False
 
@@ -372,9 +226,10 @@ class Jeu(object):
             self.verifier_perdu()
             self.carte.activer_sortie()
 
-
-            if self.doit_recommencer:
-                self.recommencer()
+            if self.doit_recommencer_niveau:
+                self.recommencer_niveau()
+            if self.doit_recommencer_partie:
+                self.recommencer_partie()
             else:
                 self.minuteur.attendre_fin()
 
@@ -402,17 +257,13 @@ class Jeu(object):
         return blocs_selectionnables
 
     def objet_survole(self, pos, *objets):
-        if len(objets) == 0:
-            raise RuntimeError("Nombre d'arguments insuffisant.")
-        for objet in objets:
-            if objet.rect.collidepoint(pos):
-                return objet
-        return None
+        return self.interface.objet_survole(pos, *objets)
 
     def selectionner(self, bloc):
-        pass
+        self.interface.selectionner(bloc)
 
     def editeur_niveau(self):
+        self.mode = MODE.EDITEUR
         carte = self.carte_vide(34, 20)
         x = 0
         y = 0
@@ -481,7 +332,7 @@ class Jeu(object):
             self.interface.afficher(carte, *objets_a_afficher)
             minuteur.attendre_fin()
         self.niveau = Niveau.depuis_carte(carte)
-        self.doit_recommencer = True
+        self.doit_recommencer_partie = True
 
     def gerer_evenements_fenetre(self, evenements):
         for evenement in evenements:
@@ -490,6 +341,8 @@ class Jeu(object):
             if evenement.type == KEYUP:
                 if evenement.key == K_q:
                     self.quitter()
+                elif evenement.key == K_m:
+                    self.menu()
                 elif evenement.key == K_ESCAPE:
                     mods = pygame.key.get_mods()
 
@@ -501,7 +354,6 @@ class Jeu(object):
                         self.interface.passer_en_fenetre()
                 elif evenement.key == K_F12:
                     if self.mode == MODE.JEU:
-                        self.mode = MODE.EDITEUR
                         self.editeur_niveau()
                     else:
                         self.mode = MODE.JEU

@@ -4,6 +4,91 @@ Fichier contenant du code gerant l'affichage.
 from coeur import *
 
 
+class Label(object):
+    def __init__(self, position_centre, texte="", taille=16, police=POLICES.ARCADECLASSIC):
+        self._position = position_centre
+        self._taille = taille
+        self._texte = texte
+        self._police = police
+        self._image = None
+        self._rect = None
+        self.rendu()
+
+    @property
+    def position_centre(self):
+        return Coordonnees(*self.rect.center)
+
+    @position_centre.setter
+    def position_centre(self, nouvelle):
+        try:
+            x, y = nouvelle.x, nouvelle.y
+        except AttributeError:
+            x, y = nouvelle[0], nouvelle[1]
+        self._rect.center = (x, y)
+
+    @property
+    def taille(self):
+        return self._taille
+
+    @taille.setter
+    def taille(self, nouveau):
+        self._taille = nouveau
+        self.rendu()
+
+    @property
+    def texte(self):
+        return self._texte
+
+    @texte.setter
+    def texte(self, nouveau):
+        self._texte = nouveau
+        self._image = None
+        self.rendu()
+
+    @property
+    def police(self):
+        return self._police
+
+    @police.setter
+    def police(self, nouvelle):
+        self._police = nouvelle
+        self.rendu()
+
+    @property
+    def rect(self):
+        return self._rect
+
+    @property
+    def image(self):
+        return self._image
+
+    @image.setter
+    def image(self, nouvelle):
+        self._image = nouvelle
+        self._texte = None
+        self.rendu()
+
+    def rendu(self, couleur=(255, 255, 255, 230)):
+        if self._texte is not None and self._image is None:
+            self._image, rect = self.police.render(self.texte, couleur, size=self.taille)
+            self._rect.size = (rect.width, rect.height)
+        elif self._image is not None and self._texte is None:
+            self._rect.size = self._image.rect.size
+        else:
+            raise AttributeError("Exactement un des deux attributs \"texte\" et \"image\" doit valoir \"None\".")
+
+
+class Bouton(Label):
+    def __init__(self, position_centre, image=None, texte="", taille=16, police=POLICES.ARCADECLASSIC):
+        super(Bouton, self).__init__(position_centre, texte, taille, police)
+        if image is not None:
+            self.image = image
+        self.action_sur_clic = Action()
+
+    def cliquer(self):
+        self.action_sur_clic.effectuer()
+
+
 class InterfaceGraphique:
     def __init__(self, ecran):
         self.ecran = ecran
@@ -62,6 +147,29 @@ class InterfaceGraphique:
             resolution = self.ecran.get_size()
             self.ecran = pygame.display.set_mode(resolution, RESIZABLE)
             self._mode = RESIZABLE
+
+    def objet_survole(self, pos, *objets):
+        if len(objets) == 0:
+                raise RuntimeError("Nombre d'arguments insuffisant.")
+        for objet in objets:
+            if objet.rect.collidepoint(pos):
+                return objet
+        return None
+
+    def selectionner(self, bloc):
+        pass
+
+    def menu(self):
+        rect = self.rect()
+        h = rect.height
+        labels = [Label((rect.centerx, 0.02*h), "Menu", 18)]
+        boutons = [Label((rect.centerx, 0), "Reprendre"), Label((rect.centerx, 0), "Recommencer"),
+                   Label((rect.centerx, 0), "Nouvelle partie"), Label((rect.centerx, 0),"Charger niveau"),
+                   Label((rect.centerx, 0), "Creer niveau")]
+        bouton_selectionne = boutons[0]
+        minuteur = Minuteur(1/60.0, 0.005)
+
+        self.afficher(None, )
 
     def afficher(self, carte=None, *autres_objets):
         self.ecran.blit(self.arriere_plan, (0, 0))  # Dessine l'arriere plan

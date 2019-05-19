@@ -96,7 +96,6 @@ class Personnage(Bloc):
         self.diamants_ramasses = 0
         self.terre_creusee = 0
         self.caillou_pousse = None
-        self.vies = 3
         self.z = 1
 
     def creuser_terre(self, terre):
@@ -116,7 +115,6 @@ class Personnage(Bloc):
 
     def tuer(self):
         super(Personnage, self).tuer()
-        self.vies -= 1
 
 
 class Terre(Bloc):

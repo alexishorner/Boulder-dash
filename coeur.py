@@ -2,6 +2,63 @@
 Module definissant des classes utilisees dans l'ensemble du programme.
 """
 from constantes import *
+import time
+import math
+from numpy import matrix
+
+
+def modulo(num, div):
+    """
+    Fonction permettant de calculer le reste de la division de deux nombres sans avoir d'erreur due a l'arrondi des ordinateurs.
+
+    Cette fonction donne le meme resultat que l'operateur "%" pour les nombres entiers, mais donne des resultats
+    correspondants a la definition de modulo pour tous les nombres, y compris les nombres a virgule et les nombres negatifs.
+
+    Exemple :
+    7.5 % 0.05 donne 0.04999999999999992 (incorrect), alors que modulo(7.5, 0.05) donne 0.0 (correct)
+
+    Verification:
+    7.5 = 150.0 * 0.05 + 0.0
+
+    Le desavantage de cette fonction est qu'elle perd un peu de precision pour parer aux erreurs d'arrondi.
+
+    :param num: numerateur
+    :param div: diviseur
+    :return: reste de la division de "num" par "div"
+    """
+    a = float(num)  # Assure que la division sera flottante
+    b = float(div)
+    facteur = int(1e14)  # Facteur de precision
+    return (a / b - int(math.ceil(a / b * facteur) / facteur)) * b
+
+
+def vecteur(directions, e_x, e_y):
+    try:
+        len(directions)  # On verifie si "directions" est iterable
+        directions_ = directions
+    except TypeError:
+        directions_ = [directions]  # S'il n'y a qu'une seule direction on la transforme en liste
+    v = matrix([[0],
+               [0]])  # On commence avec un vecteur nul
+    for direction in directions_:  # On ajoute le vecteur correspondant a chaque direction
+        if direction == ORIENTATIONS.DROITE:
+            v += matrix([[1],
+                         [0]])
+        elif direction == ORIENTATIONS.GAUCHE:
+            v += matrix([[-1],
+                         [0]])
+        elif direction == ORIENTATIONS.HAUT:
+            v += matrix([[0],
+                         [-1]])
+        elif direction == ORIENTATIONS.BAS:
+            v += matrix([[0],
+                         [1]])
+        else:
+            raise ValueError("La direction est invalide")
+    matrice = matrix([[e_x, 0],
+                     [0, e_y]])
+    v = matrice * v  # On multiplie chaque composante du vecteur pour passer dans la base {(e_x, 0), (0, e_y)}
+    return v
 
 
 class Action(object):
@@ -89,3 +146,123 @@ class Rectangle(pygame.Rect):
     def rectangle_defaut(x, y):
         largeur = 50
         return Rectangle(x, y, largeur, largeur)
+
+
+class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style a une vraie utilite, puisque cela permet d'utiliser des proprietes
+    """
+    Classe permettant de simuler un minuteur. Le minuteur se remet a zero a intervalles fixes dont la duree est
+    determinee par "self._periode". La remise a zero est une illusion externe qui n'a jamais rellement lieu en interne ;
+    au lieu de cela le temps ecoule est reduit modulo "self._periode".
+    """
+    def __init__(self, periode, tic):
+        """
+        Constructeur de la classe "Minuteur".
+
+        :param periode: duree entre chaque remise a zero du minuteur
+        :param tic: plus petite unite de temps du minuteur
+        """
+        self._periode = periode
+        self.tic = tic
+        self.debut = time.time()
+        self.numero_periode = None
+
+    @property
+    def periode(self):
+        return self._periode
+
+    @periode.setter
+    def periode(self, nouvelle):
+        self._periode = nouvelle
+        self.reinitialiser()
+
+    @periode.deleter
+    def periode(self):
+        raise AttributeError("La classe \"{0}\" ne peut pas fonctionner "
+                             "sans l'attribut \"_periode\"".format(self.__class__.__name__))
+
+    def temps_ecoule(self):
+        """
+        Retourne le temps ecoule depuis la derniere reinitialisation du minuteur.
+
+        :return: temps ecoule
+        """
+        return time.time() - self.debut
+
+    def temps_ecoule_periode_actuelle(self):
+        """
+        Retourne le temps ecoule depuis la derniere fin de periode.
+
+        :return: nombre representant le temps ecoule depuis la derniere fin de periode
+        """
+        ecoule = self.temps_ecoule()
+        return modulo(ecoule, self.periode)
+
+    def reinitialiser(self):
+        """
+        Remet le minuteur a zero.
+
+        :return: "None"
+        """
+        self.debut = time.time()
+        self.numero_periode = None
+
+    def passage(self):
+        """
+        Methode appelee a chaque fin de boucle des evenements pour indiquer au minuteur qu'il peut commencer une
+        nouvelle periode.
+
+        :return: "None"
+        """
+        est_premier_tour = self.numero_periode is None
+        if est_premier_tour or self.numero_periode != self.nombre_periodes_ecoulees():
+            self.numero_periode = self.nombre_periodes_ecoulees()   # On actualise le numero de la periode en fonction
+                                                                    # du temps ecoule
+        else:  # Si la periode n'est tout juste pas finie (a cause de l'imprecision de la fonction "time.sleep")
+            self.numero_periode += 1  # On augmente quand meme le numero de la periode, car elle est censee etre finie
+
+    def nombre_periodes_ecoulees(self):
+        """
+        Determine le nombre de fois qu'une periode s'est ecoulee.
+
+        :return: numero de la periode actuelle
+        """
+        return int(self.temps_ecoule() / self.periode)
+
+    def attendre_un_tic(self):
+        """
+        Attends le temps d'un tic.
+
+        :return: "None"
+        """
+        time.sleep(self.tic)
+
+    def attendre_fin(self):
+        """
+        Attend jusqu'a la fin de la periode specifiee, "None" attend jusqu'a la fin de la periode actuelle.
+
+        :return: "None"
+        """
+        if self.temps_restant() > 0:
+            time.sleep(self.temps_restant())  # On attend la fin de la periode numero "self.numero_periode"
+
+    def temps_restant(self):
+        nombre_periodes_ecoulees = self.nombre_periodes_ecoulees()
+
+        # Dans l'eventualite ou le numero de la periode est superieur au nombre de periodes ecoulees (peut arriver si la
+        # methode "self.passage" appelee deux fois de suite sans attendre)
+        if self.numero_periode is None:  # TODO : ameliorer commentaire
+            ecart = 0
+        else:
+            ecart = self.numero_periode - nombre_periodes_ecoulees
+        if ecart >= 0:
+            return ecart * self.periode + (self.periode - self.temps_ecoule_periode_actuelle())
+        else:
+            return 0
+
+    def tics_restants(self):
+        """
+        Retourne le nombre de tics restants avant la fin de la periode.
+
+        :return: nombre de tics restant avant la fin de la periode
+        """
+        return self.temps_restant() / self.tic
