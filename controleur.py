@@ -110,6 +110,7 @@ class Jeu(object):
         """
         self.interface.afficher(self.carte)
         self.minuteur.reinitialiser()
+        self.diamanttombe = 0
         while 1:
             self.minuteur.passage()
             debut = time.time()
@@ -389,10 +390,8 @@ class Jeu(object):
                 else:
                     if isinstance(bloc, Personnage):
                         reussite = self._collision_personnage(bloc, bloc_collisionne, direction, essai)
-                        bloc.a_collisione = True
                     elif isinstance(bloc, BlocTombant):
                         reussite = self._collision_bloc_tombant(bloc, bloc_collisionne, direction)
-                        bloc.a_collisione = True
                 if not essai:
                     if reussite:
                         nouveau_rect = bloc.rect.move(vecteur(direction, self.carte.largeur_case, self.carte.hauteur_case))
@@ -437,6 +436,7 @@ class Jeu(object):
         :return: "None"
         """
         # On fait bouger le personnage
+
         if self.personnage.mouvement_en_cours == ORIENTATIONS.DROITE:
             pass
         if self.mouvement_detecte:  # Si un mouvement doit etre effectue

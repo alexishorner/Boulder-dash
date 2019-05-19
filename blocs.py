@@ -187,6 +187,8 @@ class Caillou(BlocTombant):
             self.coups_avant_etre_pousse -= 1
 
     def terminer_cycle(self):
+        if self.tombe and not self.est_tombe:
+            SONS.CAILLOU_TOMBE.play()
         super(Caillou, self).terminer_cycle()
         if not self.est_pousse:
             self.coups_avant_etre_pousse = self.INERTIE
@@ -204,7 +206,10 @@ class Diamant(BlocTombant):
         super(Diamant, self).tomber()
         if self.ramasse == False: #comme ca on a pas le bruit du diamant qui tombe lorsqu'on le ramasse
             SONS.DIAMANT_TOMBE1.play()
-
+    def terminer_cycle(self):
+        if self.tombe and not self.est_tombe:
+            SONS.DIAMANT_TOMBE1.play()
+        super(Diamant, self).terminer_cycle()
 
 class Mur(Bloc):
     """
