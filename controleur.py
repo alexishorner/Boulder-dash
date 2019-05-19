@@ -345,8 +345,11 @@ class Jeu(object):
         self.doit_recommencer = False
 
     def verifier_perdu(self):
-        if self.personnage is None or self.minuteur.temps_ecoule() > self.TEMPS_MAX:
-            self.doit_recommencer = True
+        if self.personnage.est_mort or self.minuteur.temps_ecoule() > self.TEMPS_MAX:
+            if self.personnage.vies <= 0:
+                print("perdu")
+            else:
+                self.doit_recommencer = True
 
     def niveau_suivant(self):
         i = self.niveau.numero
@@ -437,10 +440,17 @@ class Jeu(object):
         position_souris = pygame.mouse.get_pos()
         bloc_pointeur = bloc_selectionne.__class__(pygame.Rect(position_souris, bloc_selectionne.rect.size))
         clic_gauche = clic_droit = False
-        case = None
+        case = self.objet_survole(position_souris, *carte.tuple_cases)
         del x, y
 
-        self.interface.afficher(carte)
+        # Affichage premiere image
+        if case is not None and not clic_droit:  # Si la souris survole la carte et qu'il n'y a pas de clic droit
+            bloc_pointeur.rect = case.rect
+            # On affiche la carte et le bloc sous le pointeur
+            self.interface.afficher(carte, bloc_pointeur)
+        else:
+            self.interface.afficher(carte)
+
         minuteur = Minuteur(1/60.0, 0.005)
         while self.mode == MODE.EDITEUR:
             minuteur.passage()
@@ -464,13 +474,17 @@ class Jeu(object):
                                     if bloc_clique is not None:  # Si bloc clique
                                         bloc_selectionne = bloc_clique
                                         # On change le bloc affiche sous le pointeur de la souris
-                                        bloc_pointeur = bloc_selectionne.__class__(pygame.Rect(position_souris, bloc_selectionne.rect.size))
+                                        taille_bloc = bloc_selectionne.rect.size
+                                        rect = pygame.Rect(position_souris, taille_bloc)
+                                        creer_bloc = bloc_selectionne.__class__
+                                        bloc_pointeur = creer_bloc(rect)
                                 else:  # Si une case de la carte a ete cliquee
-                                    rect = case.rect
                                     # Si le nouveau bloc est d'un autre type que l'ancien ou que la case contient
                                     # plusieurs blocs
                                     if bloc_selectionne.__class__ != case.blocs[0].__class__ or len(case.blocs) != 1:
-                                        case.blocs = [bloc_selectionne.__class__(rect)]  # On construit un bloc du bon type
+                                        rect = case.rect
+                                        creer_bloc = bloc_selectionne.__class__
+                                        case.blocs = [creer_bloc(rect)]  # On construit un bloc du bon type
                             elif clic_droit:
                                 if case is not None:  # Si une case de la carte a recu un clic droit
                                     case.blocs = [None]  # On supprime les blocs de la case

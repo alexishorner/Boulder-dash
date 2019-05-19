@@ -362,7 +362,8 @@ class Carte(object):
     def supprimer_morts(self):
         for bloc in self.blocs_tries:
             if bloc.est_mort:
-                self.supprimer(bloc)
+                if not isinstance(bloc, Personnage):
+                    self.supprimer(bloc)
 
     def blocs_a(self, x, y, index=True):
         return self.case_a(x, y, index).blocs
