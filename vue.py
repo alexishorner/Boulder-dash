@@ -162,14 +162,19 @@ class InterfaceGraphique:
     def menu(self):
         rect = self.rect()
         h = rect.height
-        labels = [Label((rect.centerx, 0.02*h), "Menu", 18)]
-        boutons = [Label((rect.centerx, 0), "Reprendre"), Label((rect.centerx, 0), "Recommencer"),
-                   Label((rect.centerx, 0), "Nouvelle partie"), Label((rect.centerx, 0),"Charger niveau"),
-                   Label((rect.centerx, 0), "Creer niveau")]
+        labels = [Label((rect.centerx, 0.3*h), "Menu", 18)]
+        boutons = [Label((rect.centerx, labels[0].position_centre.x + 0.02*h), "Reprendre"),
+                   Label((rect.centerx, 0), "Recommencer"), Label((rect.centerx, 0), "Nouvelle partie"),
+                   Label((rect.centerx, 0),"Charger niveau"), Label((rect.centerx, 0), "Creer niveau")]
+        for i, bouton in enumerate(boutons):
+            if i > 0:
+                y_prec = boutons[i - 1].position_centre.y
+                bouton.position_centre = (bouton.position_centre.x, y_prec + 0.015*h)
+        elements_affichables = labels + boutons
         bouton_selectionne = boutons[0]
         minuteur = Minuteur(1/60.0, 0.005)
 
-        self.afficher(None, )
+        self.afficher(None, elements_affichables)
 
     def afficher(self, carte=None, *autres_objets):
         self.ecran.blit(self.arriere_plan, (0, 0))  # Dessine l'arriere plan

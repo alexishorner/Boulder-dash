@@ -348,10 +348,11 @@ class Jeu(object):
 
                     # On regarde si la touche Maj est pressee et qu'aucun autre modificateur ne l'est, on utilise pour
                     # ce faire des operateurs bit a bit
-                    if mods & KMOD_SHIFT and not mods & ~KMOD_SHIFT:
-                        self.interface.passer_en_plein_ecran()
-                    elif not mods:
-                        self.interface.passer_en_fenetre()
+                    if not mods & (KMOD_ALT | KMOD_CTRL):
+                        if mods & KMOD_SHIFT:
+                            self.interface.passer_en_plein_ecran()
+                        else:
+                            self.interface.passer_en_fenetre()
                 elif evenement.key == K_F12:
                     if self.mode == MODE.JEU:
                         self.editeur_niveau()
