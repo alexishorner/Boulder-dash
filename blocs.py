@@ -208,6 +208,7 @@ class Diamant(BlocTombant):
     def taper_objet(self):
         SONS.DIAMANT_TOMBE1.play()
 
+
 class Mur(Bloc):
     """
     Classe permetant de representer un bout de mur.
@@ -257,6 +258,7 @@ class Sortie(Bloc):
         :return: "None"
         """
         self.est_activee = False
+
 
 class Explosion(Bloc):
     """

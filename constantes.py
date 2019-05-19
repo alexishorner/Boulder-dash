@@ -65,6 +65,8 @@ class SONS:
     DIAMANT_TOMBE4 = pygame.mixer.Sound("sounds/diamond4.ogg")
     DIAMANT_TOMBE5 = pygame.mixer.Sound("sounds/diamond5.ogg")
     DIAMANT_TOMBE6 = pygame.mixer.Sound("sounds/diamond6.ogg")
+
+
 @unique
 class ORIENTATIONS(IntEnum):
     """
@@ -112,6 +114,11 @@ class ERREURS(IntEnum):
 
 class POLICES:
     ARCADECLASSIC = freetype.Font("polices/arcadeclassic/ARCADECLASSIC.TTF")
+
+
+@unique
+class EVENEMENTS(IntEnum):
+    JEU, EDITEUR, MENU, REPRENDRE, RECOMMENCER, NOUVELLE_PARTIE, CHARGER_NIVEAU, CREER_NIVEAU = range(8)
 
 
 NIVEAUX = ("""

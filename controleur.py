@@ -235,9 +235,9 @@ class Jeu(object):
 
     def gerer_evenements_fenetre(self, evenements):
         retour = self.interface.gerer_evenements(evenements)
-        if retour == MODES.MENU:
+        if retour == EVENEMENTS.MENU:
             self.menu()
-        elif retour == MODES.EDITEUR:
+        elif retour == EVENEMENTS.EDITEUR:
             if self.mode == MODES.JEU:
                 self.editeur_niveau()
             else:

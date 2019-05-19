@@ -163,14 +163,14 @@ class InterfaceGraphique:
         for evenement in evenements:
             if evenement.type == QUIT:
                 self.quitter()
-            if evenement.type == VIDEORESIZE:
+            if evenement.type == VIDEORESIZE:  # FIXME : pygame ne signale pas de changement de taille
                 print(evenement.size)
                 print(self.ecran.get_size())
                 self.ecran = pygame.display.set_mode(evenement.size)
                 print(self.ecran.get_size())
             if evenement.type == KEYUP:
                 if evenement.key == K_m:
-                    return MODES.MENU
+                    return EVENEMENTS.MENU
                 if evenement.key == K_q:
                     self.quitter()
                 elif evenement.key == K_ESCAPE:
@@ -184,7 +184,7 @@ class InterfaceGraphique:
                         else:
                             self.passer_en_fenetre()
                 elif evenement.key == K_F12:
-                    return MODES.EDITEUR
+                    return EVENEMENTS.EDITEUR
             return None
 
     def objet_survole(self, pos, *objets):
@@ -202,22 +202,40 @@ class InterfaceGraphique:
         rect = self.rect()
         h = rect.height
         labels = [Label((rect.centerx, 0.3*h), "Menu", 18)]
-        boutons = [Label((rect.centerx, labels[0].position_centre.x + 0.02*h), "Reprendre"),
-                   Label((rect.centerx, 0), "Recommencer"), Label((rect.centerx, 0), "Nouvelle partie"),
-                   Label((rect.centerx, 0),"Charger niveau"), Label((rect.centerx, 0), "Creer niveau")]
+        boutons = [Bouton((rect.centerx, labels[0].position_centre.x + 0.02*h), "Reprendre"),
+                   Bouton((rect.centerx, 0), "Recommencer"), Bouton((rect.centerx, 0), "Nouvelle partie"),
+                   Bouton((rect.centerx, 0),"Charger niveau"), Bouton((rect.centerx, 0), "Creer niveau")]
         for i, bouton in enumerate(boutons):
             if i > 0:
                 y_prec = boutons[i - 1].position_centre.y
                 bouton.position_centre = (bouton.position_centre.x, y_prec + 0.015*h)
         elements_affichables = labels + boutons
         bouton_selectionne = boutons[0]
-        minuteur = Minuteur(1/60.0, 0.005)
+        numero_bouton = 0
+        minuteur = Minuteur(0.15, 0.005)
         while 1:
             minuteur.passage()
             while minuteur.tics_restants() > 1:
-                self.gerer_evenements(pygame.event.get())
+                evenements = pygame.event.get()
+                self.gerer_evenements(evenements)
+                for evenement in evenements:
+                    if evenement.type == KEYUP:
+                        if evenement.key == K_KP_ENTER:
+                            bouton_selectionne.cliquer()
                 if minuteur.tics_restants() > 1:
                     minuteur.attendre_un_tic()
+
+            touche_pressee = self.gestionnaire_touches.derniere_touche()
+
+            if touche_pressee in (K_UP, K_DOWN):
+                if touche_pressee == K_UP:
+                    numero_bouton -= 1
+                elif touche_pressee == K_DOWN:
+                    numero_bouton += 1
+                numero_bouton %= len(boutons)
+                bouton_selectionne.texte = bouton_selectionne.texte.replace("- ", "", 1)
+                bouton_selectionne = boutons[numero_bouton]
+                bouton_selectionne.texte = "- " + bouton_selectionne.texte
 
             self.afficher(None, elements_affichables)
             minuteur.attendre_fin()
