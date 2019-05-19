@@ -6,96 +6,6 @@ from vue import *
 import random
 
 
-class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe de nouveau style.
-    """
-    Classe permettant de gerer les evenements de pression des touches.
-
-    Contrairement a "pygame.key.get_pressed()", elle permet de savoir dans quel ordre les differentes touches ont ete
-    pressees.
-
-    La methode "pygame.key.get_pressed()" renvoie une liste de booleens indiquant pour chaque touche possible si elle
-    est pressee. Pour ordonner les touches pressees dans l'ordre de pressage il est plus simple de conserver une liste
-    des indexes des touches pressees, ce qui est a l'origine des differentes conversions presentes dans les methode de
-    cette classe.
-    """
-    def __init__(self, touches_pressees_booleens=None):
-        if touches_pressees_booleens is None:
-            touches_pressees_indexes = []
-        else:
-            touches_pressees_indexes = self.booleens_vers_indexes(touches_pressees_booleens)
-        self.indexes_ordonnes = touches_pressees_indexes  # indexes des touches dans leur ordre de pressage
-
-    def actualiser_touches(self, touches_pressees_booleens):
-        """
-        Ajoute les nouvelles touches pressees et enleve les touches non pressees.
-
-        :param touches_pressees_booleens: liste de booleens indiquant pour chaque touche si elle est pressee
-        :return: "None"
-        """
-        ajoutees, enlevees = self.changements_touches(touches_pressees_booleens)  # Regarde les touches nouvellement
-                                                                        # pressees et les touches n'etant plus pressees
-        for touche in enlevees:
-            self.indexes_ordonnes.remove(touche)
-        self.indexes_ordonnes.extend(ajoutees)  # Ajoute a la fin de la liste les touches nouvellement pressees
-
-    def changements_touches(self, touches_pressees_booleens):
-        """
-        Detecte les changement dans les touches pressees par rapport a l'etat d'avant.
-
-        :param touches_pressees_booleens: touches pressees dans l'etat actuel
-        :return: instances de "list", l'une contenant les touches ajoutees, l'autre les touches enlevees
-        """
-        touches_pressees_indexes = self.booleens_vers_indexes(touches_pressees_booleens)    # Recupere l'index des
-                                                                                            # touches pressees
-        ajoutees = [touche for touche in touches_pressees_indexes if touche not in self.indexes_ordonnes]
-        enlevees = [touche for touche in self.indexes_ordonnes if touche not in touches_pressees_indexes]
-        return ajoutees, enlevees
-
-    def derniere_touche(self):
-        """
-        Retourne la derniere touche pressee.
-
-        :return: derniere touche pressee
-        """
-        if len(self.indexes_ordonnes) > 0:
-            return self.indexes_ordonnes[-1]
-        else:
-            return None
-
-    @staticmethod
-    def booleens_vers_indexes(booleens):
-        """
-        Retourne les indexes des touches pressees a partir d'une liste de booleens.
-
-        :param booleens: liste de booleens determinant pour chaque touche si elle est pressee
-        :return: liste contenant l'index de chaque touche pressee
-        """
-        return [index for index, booleen in enumerate(booleens) if booleen]
-
-    @staticmethod
-    def indexes_vers_booleens(indexes):
-        """
-        Retourne une liste de booleens determinant pour chaque touche si elle est pressee a partir de l'index de chaque
-        touche pressee.
-
-        :param indexes: liste contenant l'index de chaque touche pressee
-        :return: liste de booleens determinant pour chaque touche si elle est pressee
-        """
-        booleens = [False] * GestionnaireTouches.nombre_de_touches()
-        for index in indexes:
-            booleens[index] = True
-        return booleens
-
-    @staticmethod
-    def nombre_de_touches():
-        """
-        Retourne le nombre total de touches.
-
-        :return: nombre total de touches
-        """
-        return len(pygame.key.get_pressed())
-
-
 class Jeu(object):
     """
     Classe gerant l'ensemble du jeu.
@@ -108,8 +18,6 @@ class Jeu(object):
         self.interface = InterfaceGraphique(ECRAN)
         self.niveau = Niveau.niveau(1)
 
-        pygame.key.set_repeat(1, 1)
-        self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.minuteur = Minuteur(0.15, 0.01)
 
         self.doit_recommencer_partie = False
@@ -140,22 +48,12 @@ class Jeu(object):
     def mouvement_detecte(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
 
-    def quitter(self):
-        """
-        Quitte le jeu apres confirmation de l'utilisateur.
-
-        :return: "None"
-        """
-        exit()  # TODO : ajouter confirmation
-
     def menu(self):
         retour = self.interface.menu()
         ret = raw_input("\t\tMenu\n\t1. recommencer partie\n\t2.quitter\n\t3.editeur niveaux.\n>>>")  # TODO : vraie interface
         ret = int(ret)
         if ret == 1:
             self.doit_recommencer_partie = True
-        elif ret == 2:
-            self.quitter()
         elif ret == 3:
             self.editeur_niveau()
 
@@ -335,24 +233,11 @@ class Jeu(object):
         self.doit_recommencer_partie = True
 
     def gerer_evenements_fenetre(self, evenements):
+        retour = self.interface.gerer_evenements(evenements)
         for evenement in evenements:
-            if evenement.type == QUIT:
-                self.quitter()
             if evenement.type == KEYUP:
-                if evenement.key == K_q:
-                    self.quitter()
-                elif evenement.key == K_m:
+                if evenement.key == K_m:
                     self.menu()
-                elif evenement.key == K_ESCAPE:
-                    mods = pygame.key.get_mods()
-
-                    # On regarde si la touche Maj est pressee et qu'aucun autre modificateur ne l'est, on utilise pour
-                    # ce faire des operateurs bit a bit
-                    if not mods & (KMOD_ALT | KMOD_CTRL):
-                        if mods & KMOD_SHIFT:
-                            self.interface.passer_en_plein_ecran()
-                        else:
-                            self.interface.passer_en_fenetre()
                 elif evenement.key == K_F12:
                     if self.mode == MODE.JEU:
                         self.editeur_niveau()
@@ -375,15 +260,13 @@ class Jeu(object):
 
         :return: Booleen informant si une touche a provoque une action dans le jeu
         """
-        self.gestionnaire_touches.actualiser_touches(pygame.key.get_pressed())
-
         # On regarde si plus de la moitie de la periode est ecoulee (sert a ameliorer l'experience utilisateur)
         moitie_periode_est_depassee = self.minuteur.temps_ecoule_periode_actuelle() > self.minuteur.periode / 2.0
 
         if not self.personnage.etait_en_mouvement or moitie_periode_est_depassee:   # Si le personnage est deja en train
                                                                                     # de bouger ou que plus de la moitie
                                                                                     # de la periode est ecoulee
-            derniere_touche_pressee = self.gestionnaire_touches.derniere_touche()
+            derniere_touche_pressee = self.interface.gestionnaire_touches.derniere_touche()
             if derniere_touche_pressee in TOUCHES.MOUVEMENT:  # Si on presse une touche de mouvement
 
                 # On regarde quelle touche est pressee et on stocke le mouvement en consequence

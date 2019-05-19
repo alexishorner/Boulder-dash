@@ -40,8 +40,8 @@ IMAGES = {"Bloc": "mono-unknown.png", "Personnage": "personnage.png",
           "Diamant": "diamant.png", "Terre": "terre.PNG", "Mur": "mur.png",
           "Caillou": "caillou.png", "Sortie": "porte.png", "Explosion": "explosion.png"}
 
-for classe, _chemin in IMAGES.iteritems():
-    IMAGES[classe] = charger(CHEMIN_IMAGES + _chemin)  # on charge les images
+for _classe, _chemin in IMAGES.iteritems():
+    IMAGES[_classe] = charger(CHEMIN_IMAGES + _chemin)  # on charge les images
 
 class SONS:
     """
@@ -102,8 +102,14 @@ class MODE(IntEnum):
 class ERREUR(IntEnum):
     PERSONNAGE_MANQUANT, PORTE_MANQUANTE, DIAMANTS_INSUFFISANTS, PERSONNAGE_BLOQUE, PORTE_BLOQUEE = range(5)
 
+
 class POLICES:
     ARCADECLASSIC = freetype.Font("polices/arcadeclassic/ARCADECLASSIC.TTF")
+
+
+@unique
+class EVENEMENTS(IntEnum):
+    MENU, EDITEUR = range(2)
 
 
 NIVEAUX = ("""

@@ -148,6 +148,96 @@ class Rectangle(pygame.Rect):
         return Rectangle(x, y, largeur, largeur)
 
 
+class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe de nouveau style.
+    """
+    Classe permettant de gerer les evenements de pression des touches.
+
+    Contrairement a "pygame.key.get_pressed()", elle permet de savoir dans quel ordre les differentes touches ont ete
+    pressees.
+
+    La methode "pygame.key.get_pressed()" renvoie une liste de booleens indiquant pour chaque touche possible si elle
+    est pressee. Pour ordonner les touches pressees dans l'ordre de pressage il est plus simple de conserver une liste
+    des indexes des touches pressees, ce qui est a l'origine des differentes conversions presentes dans les methode de
+    cette classe.
+    """
+    def __init__(self, touches_pressees_booleens=None):
+        if touches_pressees_booleens is None:
+            touches_pressees_indexes = []
+        else:
+            touches_pressees_indexes = self.booleens_vers_indexes(touches_pressees_booleens)
+        self.indexes_ordonnes = touches_pressees_indexes  # indexes des touches dans leur ordre de pressage
+
+    def actualiser_touches(self, touches_pressees_booleens):
+        """
+        Ajoute les nouvelles touches pressees et enleve les touches non pressees.
+
+        :param touches_pressees_booleens: liste de booleens indiquant pour chaque touche si elle est pressee
+        :return: "None"
+        """
+        ajoutees, enlevees = self.changements_touches(touches_pressees_booleens)  # Regarde les touches nouvellement
+                                                                        # pressees et les touches n'etant plus pressees
+        for touche in enlevees:
+            self.indexes_ordonnes.remove(touche)
+        self.indexes_ordonnes.extend(ajoutees)  # Ajoute a la fin de la liste les touches nouvellement pressees
+
+    def changements_touches(self, touches_pressees_booleens):
+        """
+        Detecte les changement dans les touches pressees par rapport a l'etat d'avant.
+
+        :param touches_pressees_booleens: touches pressees dans l'etat actuel
+        :return: instances de "list", l'une contenant les touches ajoutees, l'autre les touches enlevees
+        """
+        touches_pressees_indexes = self.booleens_vers_indexes(touches_pressees_booleens)    # Recupere l'index des
+                                                                                            # touches pressees
+        ajoutees = [touche for touche in touches_pressees_indexes if touche not in self.indexes_ordonnes]
+        enlevees = [touche for touche in self.indexes_ordonnes if touche not in touches_pressees_indexes]
+        return ajoutees, enlevees
+
+    def derniere_touche(self):
+        """
+        Retourne la derniere touche pressee.
+
+        :return: derniere touche pressee
+        """
+        if len(self.indexes_ordonnes) > 0:
+            return self.indexes_ordonnes[-1]
+        else:
+            return None
+
+    @staticmethod
+    def booleens_vers_indexes(booleens):
+        """
+        Retourne les indexes des touches pressees a partir d'une liste de booleens.
+
+        :param booleens: liste de booleens determinant pour chaque touche si elle est pressee
+        :return: liste contenant l'index de chaque touche pressee
+        """
+        return [index for index, booleen in enumerate(booleens) if booleen]
+
+    @staticmethod
+    def indexes_vers_booleens(indexes):
+        """
+        Retourne une liste de booleens determinant pour chaque touche si elle est pressee a partir de l'index de chaque
+        touche pressee.
+
+        :param indexes: liste contenant l'index de chaque touche pressee
+        :return: liste de booleens determinant pour chaque touche si elle est pressee
+        """
+        booleens = [False] * GestionnaireTouches.nombre_de_touches()
+        for index in indexes:
+            booleens[index] = True
+        return booleens
+
+    @staticmethod
+    def nombre_de_touches():
+        """
+        Retourne le nombre total de touches.
+
+        :return: nombre total de touches
+        """
+        return len(pygame.key.get_pressed())
+
+
 class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style a une vraie utilite, puisque cela permet d'utiliser des proprietes
     """
     Classe permettant de simuler un minuteur. Le minuteur se remet a zero a intervalles fixes dont la duree est
