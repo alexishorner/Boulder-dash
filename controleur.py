@@ -394,6 +394,7 @@ class Jeu(object):
                     if reussite:
                         nouveau_rect = bloc.rect.move(vecteur(direction, self.carte.largeur_case, self.carte.hauteur_case))
                         self.carte.bouger(bloc, nouveau_rect)
+                        bloc.bouger(direction)
                         bloc.a_deja_bouge = True
         return reussite, bloc_collisionne  # Le bloc collisionne n'est juste que si reussite == False
 
@@ -401,6 +402,9 @@ class Jeu(object):
         reussite = self.faire_bouger(bloc, ORIENTATIONS.BAS, essai)[0]
         if reussite:
             bloc.tomber()
+        else:
+            if not essai:
+                bloc.taper_objet()
         return reussite
 
     def faire_tomber_cotes(self, bloc, essai=False):

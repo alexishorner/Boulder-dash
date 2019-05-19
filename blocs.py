@@ -99,9 +99,6 @@ class Personnage(Bloc):
         self.caillou_pousse = None
         self.z = 1
 
-        # self.soncreuser = pygame.mixer.Sound()
-        # self.sontcaillou = pygame.mixer.Sound()
-        # self.sonbouger = pygame.mixer.Sound()e
     def creuser_terre(self, terre):
         terre.tuer()
         SONS.CREUSER_TERRE.play()
@@ -137,7 +134,6 @@ class BlocTombant(Bloc):
     """
     PEUT_SE_DEPLACER = True
     INERTIE = 1
-
 
     def __init__(self, rect):
         super(BlocTombant, self).__init__(rect)
@@ -186,9 +182,10 @@ class Caillou(BlocTombant):
         else:
             SONS.POUSSER_CAILLOU.play()
 
+    def taper_objet(self):
+        SONS.CAILLOU_TOMBE.play()
+
     def terminer_cycle(self):
-        if self.tombe and not self.est_tombe:
-            SONS.CAILLOU_TOMBE.play()
         super(Caillou, self).terminer_cycle()
         if not self.est_pousse:
             self.coups_avant_etre_pousse = self.INERTIE
@@ -208,10 +205,8 @@ class Diamant(BlocTombant):
         if (not self.est_tombe and not self.a_tue) and not self.ramasse: #comme ca on a pas le bruit du diamant qui tombe lorsqu'on le ramasse
             SONS.DIAMANT_TOMBE1.play()
 
-    def terminer_cycle(self):
-        if self.tombe and not self.est_tombe:
-            SONS.DIAMANT_TOMBE1.play()
-        super(Diamant, self).terminer_cycle()
+    def taper_objet(self):
+        SONS.DIAMANT_TOMBE1.play()
 
 class Mur(Bloc):
     """

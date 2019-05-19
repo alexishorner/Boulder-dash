@@ -163,6 +163,7 @@ class InterfaceGraphique:
             if evenement.type == QUIT:
                 self.quitter()
             if evenement.type == VIDEORESIZE:
+                print(evenement.size)
                 print(self.ecran.get_size())
                 self.ecran = pygame.display.set_mode(evenement.size)
                 print(self.ecran.get_size())
