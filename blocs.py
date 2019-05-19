@@ -12,7 +12,7 @@ Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 #   - editeur de niveaux :
 #       - ajouter/enlever lignes/colonnes
 #       - sauvegarder niveaux dans fichier
-#   - Facultatif :
+#   Facultatif :
 #       - ameliorer ajouts blocs par glissement (intersection segment/rectangles)
 #       - generateur de niveaux automatique
 #       - mechants

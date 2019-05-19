@@ -145,6 +145,7 @@ class Niveau(object):
         self.nombre_cases_largeur = 0
         self.nombre_cases_hauteur = 0
         self.ascii = ascii  # Representation du niveau avec des caracteres ascii
+        self.chemin = None
 
     @property
     def ascii(self):
@@ -196,6 +197,25 @@ class Niveau(object):
         :return: niveau correspondant au numero specifie
         """
         return cls(NIVEAUX[numero-1], numero)
+
+    @classmethod
+    def charger(cls, chemin):
+        ascii = ""
+        # TODO (facile) : ouvrir fichier et ecrire contenu dans "ascii"
+        niveau = cls(ascii)
+        niveau.chemin = chemin
+        return
+
+    def sauvegarder(self):
+        # TODO (facile): sauvegarder le niveau dans un fichier dans le dossier "niveaux personnalises"
+        #   Procedure :
+        #       - Si "self.chemin" vaut "None", enregistrer sous ce chemin
+        #       - Sinon :
+        #           - Regarder les fichiers deja presents dans le dossier
+        #           - Creer un nouveau fichier avec un nom different de celui des fichiers existants, on formattera le
+        #             nom de la maniere suivante : "niveau_personnalise_x", "x" est un nombre naturel
+        pass
+
 
 
 class Carte(object):
