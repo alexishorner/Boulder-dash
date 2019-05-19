@@ -143,7 +143,8 @@ class InterfaceGraphique:
 
         :return: "None"
         """
-        exit()  # TODO : ajouter confirmation
+        pygame.quit()
+        sys.exit(0)  # TODO : ajouter confirmation
 
     def passer_en_plein_ecran(self):
         if not self._mode == FULLSCREEN:
