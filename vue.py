@@ -97,6 +97,8 @@ class InterfaceGraphique:
         self.arriere_plan = pygame.Surface(RESOLUTION)
         self.arriere_plan.fill((0, 0, 0))
         self.marge = int(self.ecran.get_width() * 0.02)
+        pygame.key.set_repeat(1, 1)
+        self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
 
     def rect(self, decalage=None):
         if decalage is None:
@@ -136,6 +138,14 @@ class InterfaceGraphique:
             raise TypeError("Les arguments de la methode ne peuvent pas tous etre None.")
         return retour
 
+    def quitter(self):
+        """
+        Quitte le jeu apres confirmation de l'utilisateur.
+
+        :return: "None"
+        """
+        exit()  # TODO : ajouter confirmation
+
     def passer_en_plein_ecran(self):
         if not self._mode == FULLSCREEN:
             resolution = self.ecran.get_size()
@@ -147,6 +157,25 @@ class InterfaceGraphique:
             resolution = self.ecran.get_size()
             self.ecran = pygame.display.set_mode(resolution, RESIZABLE)
             self._mode = RESIZABLE
+
+    def gerer_evenements(self, evenements):
+        self.gestionnaire_touches.actualiser_touches(pygame.key.get_pressed())
+        for evenement in evenements:
+            if evenement.type == QUIT:
+                self.quitter()
+            if evenement.type == KEYUP:
+                if evenement.key == K_q:
+                    self.quitter()
+                elif evenement.key == K_ESCAPE:
+                    mods = pygame.key.get_mods()
+
+                    # On regarde si la touche Maj est pressee et qu'aucun autre modificateur ne l'est, on utilise pour
+                    # ce faire des operateurs bit a bit
+                    if not mods & (KMOD_ALT | KMOD_CTRL):
+                        if mods & KMOD_SHIFT:
+                            self.passer_en_plein_ecran()
+                        else:
+                            self.passer_en_fenetre()
 
     def objet_survole(self, pos, *objets):
         if len(objets) == 0:
@@ -173,8 +202,15 @@ class InterfaceGraphique:
         elements_affichables = labels + boutons
         bouton_selectionne = boutons[0]
         minuteur = Minuteur(1/60.0, 0.005)
+        while 1:
+            minuteur.passage()
+            while minuteur.tics_restants() > 1:
+                evenements = pygame.event.get()
+                if minuteur.tics_restants() > 1:
+                    minuteur.attendre_un_tic()
 
-        self.afficher(None, elements_affichables)
+            self.afficher(None, elements_affichables)
+            minuteur.attendre_fin()
 
     def afficher(self, carte=None, *autres_objets):
         self.ecran.blit(self.arriere_plan, (0, 0))  # Dessine l'arriere plan
