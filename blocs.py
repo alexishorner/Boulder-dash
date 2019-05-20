@@ -4,8 +4,6 @@ Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 # TODO :
 #   - animations
 #   - afficher score, temps, vies
-#   - recommencer niveau sans crer nouveau personnage
-#   - son
 #   - menu
 #   - score
 #   - niveaux predefinis

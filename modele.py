@@ -220,7 +220,6 @@ class Niveau(object):
         pass
 
 
-
 class Carte(object):
     """
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.

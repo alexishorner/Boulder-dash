@@ -5,14 +5,14 @@ from coeur import *
 
 
 class Label(object):
-    def __init__(self, position_centre, texte="", taille=16, police=POLICES.ARCADECLASSIC):
-        self._position = position_centre
+    def __init__(self, position_centre, texte="", taille=24, police=POLICES.ARCADECLASSIC):
         self._taille = taille
-        self._texte = texte
         self._police = police
         self._image = None
         self._rect = None
-        self.rendu()
+        self._texte = ""
+        self.texte = texte
+        self.position_centre = position_centre
 
     @property
     def position_centre(self):
@@ -37,11 +37,17 @@ class Label(object):
 
     @property
     def texte(self):
-        return self._texte
+        texte = self._texte
+        if self.police == POLICES.ARCADECLASSIC:
+            texte = texte.replace("   ", " ")
+        return texte
 
     @texte.setter
     def texte(self, nouveau):
-        self._texte = nouveau
+        texte = nouveau
+        if self.police == POLICES.ARCADECLASSIC:
+            texte = nouveau.replace(" ", "   ")
+        self._texte = texte
         self._image = None
         self.rendu()
 
@@ -70,23 +76,33 @@ class Label(object):
 
     def rendu(self, couleur=(255, 255, 255, 230)):
         if self._texte is not None and self._image is None:
-            self._image, rect = self.police.render(self.texte, couleur, size=self.taille)
-            self._rect.size = (rect.width, rect.height)
+            self._image, rect = self.police.render(self._texte, couleur, size=self.taille)
         elif self._image is not None and self._texte is None:
-            self._rect.size = self._image.rect.size
+            rect = self._image.rect
         else:
             raise AttributeError("Exactement un des deux attributs \"texte\" et \"image\" doit valoir \"None\".")
+        if self._rect is None:
+            self._rect = rect
+        else:
+            self._rect.size = rect.size
 
 
 class Bouton(Label):
-    def __init__(self, position_centre, image=None, texte="", taille=16, police=POLICES.ARCADECLASSIC):
+    def __init__(self, position_centre, action_sur_clic=Action(), image=None, texte="", taille=40,
+                 police=POLICES.ARCADECLASSIC):
         super(Bouton, self).__init__(position_centre, texte, taille, police)
         if image is not None:
             self.image = image
-        self.action_sur_clic = Action()
+        self.action_sur_clic = action_sur_clic
+
+    def selectionner(self):
+        self.texte = "- " + self.texte
+
+    def deselectionner(self):
+        self.texte = self.texte.replace("- ", "")
 
     def cliquer(self):
-        self.action_sur_clic.effectuer()
+        return self.action_sur_clic.effectuer()
 
 
 class InterfaceGraphique:
@@ -99,6 +115,8 @@ class InterfaceGraphique:
         self.marge = int(self.ecran.get_width() * 0.02)
         pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
+        self.labels_menu = []
+        self.boutons_menu = []
 
     def rect(self, decalage=None):
         if decalage is None:
@@ -199,18 +217,13 @@ class InterfaceGraphique:
         pass
 
     def menu(self):
-        rect = self.rect()
-        h = rect.height
-        labels = [Label((rect.centerx, 0.3*h), "Menu", 18)]
-        boutons = [Bouton((rect.centerx, labels[0].position_centre.x + 0.02*h), "Reprendre"),
-                   Bouton((rect.centerx, 0), "Recommencer"), Bouton((rect.centerx, 0), "Nouvelle partie"),
-                   Bouton((rect.centerx, 0),"Charger niveau"), Bouton((rect.centerx, 0), "Creer niveau")]
-        for i, bouton in enumerate(boutons):
-            if i > 0:
-                y_prec = boutons[i - 1].position_centre.y
-                bouton.position_centre = (bouton.position_centre.x, y_prec + 0.015*h)
-        elements_affichables = labels + boutons
+        labels = self.labels_menu
+        boutons = self.boutons_menu
+        for bouton in boutons:
+            bouton.deselectionner()
+        menu = labels + boutons
         bouton_selectionne = boutons[0]
+        bouton_selectionne.selectionner()
         numero_bouton = 0
         minuteur = Minuteur(0.15, 0.005)
         while 1:
@@ -220,8 +233,8 @@ class InterfaceGraphique:
                 self.gerer_evenements(evenements)
                 for evenement in evenements:
                     if evenement.type == KEYUP:
-                        if evenement.key == K_KP_ENTER:
-                            bouton_selectionne.cliquer()
+                        if evenement.key == K_RETURN:
+                            return bouton_selectionne.cliquer()
                 if minuteur.tics_restants() > 1:
                     minuteur.attendre_un_tic()
 
@@ -233,11 +246,12 @@ class InterfaceGraphique:
                 elif touche_pressee == K_DOWN:
                     numero_bouton += 1
                 numero_bouton %= len(boutons)
-                bouton_selectionne.texte = bouton_selectionne.texte.replace("- ", "", 1)
+                bouton_selectionne.deselectionner()
                 bouton_selectionne = boutons[numero_bouton]
-                bouton_selectionne.texte = "- " + bouton_selectionne.texte
+                bouton_selectionne.selectionner()
 
-            self.afficher(None, elements_affichables)
+            self.afficher(None, *menu)
+            premier_tour = False
             minuteur.attendre_fin()
 
     def afficher(self, carte=None, *autres_objets):

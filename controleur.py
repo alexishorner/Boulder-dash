@@ -16,12 +16,14 @@ class Jeu(object):
     def __init__(self):
         pygame.init()
         self.interface = InterfaceGraphique(ECRAN)
+        self.definir_menu()
         self.niveau = Niveau.niveau(1)
 
         self.minuteur = Minuteur(0.15, 0.01)
 
         self.doit_recommencer_partie = False
         self.doit_recommencer_niveau = False
+        self.doit_commencer_niveau = False
         self.vies = self.VIES_MAX
         self.carte = None
         self.mode = MODES.JEU
@@ -48,29 +50,63 @@ class Jeu(object):
     def mouvement_detecte(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
 
+    def reprendre_jeu(self):
+        self.mode = MODES.JEU
+
+    def charger_niveau(self):
+        pass
+
+    def definir_menu(self):
+        rect = self.interface.rect()
+        h = rect.height
+        labels = [Label((rect.centerx, 0.3*h), "Menu", 80)]
+        boutons = [Bouton((rect.centerx, labels[0].position_centre.y + 0.1*h), Action(self.reprendre_jeu),
+                          texte="Reprendre"),
+                   Bouton((rect.centerx, 0), Action(self.recommencer_niveau), texte="Recommencer"),
+                   Bouton((rect.centerx, 0), Action(self.recommencer_partie), texte="Recommencer partie"),
+                   Bouton((rect.centerx, 0), Action(self.nouvelle_partie), texte="Nouvelle partie"),
+                   Bouton((rect.centerx, 0), Action(self.charger_niveau), texte="Charger niveau"),
+                   Bouton((rect.centerx, 0), Action(self.editeur_niveau), texte="Creer niveau")]
+        for i, bouton in enumerate(boutons):
+            if i > 0:
+                y_prec = boutons[i - 1].position_centre.y
+                bouton.position_centre = (bouton.position_centre.x, y_prec + 0.05*h)
+        self.interface.labels_menu = labels
+        self.interface.boutons_menu = boutons
+
     def menu(self):
+        mode = self.mode
         self.mode = MODES.MENU
         retour = self.interface.menu()
-        ret = raw_input("\t\tMenu\n\t1. recommencer partie\n\t2.quitter\n\t3.editeur niveaux.\n>>>")  # TODO : vraie interface
-        ret = int(ret)
-        if ret == 1:
-            self.doit_recommencer_partie = True
-        elif ret == 3:
-            self.editeur_niveau()
+        self.mode = mode
 
-    def recommencer_niveau(self):
+    def commencer_niveau(self):
         rect = self.interface.rect_carte(self.niveau)
         self.carte = Carte(rect, self.niveau)
         self.minuteur.reinitialiser()
+        self.doit_commencer_niveau = False
+
+    def recommencer_niveau(self):
+        self.vies -= 1
+        if self.vies <= 0:
+            self.sur_perdu()
+        else:
+            self.commencer_niveau()
         self.doit_recommencer_niveau = False
         print("vies restantes : {0}".format(self.vies))
 
     def recommencer_partie(self, niveau=None):
         if niveau is not None:
             self.niveau = niveau
+        if self.niveau.numero is not None:
+            if self.niveau.numero != 1:
+                self.niveau = Niveau.niveau(1)
         self.vies = self.VIES_MAX
-        self.recommencer_niveau()
+        self.commencer_niveau()
         self.doit_recommencer_partie = False
+
+    def nouvelle_partie(self):
+        self.recommencer_partie(Niveau.niveau(1))
 
     def sur_perdu(self):
         ret = raw_input("recommencer? ")
@@ -79,20 +115,16 @@ class Jeu(object):
         else:
             self.menu()
 
-    def verifier_perdu(self):
+    def verifier_perdu_niveau(self):
         if self.personnage.est_mort or self.minuteur.temps_ecoule() > self.TEMPS_MAX:
-            self.vies -= 1
-            if self.vies <= 0:
-                self.sur_perdu()
-            else:
-                self.doit_recommencer_niveau = True
+            self.doit_recommencer_niveau = True
 
     def niveau_suivant(self):
         i = self.niveau.numero
         if i is not None:
             if i < len(NIVEAUX):
                 self.niveau = Niveau.niveau(i + 1)
-                self.doit_recommencer_partie = True
+                self.doit_commencer_niveau = True
                 return True
         return False
 
@@ -122,9 +154,11 @@ class Jeu(object):
                     self.minuteur.attendre_un_tic()
             self.effectuer_mouvements()
 
-            self.verifier_perdu()
+            self.verifier_perdu_niveau()
             self.carte.activer_sortie()
 
+            if self.doit_commencer_niveau:
+                self.commencer_niveau()
             if self.doit_recommencer_niveau:
                 self.recommencer_niveau()
             if self.doit_recommencer_partie:
@@ -231,7 +265,7 @@ class Jeu(object):
             self.interface.afficher(carte, *objets_a_afficher)
             minuteur.attendre_fin()
         self.niveau = Niveau.depuis_carte(carte)
-        self.doit_recommencer_partie = True
+        self.doit_commencer_niveau = True
 
     def gerer_evenements_fenetre(self, evenements):
         retour = self.interface.gerer_evenements(evenements)
