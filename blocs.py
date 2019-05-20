@@ -2,9 +2,8 @@
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
 # TODO :
-#   - animations
 #   - afficher score, temps, vies
-#   - menu
+#   - bouton recommencer
 #   - score
 #   - niveaux predefinis
 #   - editeur de niveaux :
@@ -13,6 +12,7 @@ Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 #   Facultatif :
 #       - ameliorer ajouts blocs par glissement (intersection segment/rectangles)
 #       - generateur de niveaux automatique
+#       - animations
 #       - mechants
 
 

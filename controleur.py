@@ -77,8 +77,8 @@ class Jeu(object):
     def menu(self):
         mode = self.mode
         self.mode = MODES.MENU
-        retour = self.interface.menu()
-        self.mode = mode
+        self.interface.menu()
+        self.mode = mode  # TODO : faire verifications securite menu
 
     def commencer_niveau(self):
         rect = self.interface.rect_carte(self.niveau)
