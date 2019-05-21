@@ -204,27 +204,22 @@ class Niveau(object):
 
     @classmethod
     def charger(cls, chemin):
-        "charge un niveau"
+        """
+        Charge un niveau
+        """
         f = open(chemin, "r")
         ascii = "".join(f.readlines())
-        # TODO (facile) : ouvrir fichier et ecrire contenu dans "ascii"
         niveau = cls(ascii)
         return niveau
 
     def sauvegarder(self, chemin):
-        """sauvegarde un niveau personnalise"""
+        """
+        Sauvegarde un niveau personnalise.
+        """
         nomchemin = chemin
         f = open(nomchemin, "w")
         f.writelines(self.ascii)
         f.close()
-        # TODO (facile): sauvegarder le niveau dans un fichier dans le dossier "niveaux personnalises"
-        #   Procedure :
-        #       - Si "self.chemin" vaut "None", enregistrer sous ce chemin
-        #       - Sinon :
-        #           - Regarder les fichiers deja presents dans le dossier
-        #           - Creer un nouveau fichier avec un nom different de celui des fichiers existants, on formattera le
-        #             nom de la maniere suivante : "niveau_personnalise_x", "x" est un nombre naturel
-
 
 
 class Carte(object):

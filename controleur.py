@@ -19,13 +19,6 @@ class Jeu(object):
         self.interface = InterfaceGraphique(ECRAN)
         self.definir_menu()
         self.niveau = Niveau.niveau(1)
-
-        niveau = Niveau.niveau(1)
-        niveau.sauvegarder("niveaux/niveau_personnalise")
-        niveau = None
-        niveau = Niveau.charger("niveaux/niveau_personnalise")
-        print niveau
-        self.niveau = niveau
         self.minuteur = Minuteur(0.15, 0.01)
 
         self.doit_recommencer_partie = False
@@ -153,7 +146,7 @@ class Jeu(object):
         self.recommencer_partie(Niveau.niveau(1))
 
     def sur_perdu(self):
-        ret = raw_input("recommencer? ")
+        ret = raw_input("recommencer ?")
         if ret.lower() == "o":
             self.recommencer_partie()
         else:
