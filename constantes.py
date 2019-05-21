@@ -122,28 +122,4 @@ class EVENEMENTS(IntEnum):
     JEU, EDITEUR, MENU, REPRENDRE, RECOMMENCER, NOUVELLE_PARTIE, CHARGER_NIVEAU, CREER_NIVEAU = range(8)
 
 
-NIVEAUX = ("""
-            ############
-            #OOOOOOOOOO#
-            #OOOOOOOO$$#
-            #$$$O~O~$$~#
-            #OO~O~$]~~~#
-            #**********#
-            #~~~~~~~~~P#
-            #~~~~~~~~~~#
-            #~~~~~~~~~~#
-            #~~~~~~****#
-            ############
-            ""","""
-            ############
-            #***O***O*$#
-            #***OOP**~##
-            #$$$#******#
-            #OO*O*$]***#
-            #**********#
-            #**********#
-            #**********#
-            #**********#
-            #**********#
-            ############
-            """)
+NIVEAUX = [None]*5  # On donne une valeur à cette constante dans "modele.py"

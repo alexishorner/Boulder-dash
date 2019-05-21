@@ -200,7 +200,9 @@ class Niveau(object):
         :param numero: numero du niveau
         :return: niveau correspondant au numero specifie
         """
-        return cls(NIVEAUX[numero-1], numero)
+        niveau = NIVEAUX[numero-1]
+        niveau.numero = numero
+        return niveau
 
     @classmethod
     def charger(cls, chemin):
@@ -220,6 +222,9 @@ class Niveau(object):
         f = open(nomchemin, "w")
         f.writelines(self.ascii)
         f.close()
+
+
+NIVEAUX = [Niveau.charger("niveaux/niveau{0}".format(i)) for i in range(1, 5)]
 
 
 class Carte(object):

@@ -72,7 +72,7 @@ class Jeu(object):
     @vies.setter
     def vies(self, nouvelles):
         self._vies = nouvelles
-        self.interface.label_vies.texte = u"♥ : {0}".format(nouvelles)
+        self.interface.label_vies.texte = u"♥: {0}".format(nouvelles)
 
     @property
     def temps_restant(self):
@@ -85,9 +85,9 @@ class Jeu(object):
         if secondes < 10: secondes = "0{0}".format(secondes)
         self.interface.label_temps.texte = "{0}:{1}".format(minutes, secondes)  # TODO : formatter le temps
 
-    def score(self):
+    def actualiser_score(self):
         """comptabilise le score"""
-        self.score = self.personnage.diamants_ramasses *10
+        self.score = self.personnage.diamants_ramasses * 10
         self.interface.label_score.texte = "SCORE: {0}".format(self.score)
 
     def reprendre(self):
@@ -209,6 +209,7 @@ class Jeu(object):
                 self.minuteur.attendre_fin()
 
             self.actualiser_temps()
+            self.actualiser_score()
             self.interface.afficher_jeu(self.carte)
 
             print(time.time() - debut)
