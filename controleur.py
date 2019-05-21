@@ -184,11 +184,7 @@ class Jeu(object):
         self.recommencer_partie(Niveau.niveau(1))
 
     def sur_perdu(self):
-        ret = raw_input("recommencer ?")
-        if ret.lower() == "o":
-            self.recommencer_partie()
-        else:
-            self.menu()
+        self.menu()
 
     def verifier_perdu_niveau(self):
         if self.personnage.est_mort or self.temps_restant < 0:
