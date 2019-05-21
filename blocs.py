@@ -2,7 +2,6 @@
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
 # TODO :
-#   - verifier validite niveau
 #   - afficher score, temps, vies
 #   - bouton recommencer
 #   - score

@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Fichier contenant du code gerant l'affichage.
 """
@@ -5,26 +6,39 @@ from coeur import *
 
 
 class Label(object):
-    def __init__(self, position_centre, texte="", taille=24, police=POLICES.ARCADECLASSIC):
+    def __init__(self, position_centre=(0, 0), texte="", taille=24, police=POLICES.PRESS_START_K, couleur=(255, 255, 255, 230)):
         self._taille = taille
         self._police = police
         self._image = None
         self._rect = None
         self._texte = ""
+        self._couleur = couleur
         self.texte = texte
-        self.position_centre = position_centre
+        self.centre = position_centre
 
     @property
-    def position_centre(self):
+    def centre(self):
         return Coordonnees(*self.rect.center)
 
-    @position_centre.setter
-    def position_centre(self, nouvelle):
+    @centre.setter
+    def centre(self, nouvelle):
         try:
             x, y = nouvelle.x, nouvelle.y
         except AttributeError:
             x, y = nouvelle[0], nouvelle[1]
         self._rect.center = (x, y)
+
+    @property
+    def haut_gauche(self):
+        return Coordonnees(*self._rect.topleft)
+
+    @haut_gauche.setter
+    def haut_gauche(self, nouveau):
+        try:
+            x, y = nouveau.x, nouveau.y
+        except AttributeError:
+            x, y = nouveau[0], nouveau[1]
+        self._rect.topleft = (x, y)
 
     @property
     def taille(self):
@@ -61,6 +75,15 @@ class Label(object):
         self.rendu()
 
     @property
+    def couleur(self):
+        return self._couleur
+
+    @couleur.setter
+    def couleur(self, nouvelle):
+        self._couleur = nouvelle
+        self.rendu()
+
+    @property
     def rect(self):
         return self._rect
 
@@ -74,9 +97,9 @@ class Label(object):
         self._texte = None
         self.rendu()
 
-    def rendu(self, couleur=(255, 255, 255, 230)):
+    def rendu(self):
         if self._texte is not None and self._image is None:
-            self._image, rect = self.police.render(self._texte, couleur, size=self.taille)
+            self._image, rect = self.police.render(self._texte, self._couleur, size=self.taille)
         elif self._image is not None and self._texte is None:
             rect = self._image.rect
         else:
@@ -117,6 +140,11 @@ class InterfaceGraphique:
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.labels_menu = []
         self.boutons_menu = []
+        self.distance_labels = 100
+        self.label_erreur = Label(couleur=(226, 22, 22))
+        self.label_vies = Label()
+        self.label_temps = Label()
+        self.ajuster_position_labels()
 
     def rect(self, decalage=None):
         if decalage is None:
@@ -230,7 +258,9 @@ class InterfaceGraphique:
             minuteur.passage()
             while minuteur.tics_restants() > 1:
                 evenements = pygame.event.get()
-                self.gerer_evenements(evenements)
+                retour = self.gerer_evenements(evenements)
+                if retour is not None:
+                    return retour
                 for evenement in evenements:
                     if evenement.type == KEYUP:
                         if evenement.key == K_RETURN:
@@ -251,8 +281,44 @@ class InterfaceGraphique:
                 bouton_selectionne.selectionner()
 
             self.afficher(None, *menu)
-            premier_tour = False
             minuteur.attendre_fin()
+
+    @staticmethod
+    def message_erreur(erreurs):
+        message_erreur = ""
+        erreurs_ = erreurs
+        try:
+            list(erreurs)
+        except TypeError:
+            erreurs_ = [erreurs]
+        if len(erreurs_) > 0:
+            if ERREURS.PERSONNAGE_MANQUANT in erreurs_:
+                message_erreur = "Personnage manquant"
+            elif ERREURS.PORTE_MANQUANTE in erreurs_:
+                message_erreur = "Porte manquante"
+            elif ERREURS.DIAMANTS_INSUFFISANTS:
+                message_erreur = "Nombre de diamants insuffisants"
+            else:
+                raise RuntimeError("L'erreur spécifiée est invalide")
+        return message_erreur
+
+    def supprimer_erreurs(self):
+        self.label_erreur.texte = ""
+
+    def ajuster_position_labels(self):
+        rect = self.rect()
+        pos = (rect.centerx, rect.bottom + 5)
+        self.label_erreur.rect.centerx, self.label_erreur.rect.top = pos
+        self.label_vies.rect.left, self.label_vies.rect.bottom = rect.left, rect.top - 5
+        labels = [self.label_vies, self.label_temps]
+        for i, label in enumerate(labels):
+            if i > 0:
+                label_precedent = labels[i - 1]
+                label.rect.left, label.rect.top = label_precedent.rect.right + self.distance_labels, label_precedent.rect.top
+
+    def afficher_erreur(self, erreurs):
+        message = self.message_erreur(erreurs)
+        self.label_erreur.texte = message
 
     def afficher(self, carte=None, *autres_objets):
         self.ecran.blit(self.arriere_plan, (0, 0))  # Dessine l'arriere plan
@@ -262,6 +328,13 @@ class InterfaceGraphique:
             for bloc in carte.blocs_tries:
                 if bloc is not None:
                     self.ecran.blit(bloc.image, bloc.rect)
-        for objet in autres_objets:
+
+        if self.label_erreur.texte != "":
+            rect = self.rect()
+            self.label_erreur.centre = (rect.centerx, rect.bottom + int(round(self.marge / 2.0)))
+
+        self.ajuster_position_labels()
+        labels = (self.label_erreur, self.label_vies, self.label_temps)
+        for objet in (autres_objets + labels):
             self.ecran.blit(objet.image, objet.rect)
         pygame.display.flip()  # Actualise l'ecran

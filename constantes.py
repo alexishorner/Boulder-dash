@@ -1,4 +1,4 @@
-# coding=utf-8
+# coding: utf-8
 """
 Module contenant toutes les constantes. Si des variables ne doivent pas etre importees avec le module, il faut commencer
 leur nom par un tiret bas ("_").
@@ -109,11 +109,12 @@ class MODES(IntEnum):
 
 @unique
 class ERREURS(IntEnum):
-    PERSONNAGE_MANQUANT, PORTE_MANQUANTE, DIAMANTS_INSUFFISANTS, PERSONNAGE_BLOQUE, PORTE_BLOQUEE = range(5)
+    PERSONNAGE_MANQUANT, PORTE_MANQUANTE, DIAMANTS_INSUFFISANTS = range(3)
 
 
 class POLICES:
     ARCADECLASSIC = freetype.Font("polices/arcadeclassic/ARCADECLASSIC.TTF")
+    PRESS_START_K = freetype.Font("polices/press_start/prstartk.ttf")
 
 
 @unique
