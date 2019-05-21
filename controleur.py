@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Module gerant la logique du jeu.
 """
@@ -24,8 +25,10 @@ class Jeu(object):
         self.doit_recommencer_partie = False
         self.doit_recommencer_niveau = False
         self.doit_commencer_niveau = False
+        self._vies = 0
         self.vies = self.VIES_MAX
         self.carte = None
+        self.carte_editeur = None
         self._ancien_mode = None
         self._mode = MODES.JEU
         self.recommencer_partie()
@@ -63,6 +66,15 @@ class Jeu(object):
         self._ancien_mode = self._mode
         self._mode = nouveau
 
+    @property
+    def vies(self):
+        return self._vies
+
+    @vies.setter
+    def vies(self, nouvelles):
+        self._vies = nouvelles
+        self.interface.label_vies.texte = u"♥ : {0}".format(nouvelles)
+
     def reprendre(self):
         self.mode = self.ancien_mode
 
@@ -73,25 +85,29 @@ class Jeu(object):
         rect = self.interface.rect()
         h = rect.height
         labels = [Label((rect.centerx, 0.3*h), "Menu", 80)]
-        boutons = [Bouton((rect.centerx, labels[0].position_centre.y + 0.1*h), Action(self.reprendre),
+        boutons = [Bouton((rect.centerx, labels[0].centre.y + 0.1 * h), Action(self.reprendre),
                           texte="Reprendre"),
                    Bouton((rect.centerx, 0), Action(self.recommencer_niveau), texte="Recommencer"),
                    Bouton((rect.centerx, 0), Action(self.recommencer_partie), texte="Recommencer partie"),
                    Bouton((rect.centerx, 0), Action(self.nouvelle_partie), texte="Nouvelle partie"),
                    Bouton((rect.centerx, 0), Action(self.charger_niveau), texte="Charger niveau"),
-                   Bouton((rect.centerx, 0), Action(self.editeur_niveau), texte="Creer niveau")]
+                   Bouton((rect.centerx, 0), Action(self.editeur_niveau), texte="Creer niveau"),
+                   Bouton((rect.centerx, 0), Action(self.interface.quitter), texte="Quitter")]
         for i, bouton in enumerate(boutons):
             if i > 0:
-                y_prec = boutons[i - 1].position_centre.y
-                bouton.position_centre = (bouton.position_centre.x, y_prec + 0.05*h)
+                y_prec = boutons[i - 1].centre.y
+                bouton.centre = (bouton.centre.x, y_prec + 0.05 * h)
         self.interface.labels_menu = labels
         self.interface.boutons_menu = boutons
 
     def menu(self):
         self.mode = MODES.MENU
-        self.interface.menu()
+        retour = self.interface.menu()
+        self.gerer_retour_interface(retour)
 
     def commencer_niveau(self):
+        self.mode = MODES.JEU
+        self.interface.supprimer_erreurs()
         rect = self.interface.rect_carte(self.niveau)
         self.carte = Carte(rect, self.niveau)
         self.minuteur.reinitialiser()
@@ -177,6 +193,7 @@ class Jeu(object):
             else:
                 self.minuteur.attendre_fin()
 
+            self.interface.label_temps.texte = str(self.TEMPS_MAX - self.minuteur.temps_ecoule())  # TODO : formatter le temps
             self.interface.afficher(self.carte)
 
             print(time.time() - debut)
@@ -209,6 +226,7 @@ class Jeu(object):
     def editeur_niveau(self):
         self.mode = MODES.EDITEUR
         carte = self.carte_vide(34, 20)
+        self.carte_editeur = carte
         x = 0
         y = 0
         # Les blocs selectionnables sont les blocs sur lesquels on peut cliquer pour choisir le type de blocs a ajouter
@@ -234,7 +252,7 @@ class Jeu(object):
             minuteur.passage()
             while minuteur.tics_restants() > 1:
                 evenements = pygame.event.get()
-                self.gerer_evenements_fenetre(evenements)
+                self.gerer_evenements_interface(evenements)
                 for evenement in evenements:
                     if evenement.type in (MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION):
                         boutons_presses = pygame.mouse.get_pressed()
@@ -257,6 +275,7 @@ class Jeu(object):
                                         creer_bloc = bloc_selectionne.__class__
                                         bloc_pointeur = creer_bloc(rect)
                                 else:  # Si une case de la carte a ete cliquee
+
                                     # Si le nouveau bloc est d'un autre type que l'ancien ou que la case contient
                                     # plusieurs blocs
                                     if bloc_selectionne.__class__ != case.blocs[0].__class__ or len(case.blocs) != 1:
@@ -275,18 +294,33 @@ class Jeu(object):
                 objets_a_afficher.append(bloc_pointeur)
             self.interface.afficher(carte, *objets_a_afficher)
             minuteur.attendre_fin()
-        self.niveau = Niveau.depuis_carte(carte)
-        self.doit_commencer_niveau = True
 
-    def gerer_evenements_fenetre(self, evenements):
+    def gerer_erreurs(self, erreurs):
+        self.interface.afficher_erreur(erreurs)
+
+    def gerer_evenements_interface(self, evenements):
         retour = self.interface.gerer_evenements(evenements)
+        self.gerer_retour_interface(retour)
+
+    def gerer_retour_interface(self, retour):
         if retour == EVENEMENTS.MENU:
-            self.menu()
+            if self.mode == MODES.MENU:
+                self.mode = self.ancien_mode
+            else:
+                self.menu()
         elif retour == EVENEMENTS.EDITEUR:
-            if self.mode == MODES.JEU:
+            if self.mode != MODES.EDITEUR:
                 self.editeur_niveau()
             else:
-                self.mode = MODES.JEU
+                erreurs_niveau = self.carte_editeur.valider()
+                if len(erreurs_niveau) > 0:
+                    self.gerer_erreurs(erreurs_niveau)
+                else:
+                    self.interface.supprimer_erreurs()
+                    self.niveau = Niveau.depuis_carte(self.carte_editeur)
+                    self.vies = self.VIES_MAX
+                    self.doit_commencer_niveau = True
+                    self.mode = MODES.JEU
 
     def gerer_evenements(self):
         """
@@ -294,7 +328,7 @@ class Jeu(object):
 
         :return: Booleen informant si une touche a provoque une action dans le jeu
         """
-        self.gerer_evenements_fenetre(pygame.event.get())
+        self.gerer_evenements_interface(pygame.event.get())
         self.gerer_mouvement()  # Pas besoin de verifier un KEYDOWN grace au gestionnaire de touches
                                 # KEYDOWN n'est parfois pas present alors qu'il devrait
 

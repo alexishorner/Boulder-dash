@@ -229,6 +229,7 @@ class Carte(object):
         self.blocs_uniques = dict()
         self.cailloux = dict()
         self.nombre_diamants = 0
+        self.nombre_diamants_pour_sortir = 4
         self.nombre_cases_hauteur = 0
         self.nombre_cases_largeur = 0
         self._tuple_cases = tuple()
@@ -343,7 +344,6 @@ class Carte(object):
         self.blocs_uniques = self.trouver_blocs_uniques(self.blocs_tries)
         self.personnage = self.blocs_uniques[Personnage]
         self.sortie = self.blocs_uniques[Sortie]
-        self.nombre_diamants_pour_sortir = 4
         self.nombre_diamants = self.compter_diamants(self.blocs_tries)
         self.cailloux = self.trouver_cailloux(self.blocs_tries)
 
@@ -458,4 +458,6 @@ class Carte(object):
             erreurs.append(ERREURS.PERSONNAGE_MANQUANT)
         if self.sortie is None:
             erreurs.append(ERREURS.PORTE_MANQUANTE)
-        return len(erreurs) == 0, erreurs  # TODO : verifier si le personnage et la porte ne sont pas bloques par des cailloux ou des murs
+        if self.nombre_diamants < self.nombre_diamants_pour_sortir:
+            erreurs.append(ERREURS.DIAMANTS_INSUFFISANTS)
+        return erreurs
