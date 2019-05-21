@@ -111,6 +111,7 @@ class Personnage(Bloc):
 
     def pousser(self, caillou, direction):
         caillou.etre_pousse()
+        SONS.POUSSER_CAILLOU.play()
         self.bouger(direction)
 
     def bouger(self, direction):
@@ -201,7 +202,7 @@ class Diamant(BlocTombant):
 
     def tomber(self):
         super(Diamant, self).tomber()
-        if (not self.est_tombe and not self.a_tue) and not self.ramasse: #comme ca on a pas le bruit du diamant qui tombe lorsqu'on le ramasse
+        if not self.ramasse and (not self.est_tombe and not self.a_tue) : #comme ca on a pas le bruit du diamant qui tombe lorsqu'on le ramasse
             SONS.DIAMANT_TOMBE1.play()
 
     def taper_objet(self):
@@ -257,7 +258,6 @@ class Sortie(Bloc):
         :return: "None"
         """
         self.est_activee = False
-
 
 class Explosion(Bloc):
     """

@@ -4,6 +4,8 @@ Module stockant les donnees du jeu.
 from blocs import *
 import itertools
 from numpy import matrix
+from os import isdir
+from os.path import isfile, join
 
 
 def _enlever_extremite(chaine, extremite=ORIENTATIONS.GAUCHE, caracteres_a_enlever=("\n", " ")):
@@ -148,7 +150,6 @@ class Niveau(object):
         self.nombre_cases_largeur = 0
         self.nombre_cases_hauteur = 0
         self.ascii = ascii  # Representation du niveau avec des caracteres ascii
-        self.chemin = None
 
     @property
     def ascii(self):
@@ -203,13 +204,31 @@ class Niveau(object):
 
     @classmethod
     def charger(cls, chemin):
-        ascii = ""
+        "charge un niveau"
+        f = open(chemin, "r")
+        ascii = str(f.readlines(nombre_cases_hauteur))
         # TODO (facile) : ouvrir fichier et ecrire contenu dans "ascii"
         niveau = cls(ascii)
         niveau.chemin = chemin
         return
 
-    def sauvegarder(self):
+    def sauvegarder(self, chemin):
+        """sauvegarde un niveau personnalise"""
+        nouveaunom = False
+        listefichiers = []
+        nomchemin = chemin
+
+        #listefichiers = os.listdir("/niveaux")
+
+        while x == False:
+            if nomchemin os.path-isdir("niveaux"):
+                nomchemin = chemin + "_" + str(y)
+                y += 1
+            else:
+                x = True
+        f = open(nomchemin, "w")
+        f.writelines(self.ascii)
+        f.close()
         # TODO (facile): sauvegarder le niveau dans un fichier dans le dossier "niveaux personnalises"
         #   Procedure :
         #       - Si "self.chemin" vaut "None", enregistrer sous ce chemin
@@ -217,7 +236,7 @@ class Niveau(object):
         #           - Regarder les fichiers deja presents dans le dossier
         #           - Creer un nouveau fichier avec un nom different de celui des fichiers existants, on formattera le
         #             nom de la maniere suivante : "niveau_personnalise_x", "x" est un nombre naturel
-        pass
+
 
 
 class Carte(object):

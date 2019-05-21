@@ -19,6 +19,11 @@ class Jeu(object):
         self.definir_menu()
         self.niveau = Niveau.niveau(1)
 
+        niveau = Niveau.niveau(1)
+        niveau.sauvegarder("niveaux/niveau_personnalise")
+        niveau = None
+        niveau = Niveau.charger("/niveaux/niveau_personnalise")
+        self.niveau = niveau
         self.minuteur = Minuteur(0.15, 0.01)
 
         self.doit_recommencer_partie = False
@@ -330,6 +335,15 @@ class Jeu(object):
                     if isinstance(bloc, BlocTombant):
                         if self.personnage in case.blocs:
                             self.personnage.tuer()
+                            case.blocs = Explosion(case.rect)
+                            x = case.index.x
+                            y = case.index.y
+                            for i in range(-1,2):
+                                for j in range(-1, 2):
+                                    case_ = self.carte.case_a(x+i, y+j)
+                                    case_.blocs = Explosion(case_.rect)
+
+
                         else:
                             raise RuntimeError("Seul le personnage peut etre sur la meme case qu'un autre bloc.")
 
@@ -499,6 +513,9 @@ class Jeu(object):
                             if bloc.tombe or bloc.coups_avant_tomber == 0:
                                 essai = False
                             faire_tomber(bloc, essai)
+                           # if isinstance(bloc, Diamant):
+                               # nbdiamants += 1
+
 
         # self.bouger_personnage()
 
