@@ -95,12 +95,37 @@ class Jeu(object):
         if secondes < 10: secondes = "0{0}".format(secondes)
         self.interface.label_temps.texte = "{0}:{1}".format(minutes, secondes)  # TODO : formatter le temps
 
+    def comptabiliser_score(self):
+        """
+        comptabilise le score en fonction des diamants
+        """
+        self.scorediamants = self.personnage.diamants_ramasses * 10
+        return self.scorediamants
+
+
     def actualiser_score(self):
         """
-        Comptabilise le score.
+        calcule le score
         """
-        self.score = self.personnage.diamants_ramasses * 10
+
+        self.score = comptabiliser_score() + ajouter_temps_score()
         self.interface.label_score.texte = "SCORE: {0}".format(self.score)
+        self.scorevies = self.score
+        if self.scorevies >= 500:
+            gagner_vie()
+
+    def gagner_vie(self):
+        """
+        ajoute une vie
+        """
+
+        self.vies = self.vies + 1
+
+    def ajouter_temps_score(self):
+        """
+        ajoute le temps au score à la fin du niveau
+        """
+        self.scoretemps += self.temps_restant()
 
     def reprendre(self):
         self.mode = self.ancien_mode
@@ -186,6 +211,8 @@ class Jeu(object):
         print("Felicitations, vous avez termine tous les niveaux.")  # TODO : remplacer par texte dans pygame
 
     def gagne(self):
+        ajouter_temps_score()
+        SOUNDS.FINI.play()
         if not self.niveau_suivant():
             self.felicitations()
 
