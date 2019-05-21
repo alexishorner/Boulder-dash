@@ -5,6 +5,16 @@ Module gerant la logique du jeu.
 from modele import *
 from vue import *
 import random
+from Tkinter import *
+import Tkinter, Tkconstants, tkFileDialog
+
+# root = Tk()
+# root.filename = tkFileDialog.asksaveasfilename(initialdir="/",title="Select file",filetypes=(("jpeg files","*.jpg"),("all files","*.*")))
+# print (root.filename)
+#
+# Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
+# filename = askopenfilename() # show an "Open" dialog box and return the path to the selected file
+# print(filename)
 
 
 class Jeu(object):
@@ -86,7 +96,9 @@ class Jeu(object):
         self.interface.label_temps.texte = "{0}:{1}".format(minutes, secondes)  # TODO : formatter le temps
 
     def actualiser_score(self):
-        """comptabilise le score"""
+        """
+        Comptabilise le score.
+        """
         self.score = self.personnage.diamants_ramasses * 10
         self.interface.label_score.texte = "SCORE: {0}".format(self.score)
 
