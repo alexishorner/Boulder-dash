@@ -5,15 +5,11 @@ Module gerant la logique du jeu.
 from modele import *
 from vue import *
 import random
-from Tkinter import *
-import Tkinter, Tkconstants, tkFileDialog
-
-# root = Tk()
-# root.filename = tkFileDialog.asksaveasfilename(initialdir="/",title="Select file",filetypes=(("jpeg files","*.jpg"),("all files","*.*")))
-# print (root.filename)
+# from Tkinter import Tk
+# from tkFileDialog import askopenfilename
 #
 # Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-# filename = askopenfilename() # show an "Open" dialog box and return the path to the selected file
+# filename = askopenfilename()  # show an "Open" dialog box and return the path to the selected file
 # print(filename)
 
 
@@ -99,8 +95,7 @@ class Jeu(object):
         """
         comptabilise le score en fonction des diamants
         """
-        self.scorediamants = self.personnage.diamants_ramasses * 10
-        return self.scorediamants
+        return self.personnage.diamants_ramasses * 10
 
 
     def actualiser_score(self):
@@ -108,24 +103,26 @@ class Jeu(object):
         calcule le score
         """
 
-        self.score = comptabiliser_score() + ajouter_temps_score()
+        self.score = self.comptabiliser_score()
         self.interface.label_score.texte = "SCORE: {0}".format(self.score)
-        self.scorevies = self.score
-        if self.scorevies >= 500:
-            gagner_vie()
+        nombre_vies_ajoutees = self.score // 500
+        ajout_score_depuis_derniere_vie = self.score - nombre_vies_ajoutees * 500
+        vies_a_ajouter = ajout_score_depuis_derniere_vie // 500
+        if vies_a_ajouter > 0:
+            self.gagner_vies(vies_a_ajouter)
 
-    def gagner_vie(self):
+    def gagner_vies(self, vies):
         """
         ajoute une vie
         """
-
-        self.vies = self.vies + 1
+        # TODO : ajouter son
+        self.vies += vies
 
     def ajouter_temps_score(self):
         """
         ajoute le temps au score à la fin du niveau
         """
-        self.scoretemps += self.temps_restant()
+        self.score += self.temps_restant()
 
     def reprendre(self):
         self.mode = self.ancien_mode
@@ -211,8 +208,8 @@ class Jeu(object):
         print("Felicitations, vous avez termine tous les niveaux.")  # TODO : remplacer par texte dans pygame
 
     def gagne(self):
-        ajouter_temps_score()
-        SOUNDS.FINI.play()
+        self.ajouter_temps_score()
+        SONS.FINI.play()
         if not self.niveau_suivant():
             self.felicitations()
 
