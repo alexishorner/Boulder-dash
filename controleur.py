@@ -75,6 +75,17 @@ class Jeu(object):
         self._vies = nouvelles
         self.interface.label_vies.texte = u"♥ : {0}".format(nouvelles)
 
+    @property
+    def temps_restant(self):
+        return self.TEMPS_MAX - self.minuteur.temps_ecoule()
+
+    def actualiser_temps(self):
+        temps = self.temps_restant
+        minutes = int(temps // 60)
+        secondes = int(temps % 60)
+        if secondes < 10: secondes = "0{0}".format(secondes)
+        self.interface.label_temps.texte = "{0}:{1}".format(minutes, secondes)  # TODO : formatter le temps
+
     def reprendre(self):
         self.mode = self.ancien_mode
 
@@ -143,7 +154,7 @@ class Jeu(object):
             self.menu()
 
     def verifier_perdu_niveau(self):
-        if self.personnage.est_mort or self.minuteur.temps_ecoule() > self.TEMPS_MAX:
+        if self.personnage.est_mort or self.temps_restant < 0:
             self.doit_recommencer_niveau = True
 
     def niveau_suivant(self):
@@ -168,7 +179,7 @@ class Jeu(object):
 
         :return: "None"
         """
-        self.interface.afficher(self.carte)
+        self.interface.afficher_jeu(self.carte)
         self.minuteur.reinitialiser()
         while 1:
             self.minuteur.passage()
@@ -193,8 +204,8 @@ class Jeu(object):
             else:
                 self.minuteur.attendre_fin()
 
-            self.interface.label_temps.texte = str(self.TEMPS_MAX - self.minuteur.temps_ecoule())  # TODO : formatter le temps
-            self.interface.afficher(self.carte)
+            self.actualiser_temps()
+            self.interface.afficher_jeu(self.carte)
 
             print(time.time() - debut)
 
@@ -239,13 +250,13 @@ class Jeu(object):
         case = self.objet_survole(position_souris, *carte.tuple_cases)
         del x, y
 
-        # Affichage premiere image
+        # Affichage première image
         if case is not None and not clic_droit:  # Si la souris survole la carte et qu'il n'y a pas de clic droit
             bloc_pointeur.rect = case.rect
             # On affiche la carte et le bloc sous le pointeur
-            self.interface.afficher(carte, bloc_pointeur)
+            self.interface.afficher_carte(carte, bloc_pointeur)
         else:
-            self.interface.afficher(carte)
+            self.interface.afficher_carte(carte)
 
         minuteur = Minuteur(1/60.0, 0.005)
         while self.mode == MODES.EDITEUR:
@@ -292,11 +303,11 @@ class Jeu(object):
             if case is not None and not clic_droit:  # Si la souris survole la carte et qu'il n'y a pas de clic droit
                 bloc_pointeur.rect = case.rect
                 objets_a_afficher.append(bloc_pointeur)
-            self.interface.afficher(carte, *objets_a_afficher)
+            self.interface.afficher_carte(carte, *objets_a_afficher)
             minuteur.attendre_fin()
 
     def gerer_erreurs(self, erreurs):
-        self.interface.afficher_erreur(erreurs)
+        self.interface.changer_erreur(erreurs)
 
     def gerer_evenements_interface(self, evenements):
         retour = self.interface.gerer_evenements(evenements)
