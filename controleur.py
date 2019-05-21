@@ -26,7 +26,8 @@ class Jeu(object):
         self.doit_commencer_niveau = False
         self.vies = self.VIES_MAX
         self.carte = None
-        self.mode = MODES.JEU
+        self._ancien_mode = None
+        self._mode = MODES.JEU
         self.recommencer_partie()
 
     @property
@@ -50,8 +51,20 @@ class Jeu(object):
     def mouvement_detecte(self):
         raise AttributeError("La propriete ne peut pas etre supprimee.")
 
-    def reprendre_jeu(self):
-        self.mode = MODES.JEU
+    @property
+    def ancien_mode(self):
+        return self._ancien_mode
+
+    @property
+    def mode(self):
+        return self._mode
+    @mode.setter
+    def mode(self, nouveau):
+        self._ancien_mode = self._mode
+        self._mode = nouveau
+
+    def reprendre(self):
+        self.mode = self.ancien_mode
 
     def charger_niveau(self):
         pass
@@ -60,7 +73,7 @@ class Jeu(object):
         rect = self.interface.rect()
         h = rect.height
         labels = [Label((rect.centerx, 0.3*h), "Menu", 80)]
-        boutons = [Bouton((rect.centerx, labels[0].position_centre.y + 0.1*h), Action(self.reprendre_jeu),
+        boutons = [Bouton((rect.centerx, labels[0].position_centre.y + 0.1*h), Action(self.reprendre),
                           texte="Reprendre"),
                    Bouton((rect.centerx, 0), Action(self.recommencer_niveau), texte="Recommencer"),
                    Bouton((rect.centerx, 0), Action(self.recommencer_partie), texte="Recommencer partie"),
@@ -75,10 +88,8 @@ class Jeu(object):
         self.interface.boutons_menu = boutons
 
     def menu(self):
-        mode = self.mode
         self.mode = MODES.MENU
         self.interface.menu()
-        self.mode = mode  # TODO : faire verifications securite menu
 
     def commencer_niveau(self):
         rect = self.interface.rect_carte(self.niveau)
