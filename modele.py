@@ -4,7 +4,7 @@ Module stockant les donnees du jeu.
 from blocs import *
 import itertools
 from numpy import matrix
-from os import isdir
+from os import listdir
 from os.path import isfile, join
 
 
@@ -206,26 +206,14 @@ class Niveau(object):
     def charger(cls, chemin):
         "charge un niveau"
         f = open(chemin, "r")
-        ascii = str(f.readlines(nombre_cases_hauteur))
+        ascii = "".join(f.readlines())
         # TODO (facile) : ouvrir fichier et ecrire contenu dans "ascii"
         niveau = cls(ascii)
-        niveau.chemin = chemin
-        return
+        return niveau
 
     def sauvegarder(self, chemin):
         """sauvegarde un niveau personnalise"""
-        nouveaunom = False
-        listefichiers = []
         nomchemin = chemin
-
-        #listefichiers = os.listdir("/niveaux")
-
-        while x == False:
-            if nomchemin os.path-isdir("niveaux"):
-                nomchemin = chemin + "_" + str(y)
-                y += 1
-            else:
-                x = True
         f = open(nomchemin, "w")
         f.writelines(self.ascii)
         f.close()

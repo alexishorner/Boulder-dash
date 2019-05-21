@@ -23,7 +23,8 @@ class Jeu(object):
         niveau = Niveau.niveau(1)
         niveau.sauvegarder("niveaux/niveau_personnalise")
         niveau = None
-        niveau = Niveau.charger("/niveaux/niveau_personnalise")
+        niveau = Niveau.charger("niveaux/niveau_personnalise")
+        print niveau
         self.niveau = niveau
         self.minuteur = Minuteur(0.15, 0.01)
 
@@ -467,8 +468,10 @@ class Jeu(object):
             if bloc.tombe and direction == ORIENTATIONS.BAS:
                 reussite = True
                 if ORIENTATIONS.sont_opposees(direction, self.personnage.mouvement_en_cours):
+                    self.pos = self.personnage.get_rect()
                     self.personnage.tuer()
                     bloc_collisionne.a_tue = True
+                    boum = Explosion(self.pos)
                     SONS.TUER.play()
         return reussite
 
@@ -558,7 +561,7 @@ class Jeu(object):
                             if bloc.tombe or bloc.coups_avant_tomber == 0:
                                 essai = False
                             faire_tomber(bloc, essai)
-                           # if isinstance(bloc, Diamant):
+                           # if isinstance(bloc, Diamant): # TODO sons différents pour plusieurs diamants ?
                                # nbdiamants += 1
 
 
