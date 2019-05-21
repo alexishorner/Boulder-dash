@@ -97,10 +97,9 @@ class Jeu(object):
         """
         return self.personnage.diamants_ramasses * 10
 
-
     def actualiser_score(self):
         """
-        calcule le score
+        Calcule le score.
         """
 
         self.score = self.comptabiliser_score()
@@ -113,7 +112,7 @@ class Jeu(object):
 
     def gagner_vies(self, vies):
         """
-        ajoute une vie
+        Ajoute une vie.
         """
         # TODO : ajouter son
         self.vies += vies
@@ -122,7 +121,7 @@ class Jeu(object):
         """
         ajoute le temps au score à la fin du niveau
         """
-        self.score += self.temps_restant()
+        self.score += self.temps_restant
 
     def reprendre(self):
         self.mode = self.ancien_mode
