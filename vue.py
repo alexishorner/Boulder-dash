@@ -107,7 +107,9 @@ class Label(object):
         if self._rect is None:
             self._rect = rect
         else:
+            centre = self.rect.center
             self._rect.size = rect.size
+            self._rect.center = centre
 
 
 class Bouton(Label):
