@@ -124,6 +124,9 @@ class Jeu(object):
         """
         self.score += self.temps_restant()
 
+        def afficher_nbdiamants(self):
+            """affiche le nombre de diamants totaux ainsi que """
+
     def reprendre(self):
         self.mode = self.ancien_mode
 
@@ -164,6 +167,7 @@ class Jeu(object):
 
     def recommencer_niveau(self):
         self.vies -= 1
+        self.score = 0
         if self.vies <= 0:
             self.sur_perdu()
         else:
@@ -208,8 +212,8 @@ class Jeu(object):
         print("Felicitations, vous avez termine tous les niveaux.")  # TODO : remplacer par texte dans pygame
 
     def gagne(self):
-        self.ajouter_temps_score()
-        SONS.FINI.play()
+        ajouter_temps_score()
+        SOUNDS.FINI.play()
         if not self.niveau_suivant():
             self.felicitations()
 
