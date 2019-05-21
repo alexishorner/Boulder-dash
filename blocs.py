@@ -2,7 +2,7 @@
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
 # TODO :
-#   - afficher score, temps, vies
+#   - afficher score
 #   - bouton recommencer
 #   - score
 #   - niveaux predefinis

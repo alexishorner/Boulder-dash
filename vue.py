@@ -280,7 +280,7 @@ class InterfaceGraphique:
                 bouton_selectionne = boutons[numero_bouton]
                 bouton_selectionne.selectionner()
 
-            self.afficher(None, *menu)
+            self.afficher(*menu)
             minuteur.attendre_fin()
 
     @staticmethod
@@ -307,34 +307,37 @@ class InterfaceGraphique:
 
     def ajuster_position_labels(self):
         rect = self.rect()
-        pos = (rect.centerx, rect.bottom + 5)
-        self.label_erreur.rect.centerx, self.label_erreur.rect.top = pos
+
+        # Erreur en bas au centre
+        self.label_erreur.rect.centerx, self.label_erreur.rect.top = (rect.centerx, rect.bottom + 5)
+
+        # Vies en haut à gauche
         self.label_vies.rect.left, self.label_vies.rect.bottom = rect.left, rect.top - 5
+
+        # Labels du haut placés à la suite
         labels = [self.label_vies, self.label_temps]
         for i, label in enumerate(labels):
             if i > 0:
                 label_precedent = labels[i - 1]
                 label.rect.left, label.rect.top = label_precedent.rect.right + self.distance_labels, label_precedent.rect.top
 
-    def afficher_erreur(self, erreurs):
+    def changer_erreur(self, erreurs):
         message = self.message_erreur(erreurs)
         self.label_erreur.texte = message
 
-    def afficher(self, carte=None, *autres_objets):
+    def afficher(self, *objets):
         self.ecran.blit(self.arriere_plan, (0, 0))  # Dessine l'arriere plan
-
-        # On dessine les blocs par ordre de position z
-        if carte is not None:
-            for bloc in carte.blocs_tries:
-                if bloc is not None:
-                    self.ecran.blit(bloc.image, bloc.rect)
-
-        if self.label_erreur.texte != "":
-            rect = self.rect()
-            self.label_erreur.centre = (rect.centerx, rect.bottom + int(round(self.marge / 2.0)))
-
-        self.ajuster_position_labels()
-        labels = (self.label_erreur, self.label_vies, self.label_temps)
-        for objet in (autres_objets + labels):
+        for objet in objets:
             self.ecran.blit(objet.image, objet.rect)
         pygame.display.flip()  # Actualise l'ecran
+
+    def afficher_carte(self, carte, *autres_objets):
+        labels = (self.label_erreur,)
+        blocs = tuple(carte.blocs_tries)
+        self.afficher(*(blocs + autres_objets + labels))
+
+    def afficher_jeu(self, carte, *autres_objets):
+        self.ajuster_position_labels()
+        labels = (self.label_erreur, self.label_vies, self.label_temps)
+        blocs = tuple(carte.blocs_tries)
+        self.afficher(*(blocs + autres_objets + labels))
