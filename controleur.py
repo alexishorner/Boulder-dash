@@ -85,6 +85,11 @@ class Jeu(object):
         if secondes < 10: secondes = "0{0}".format(secondes)
         self.interface.label_temps.texte = "{0}:{1}".format(minutes, secondes)  # TODO : formatter le temps
 
+    def score(self):
+        """comptabilise le score"""
+        self.score = self.personnage.diamants_ramasses *10
+        self.interface.label_score.texte = "SCORE: {0}".format(self.score)
+
     def reprendre(self):
         self.mode = self.ancien_mode
 

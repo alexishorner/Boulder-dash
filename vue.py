@@ -146,6 +146,7 @@ class InterfaceGraphique:
         self.label_erreur = Label(couleur=(226, 22, 22))
         self.label_vies = Label()
         self.label_temps = Label()
+        self.label_score = Label()
         self.ajuster_position_labels()
 
     def rect(self, decalage=None):
@@ -317,7 +318,7 @@ class InterfaceGraphique:
         self.label_vies.rect.left, self.label_vies.rect.bottom = rect.left, rect.top - 5
 
         # Labels du haut placés à la suite
-        labels = [self.label_vies, self.label_temps]
+        labels = [self.label_vies, self.label_temps, self.label_score]
         for i, label in enumerate(labels):
             if i > 0:
                 label_precedent = labels[i - 1]
@@ -340,6 +341,6 @@ class InterfaceGraphique:
 
     def afficher_jeu(self, carte, *autres_objets):
         self.ajuster_position_labels()
-        labels = (self.label_erreur, self.label_vies, self.label_temps)
+        labels = (self.label_erreur, self.label_vies, self.label_temps, self.label_score)
         blocs = tuple(carte.blocs_tries)
         self.afficher(*(blocs + autres_objets + labels))
