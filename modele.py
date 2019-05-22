@@ -352,6 +352,27 @@ class Carte(object):
         self.cases[bloc.rect_hashable].enlever(bloc)
         self.actualiser_blocs()
 
+    def changer_taille(self, largeur=None, hauteur=None):
+        cases = dict()
+        largeur_ = largeur
+        hauteur_ = hauteur
+        if largeur is None:
+            largeur_ = self.nombre_cases_largeur
+        if hauteur is None:
+            hauteur_ = hauteur
+        self.nombre_cases_largeur = largeur_
+        self.nombre_cases_hauteur = hauteur_
+        for x in range(largeur_):
+            for y in range(hauteur_):
+                index = (x, y)
+                rect = self.rect_a(x, y)
+                blocs = None
+                if x in (0, largeur_ - 1) or y in (0, hauteur_ - 1):
+                    blocs = (Mur(rect),)
+                case = Case(rect, index, blocs)
+                cases.update({rect: case})
+        self.cases = cases
+
     def ajouter_ligne(self, y):
         cases = self.cases.copy()
         for x in range(self.nombre_cases_largeur):

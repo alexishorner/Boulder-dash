@@ -7,6 +7,7 @@ from vue import *
 import random
 from Tkinter import Tk
 from tkFileDialog import askopenfilename, asksaveasfilename
+from tkSimpleDialog import askinteger
 Tk().withdraw()  # On empêche Tk de créer une interface complète
 
 
@@ -29,6 +30,8 @@ class Jeu(object):
         self.doit_commencer_niveau = False
         self._vies = 0
         self.vies = self.VIES_MAX
+        self._score = 0
+        self.score = 0
         self.carte = None
         self.carte_editeur = None
         self._ancien_mode = None
@@ -60,6 +63,7 @@ class Jeu(object):
     @property
     def mode(self):
         return self._mode
+
     @mode.setter
     def mode(self, nouveau):
         self._ancien_mode = self._mode
@@ -73,6 +77,15 @@ class Jeu(object):
     def vies(self, nouvelles):
         self._vies = nouvelles
         self.interface.label_vies.texte = u"♥: {0}".format(nouvelles)
+
+    @property
+    def score(self):
+        return self._score
+
+    @score.setter
+    def score(self, nouveau):
+        self._score = nouveau
+        self.interface.label_score.texte = "SCORE: {0}".format(nouveau)
 
     @property
     def temps_restant(self):
@@ -97,7 +110,6 @@ class Jeu(object):
         """
 
         self.score = self.comptabiliser_score()
-        self.interface.label_score.texte = "SCORE: {0}".format(self.score)
         nombre_vies_ajoutees = self.score // 500
         ajout_score_depuis_derniere_vie = self.score - nombre_vies_ajoutees * 500
         vies_a_ajouter = ajout_score_depuis_derniere_vie // 500
@@ -139,6 +151,11 @@ class Jeu(object):
             if nom_fichier:
                 niveau = Niveau.depuis_carte(carte)
                 niveau.sauvegarder(nom_fichier)
+
+    def redimensionner_carte(self, carte):
+        largeur = askinteger("Largeur", "Entrez la largeur de la carte", minvalue=3, maxvalue=100)
+        hauteur = askinteger("Hauteur", "Entrez la hauteur de la carte", minvalue=3, maxvalue=100)
+        carte.changer_taille(largeur, hauteur)
 
     def definir_menu(self):
         rect = self.interface.rect()
@@ -214,6 +231,8 @@ class Jeu(object):
     def gagne(self):
         self.ajouter_temps_score()
         SONS.FINI.play()
+        self.interface.afficher_jeu(self.carte)
+        time.sleep(5)
         if not self.niveau_suivant():
             self.felicitations()
 
@@ -313,6 +332,8 @@ class Jeu(object):
                     if evenement.type == KEYDOWN:
                         if evenement.key == K_s and evenement.mod & KMOD_CTRL:
                             self.sauvegarder(carte)
+                        if evenement.key == K_F1:
+                            self.redimensionner_carte(carte)
                     if evenement.type in (MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION):
                         boutons_presses = pygame.mouse.get_pressed()
                         clic_gauche = boutons_presses[CLIC.GAUCHE] and not boutons_presses[CLIC.DROIT]
