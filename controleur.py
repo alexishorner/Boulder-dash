@@ -99,10 +99,9 @@ class Jeu(object):
 
     def actualiser_temps(self):
         temps = self.temps_restant
-        minutes = int(temps // 60)
-        secondes = int(temps % 60)
+        secondes = int(temps)
         if secondes < 10: secondes = "0{0}".format(secondes)
-        self.interface.label_temps.texte = "{0}:{1}".format(minutes, secondes)
+        self.interface.label_temps.texte = "{0}".format(secondes)
 
     def comptabiliser_score(self):
         """
@@ -133,10 +132,14 @@ class Jeu(object):
         """
         ajoute le temps au score à la fin du niveau
         """
-        self.score += self.temps_restant
+        self.score += int(self.temps_restant)
 
-        def afficher_nbdiamants(self):
-            """affiche le nombre de diamants totaux ainsi que """
+    def afficher_nbdiamants(self):
+        """affiche le nombre de diamants totaux ainsi que """
+        nombre_diamants = self.carte.nbdiamantsmax
+        nombre_diamants_pour_sortir = self.carte.nombre_diamants_pour_sortir
+        diamants = self.personnage.diamants_ramasses
+        self.interface.label_diamants.texte = "{0}${1} {2}".format(nombre_diamants, nombre_diamants_pour_sortir, diamants)
 
     def reprendre(self):
         self.mode = self.ancien_mode
@@ -290,6 +293,7 @@ class Jeu(object):
 
             self.actualiser_temps()
             self.actualiser_score()
+            self.afficher_nbdiamants()
             self.interface.afficher_jeu(self.carte)
 
             print(time.time() - debut)

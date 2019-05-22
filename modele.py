@@ -247,6 +247,7 @@ class Carte(object):
         self.sortie = None
         self.cailloux = dict()
         self.nombre_diamants = 0
+        self.nombre_diamantsmax = 0
         self.nombre_diamants_pour_sortir = 4
         self.nombre_cases_hauteur = 0
         self.nombre_cases_largeur = 0
@@ -288,6 +289,7 @@ class Carte(object):
         self._cases = valeur
         self._tuple_cases = tuple(valeur.itervalues())
         self.actualiser_blocs()  # FIXME : attention on n'actualise pas le nombre de cases dans la largeur et la hauteur
+        self.nbdiamantsmax = self.nombre_diamants
 
     @property
     def rect(self):
