@@ -218,7 +218,6 @@ class Jeu(object):
     def se_suicider(self):
         if self.vies > 0:
             self.vies -= 1
-        self.vies -= 1
         self.score = 0
         if self.vies <= 0:
             self.sur_perdu()
