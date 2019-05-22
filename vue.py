@@ -6,7 +6,11 @@ from coeur import *
 
 
 class Label(object):
-    def __init__(self, position_centre=(0, 0), texte="", taille=24, police=POLICES.PRESS_START_K, couleur=(255, 255, 255, 230)):
+    """
+    Classe permettant d'afficher du texte ou une image sur la fenêtre.
+    """
+    def __init__(self, position_centre=(0, 0), texte="", taille=24, police=POLICES.PRESS_START_K,
+                 couleur=(255, 255, 255, 230)):
         self._taille = taille
         self._police = police
         self._image = None
@@ -18,6 +22,11 @@ class Label(object):
 
     @property
     def centre(self):
+        """
+        Propriété permettant de gérer l'accès à la position du centre du label.
+
+        :return: instance de "Coordonnees" indiquant les coordonnées du centre
+        """
         return Coordonnees(*self.rect.center)
 
     @centre.setter
@@ -30,6 +39,11 @@ class Label(object):
 
     @property
     def haut_gauche(self):
+        """
+        Propriété permettant de gérer l'accès  à la position du coin supérieur gauche du label.
+
+        :return: instance de "Coordonnees" indiquant les coordonnées du coin supérieur gauche
+        """
         return Coordonnees(*self._rect.topleft)
 
     @haut_gauche.setter
@@ -42,15 +56,27 @@ class Label(object):
 
     @property
     def taille(self):
+        """
+        Propriété permettant de gérer l'accès à la taille de la police du label. Si la taille de la police est modifiée,
+        le rendu du label est effectué à nouveau.
+
+        :return: nombre indiquant la taille de la police
+        """
         return self._taille
 
     @taille.setter
     def taille(self, nouveau):
         self._taille = nouveau
-        self.rendu()
+        self.rendu()  # On refait le rendu pour rendre les changements visibles
 
     @property
     def texte(self):
+        """
+        Propriété permettant de gérer l'accès au texte du label. Si le texte est modifié, le rendu du label est effectué
+        à nouveau.
+
+        :return: texte affiché dans le label
+        """
         texte = self._texte
         if self.police == POLICES.ARCADECLASSIC:
             texte = texte.replace("   ", " ")
@@ -63,19 +89,31 @@ class Label(object):
             texte = nouveau.replace(" ", "   ")
         self._texte = texte
         self._image = None
-        self.rendu()
+        self.rendu()  # On refait le rendu pour rendre les changements visibles
 
     @property
     def police(self):
+        """
+        Propriété permettant de gérer l'accès à la police du texte du label. Si la police est modifiées, le rendu du
+        label est effectué à nouveau.
+
+        :return: police utilisée par le label
+        """
         return self._police
 
     @police.setter
     def police(self, nouvelle):
         self._police = nouvelle
-        self.rendu()
+        self.rendu()  # On refait le rendu pour rendre les changements visibles
 
     @property
     def couleur(self):
+        """
+        Propriété permettant de gérer l'accès à la couleur du texte du label. Si la couleur du texte est modifiée, le
+        rendu du label est effectué à nouveau.
+
+        :return: couleur du texte du label
+        """
         return self._couleur
 
     @couleur.setter
@@ -85,58 +123,103 @@ class Label(object):
 
     @property
     def rect(self):
+        """
+        Propriété permettant de gérer l'accès au rectangle du label.
+
+        Aucun mutateur n'est définit pour éviter la modification complète du rectangle. Il peut néanmoins toujours être
+        changé par la modification de ses attributs, mais cela est déconseillé pour les attributs autres que "center",
+        "centerx", "centery", "size", "width" et "height".
+
+        :return: rectangle du label
+        """
         return self._rect
 
     @property
     def image(self):
+        """
+        Propriété permettant de gérer l'accès à l'image (texte rendu ou image classique) du label.
+
+        Aucun mutateur n'est définit pour éviter la modification de l'image depuis l'extérieur de la classe.
+
+        :return: image du label
+        """
         return self._image
 
     @image.setter
     def image(self, nouvelle):
         self._image = nouvelle
         self._texte = None
-        self.rendu()
+        self.rendu()  # On refait le rendu pour rendre les changements visibles
 
     def rendu(self):
-        if self._texte is not None and self._image is None:
+        """
+        Effectue le rendu du texte du label et enregistre l'image rendu dans l'attribut "_image".
+
+        :return: "None"
+        """
+        if self._texte is not None and self._image is None:  # Si le texte a une valeur, mais pas l'image
             self._image, rect = self.police.render(self._texte, self._couleur, size=self.taille)
-        elif self._image is not None and self._texte is None:
+        elif self._image is not None and self._texte is None:  # Si l'image a une valeur, mais pas le texte
             rect = self._image.rect
         else:
+            # On ne peut pas afficher du texte et une image dans le même label
             raise AttributeError("Exactement un des deux attributs \"texte\" et \"image\" doit valoir \"None\".")
+
         if self._rect is None:
             self._rect = rect
         else:
+            # On change la taille tout en gardant le centre à la même position
             centre = self.rect.center
             self._rect.size = rect.size
             self._rect.center = centre
 
 
 class Bouton(Label):
+    """
+    Classe permettant de définir des boutons cliquables.
+    """
     def __init__(self, position_centre, action_sur_clic=Action(), image=None, texte="", taille=40,
                  police=POLICES.ARCADECLASSIC):
         super(Bouton, self).__init__(position_centre, texte, taille, police)
         if image is not None:
             self.image = image
-        self.action_sur_clic = action_sur_clic
+        self.action_sur_clic = action_sur_clic  # permet d'associer une action au clic du bouton
 
     def selectionner(self):
-        self.texte = "- " + self.texte
+        """
+        Méthode permettant de montrer que le bouton est sélectionné.
+
+        :return: "None"
+        """
+        if self.texte is not None:
+            self.texte = "- " + self.texte
 
     def deselectionner(self):
-        self.texte = self.texte.replace("- ", "")
+        """
+        Méthode permettant d'arrêter de montrer que le bouton est sélectionné.
+
+        :return: "None"
+        """
+        self.texte = self.texte.replace("- ", "", 1)
 
     def cliquer(self):
+        """
+        Méthode à appeler si le bouton a été cliqué.
+
+        :return: retour de l'action associée au clic du bouton
+        """
         return self.action_sur_clic.effectuer()
 
 
 class InterfaceGraphique:
+    """
+    Classe permettant d'afficher des objets sur la fenêtre.
+    """
     def __init__(self, ecran):
         self.ecran = ecran
         self.arriere_plan = pygame.Surface(self.ecran.get_size())
         self.arriere_plan.fill((0, 0, 0))
         self.marge = int(self.ecran.get_width() * 0.02)
-        pygame.key.set_repeat(1, 1)
         self.gestionnaire_touches = GestionnaireTouches(pygame.key.get_pressed())
         self.labels_menu = []
         self.boutons_menu = []
