@@ -96,10 +96,6 @@ class Case(object):
             blocs = [nouveaux]
         self._blocs = trier(blocs)
 
-    @blocs.deleter
-    def blocs(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
-
     @property
     def rect(self):
         return self._rect
@@ -257,10 +253,6 @@ class Carte(object):
         self._niveau = valeur
         self.sur_changement_niveau()
 
-    @niveau.deleter
-    def niveau(self):
-        raise AttributeError("La propriete ne peut pas etre supprimee.")
-
     @property
     def tuple_cases(self):
         return self._tuple_cases
@@ -281,10 +273,6 @@ class Carte(object):
         self._cases = valeur
         self._tuple_cases = tuple(valeur.itervalues())
         self.actualiser_blocs()  # FIXME : attention on n'actualise pas le nombre de cases dans la largeur et la hauteur
-
-    @cases.deleter
-    def cases(self):
-        raise AttributeError("La propriete ne peut pas etre supprimee.")
 
     @property
     def rect(self):

@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
@@ -46,19 +47,12 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
         """
         return Rectangle(self.rect)
 
-    @rect_hashable.setter
-    def rect_hashable(self, nouveau):
-        raise AttributeError("Le rectangle hashable n'est pas modifiable, utiliser l'attribut \"rect\" a la place.")
-
-    @rect_hashable.deleter
-    def rect_hashable(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
-
-    def actualiser(self):
-        pass
-    # TODO : gerer les autres actions (comme tomber)
-
     def terminer_cycle(self):
+        """
+        Méthode appelée à chaque fin de boucle de jeu.
+
+        :return: "None"
+        """
         self.a_deja_bouge = not self.PEUT_SE_DEPLACER  # Les blocs ne pouvant pas se deplacer ont deja un mouvement traite
 
     def bouger(self, direction):

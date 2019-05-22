@@ -9,6 +9,7 @@ from Tkinter import Tk
 from tkFileDialog import askopenfilename, asksaveasfilename
 Tk().withdraw()  # On empêche Tk de créer une interface complète
 
+
 class Jeu(object):
     """
     Classe gerant l'ensemble du jeu.
@@ -36,6 +37,11 @@ class Jeu(object):
 
     @property
     def personnage(self):
+        """
+        Propriété permettant d'accéder plus facilement au personnage.
+
+        :return: instance de la classe "Personnage" représentant le personnage sur la carte
+        """
         return self.carte.personnage
 
     @property
@@ -46,14 +52,6 @@ class Jeu(object):
         :return: booleen indiquant si un mouvement a ete detecte
         """
         return self.personnage.mouvement_en_cours is not None
-
-    @mouvement_detecte.setter
-    def mouvement_detecte(self, nouveau):
-        raise AttributeError("La propriete ne peut pas etre modifiee.")
-
-    @mouvement_detecte.deleter
-    def mouvement_detecte(self):
-        raise AttributeError("La propriete ne peut pas etre supprimee.")
 
     @property
     def ancien_mode(self):
