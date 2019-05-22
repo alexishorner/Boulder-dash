@@ -19,27 +19,32 @@ Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 from coeur import *
 
 
-class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygame.sprite.Sprite" est une classe de nouveau style
+class Bloc(pygame.sprite.Sprite):  # Pas d'héritage d'"object", "pygame.sprite.Sprite" est une classe de nouveau style
     """
     Classe de base pour tous les blocs.
     """
-    PEUT_SE_DEPLACER = False
+    PEUT_SE_DEPLACER = False  # Variable de classe indiquant si les instances d'une certaine classe sont bougeables
 
     def __init__(self, rect):
-        pygame.sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
+        pygame.sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mère
         image = IMAGES[self.__class__.__name__]
         self.image = pygame.transform.scale(image, rect.size)
         self.rect = self.image.get_rect()
         self.rect.x = rect.x
         self.rect.y = rect.y
         self.z = 0
-        self.a_deja_bouge = not self.PEUT_SE_DEPLACER  # Les blocs ne pouvant pas se deplacer ont deja un mouvement traite
+        self.a_deja_bouge = not self.PEUT_SE_DEPLACER
         self.orientation = ORIENTATIONS.DROITE
         self.est_mort = False
         self.doit_bouger = False
 
     @property
     def taille(self):
+        """
+        Propriété permettant de gérer la taille du rectangle et de l'image du bloc en même temps.
+
+        :return: Taille du rectangle du bloc.
+        """
         return self.rect.size
 
     @taille.setter
@@ -62,7 +67,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
 
         :return: "None"
         """
-        self.a_deja_bouge = not self.PEUT_SE_DEPLACER  # Les blocs ne pouvant pas se deplacer ont deja un mouvement traite
+        self.a_deja_bouge = not self.PEUT_SE_DEPLACER  # On considère que les blocs ne pouvant pas se déplacer on déjà bougé
 
     def bouger(self, direction):
         """
@@ -85,7 +90,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
 
 class Personnage(Bloc):
     """
-    Classe permettant de representer un personnage.
+    Classe permettant de représenter un personnage.
     """
     PEUT_SE_DEPLACER = True
 
@@ -100,41 +105,77 @@ class Personnage(Bloc):
         self.z = 1
 
     def creuser_terre(self, terre):
+        """
+        Méthode appelée lorsque le personnage creuse de la terre. Elle permet de jouer un son et de compter la quantité
+        de terre creusée.
+
+        :param terre: Instance de "Terre" représentant le bloc de terre à creuser
+        :return: "None"
+        """
         terre.tuer()
         SONS.CREUSER_TERRE.play()
         self.terre_creusee += 1
 
     def ramasser_diamant(self, diamant):
+        """
+        Méthode appelée lorsque le personnage ramasse un diamant.
+
+        :param diamant: Instance de "Diamant" représentant le diamant à ramasser.
+        :return:
+        """
         diamant.tuer()
         SONS.RAMASSER_DIAMANT.play()
         diamant.ramasse = True
         self.diamants_ramasses += 1
 
     def pousser(self, caillou, direction):
+        """
+        Méthode appelée lorsque le personnage pousse un caillou.
+
+        :param caillou: Instance de "Caillou" représentant le caillou à pousser
+        :param direction: Valeur de l'énumération "ORIENTATIONS" indiquant le sens et la direction dans lesquels le
+        caillou doit être poussé.
+        :return: "None"
+        """
         caillou.etre_pousse()
         SONS.POUSSER_CAILLOU.play()
         self.bouger(direction)
 
     def bouger(self, direction):
+        """
+        Méthode appelée lorsque le personnage bouge.
+
+        :param direction: Valeur de l'énumération "ORIENTATIONS" indiquant le sens et la direction dans lesquels le
+        personnage doit bouger.
+        :return:
+        """
         super(Personnage, self).bouger(direction)
         SONS.BOUGER.play()
 
     def tuer(self):
+        """
+        Réimplémentation de la méthode "tuer" de la classe "Bloc".
+
+        Elle joue un son indiquant la mort du personnage.
+
+        :return: "None"
+        """
         super(Personnage, self).tuer()
         SONS.TUER.play()
 
+
 class Terre(Bloc):
     """
-    Classe permettant de representer de la terre.
+    Classe permettant de représenter de la terre.
     """
 
 
 class BlocTombant(Bloc):
     """
-    Classe permettant de gerer les blocs qui tombent (caillou et diamant)
+    Classe permettant de gérer les blocs qui tombent (caillou et diamant)
     """
     PEUT_SE_DEPLACER = True
-    INERTIE = 1
+    INERTIE = 1  # Nombre de tours de retard sur les mouvements
 
     def __init__(self, rect):
         super(BlocTombant, self).__init__(rect)
@@ -145,6 +186,11 @@ class BlocTombant(Bloc):
         self.a_tue = False
 
     def tomber(self):
+        """
+        Méthode appelée lorsque le bloc tombe.
+
+        :return: "None"
+        """
         if self.coups_avant_tomber > 0:
             self.coups_avant_tomber -= 1
         else:
@@ -152,16 +198,20 @@ class BlocTombant(Bloc):
         self.pouvait_tomber = True
 
     def terminer_cycle(self):
+        """
+        Réimplémentation de la méthode "terminer_cycle" de la classe "Bloc".
+        :return:
+        """
         super(BlocTombant, self).terminer_cycle()
-        self.tombe = self.est_tombe
-        if not self.pouvait_tomber:
+        self.tombe = self.est_tombe  # Si le bloc est tombé à ce tour, il peut tuer le personnage aux prochains tours.
+        if not self.pouvait_tomber:  # Si le bloc avait des bloc l'empêchant de bouger
             self.coups_avant_tomber = self.INERTIE
         self.est_tombe = self.pouvait_tomber = False
 
 
 class Caillou(BlocTombant):
     """
-    Classe permettant de representer un caillou.
+    Classe permettant de représenter un caillou.
     """
     def __init__(self, rect):
         super(Caillou, self).__init__(rect)
@@ -195,7 +245,7 @@ class Caillou(BlocTombant):
 
 class Diamant(BlocTombant):
     """
-    Classe permettant de representer un diamant.
+    Classe permettant de représenter un diamant.
     """
     def __init__(self, rect):
         super(Diamant, self).__init__(rect)
@@ -212,13 +262,13 @@ class Diamant(BlocTombant):
 
 class Mur(Bloc):
     """
-    Classe permetant de representer un bout de mur.
+    Classe permettant de représenter un bout de mur.
     """
 
 
 class Sortie(Bloc):
     """
-    Classe permettant de representer une porte de maniere generique.
+    Classe permettant de représenter une porte de sortie
     """
     def __init__(self, rect):
         super(Sortie, self).__init__(rect)
@@ -227,9 +277,9 @@ class Sortie(Bloc):
     @property
     def est_activee(self):
         """
-        Propriete permettant de savoir si la porte est activee.
+        Propriété permettant de savoir si la porte est activée.
 
-        :return: booleen indiquant si la porte est activee
+        :return: booléen indiquant si la porte est activée
         """
         return self._est_activee
 
@@ -246,7 +296,7 @@ class Sortie(Bloc):
 
     def activer(self):
         """
-        Methode de convenance permettant d'activer la porte.
+        Méthode de convenance permettant d'activer la porte.
 
         :return: "None"
         """
@@ -254,7 +304,7 @@ class Sortie(Bloc):
 
     def desactiver(self):
         """
-        Methode de convenance permettant de desactiver la porte.
+        Méthode de convenance permettant de désactiver la porte.
 
         :return: "None"
         """
@@ -263,5 +313,5 @@ class Sortie(Bloc):
 
 class Explosion(Bloc):
     """
-    Classe permettant de representer une explosion
+    Classe permettant de représenter une explosion
     """

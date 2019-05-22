@@ -58,6 +58,12 @@ class Jeu(object):
 
     @property
     def ancien_mode(self):
+        """
+        Propriété permettant d'acceder à la valeur du mode précédent.
+        Le mode décrit quel type de contenu est affiché à l'écran.
+
+        :return: Nombre représentant le mode précédent
+        """
         return self._ancien_mode
 
     @property
@@ -174,8 +180,8 @@ class Jeu(object):
         labels = [Label((rect.centerx, 0.25*h), "Menu", 80)]
         boutons = [Bouton((rect.centerx, labels[0].centre.y + 0.15 * h), Action(self.reprendre),
                           texte="Reprendre"),
-                   Bouton((rect.centerx, 0), Action(self.recommencer_niveau), texte="Recommencer"),
-                   Bouton((rect.centerx, 0), Action(self.recommencer_partie), texte="Recommencer partie"),
+                   Bouton((rect.centerx, 0), Action(self.se_suicider), texte="Se suicider"),
+                   Bouton((rect.centerx, 0), Action(self.recommencer_niveau), texte="Recommencer niveau"),
                    Bouton((rect.centerx, 0), Action(self.nouvelle_partie), texte="Nouvelle partie"),
                    Bouton((rect.centerx, 0), Action(self.charger_niveau), texte="Charger niveau"),
                    Bouton((rect.centerx, 0), Action(self.editeur_niveau), texte="Creer niveau"),
@@ -200,7 +206,7 @@ class Jeu(object):
         self.minuteur.reinitialiser()
         self.doit_commencer_niveau = False
 
-    def recommencer_niveau(self):
+    def se_suicider(self):
         if self.vies > 0:
             self.vies -= 1
         self.vies -= 1
@@ -212,7 +218,7 @@ class Jeu(object):
         self.doit_recommencer_niveau = False
         print("vies restantes : {0}".format(self.vies))
 
-    def recommencer_partie(self, niveau=None):
+    def recommencer_niveau(self, niveau=None):
         if niveau is not None:
             self.niveau = niveau
         self.vies = self.VIES_MAX
@@ -220,7 +226,7 @@ class Jeu(object):
         self.doit_recommencer_partie = False
 
     def nouvelle_partie(self):
-        self.recommencer_partie(Niveau.niveau(1))
+        self.recommencer_niveau(Niveau.niveau(1))
 
     def sur_perdu(self):
         self.menu()
@@ -276,9 +282,9 @@ class Jeu(object):
             if self.doit_commencer_niveau:
                 self.commencer_niveau()
             if self.doit_recommencer_niveau:
-                self.recommencer_niveau()
+                self.se_suicider()
             if self.doit_recommencer_partie:
-                self.recommencer_partie()
+                self.recommencer_niveau()
             else:
                 self.minuteur.attendre_fin()
 
