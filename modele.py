@@ -219,6 +219,19 @@ class Niveau(object):
         f.writelines(self.ascii)
         f.close()
 
+    @classmethod
+    def vide(cls, largeur, hauteur):
+        ascii = ""
+        for y in range(hauteur):
+            ligne = ""
+            for x in range(largeur):
+                if x in (0, largeur - 1) or y in (0, hauteur - 1):
+                    ligne += cls.BLOC_VERS_ASCII[Mur]
+                else:
+                    ligne += cls.BLOC_VERS_ASCII[None]
+            ascii += ligne
+        return cls(ascii)
+
 
 NIVEAUX = [Niveau.charger("niveaux/niveau{0}".format(i)) for i in range(1, 5)]
 
@@ -230,6 +243,8 @@ class Carte(object):
     def __init__(self, rect, niveau):
         self.blocs_tries = []
         self.blocs_uniques = dict()
+        self.personnage = None
+        self.sortie = None
         self.cailloux = dict()
         self.nombre_diamants = 0
         self.nombre_diamants_pour_sortir = 4
@@ -300,7 +315,7 @@ class Carte(object):
     def actualiser_rects_cases(self):
         cases = dict()
         for case in self.tuple_cases:
-            rect = case.rect.copy()  # On modifie une copie du rectangle pour que la case soit au courant du changement
+            rect = Rectangle(case.rect)  # On modifie une copie du rectangle pour que la case soit au courant du changement
             rect.x, rect.y = self.index_vers_coordonnees(*case.index)
             rect.width, rect.height = self.largeur_case, self.hauteur_case
             case.rect = rect  # La case sait qu'on change de rectangle

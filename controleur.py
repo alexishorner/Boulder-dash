@@ -155,7 +155,15 @@ class Jeu(object):
     def redimensionner_carte(self, carte):
         largeur = askinteger("Largeur", "Entrez la largeur de la carte", minvalue=3, maxvalue=100)
         hauteur = askinteger("Hauteur", "Entrez la hauteur de la carte", minvalue=3, maxvalue=100)
-        carte.changer_taille(largeur, hauteur)
+        largeur_ = largeur
+        hauteur_ = hauteur
+        if largeur is None:
+            largeur_ = carte.largeur_case
+        if hauteur_ is None:
+            hauteur_ = carte.hauteur_case
+        decalage = (self.carte.largeur_case + self.interface.marge, 0)
+        carte.rect = self.interface.rect_carte(largeur_, hauteur_, decalage)
+        carte.changer_taille(largeur_, hauteur_)
 
     def definir_menu(self):
         rect = self.interface.rect()
@@ -184,7 +192,7 @@ class Jeu(object):
     def commencer_niveau(self):
         self.mode = MODES.JEU
         self.interface.supprimer_erreurs()
-        rect = self.interface.rect_carte(self.niveau)
+        rect = self.interface.rect_carte(self.niveau.nombre_cases_largeur, self.niveau.nombre_cases_hauteur)
         self.carte = Carte(rect, self.niveau)
         self.minuteur.reinitialiser()
         self.doit_commencer_niveau = False
@@ -214,6 +222,8 @@ class Jeu(object):
 
     def verifier_perdu_niveau(self):
         if self.personnage.est_mort or self.temps_restant < 0:
+            self.interface.afficher_jeu(self.carte)
+            time.sleep(0.5)
             self.doit_recommencer_niveau = True
 
     def niveau_suivant(self):
@@ -282,7 +292,7 @@ class Jeu(object):
         decalage = None
         if self.mode == MODES.EDITEUR:
             decalage = (self.carte.largeur_case + self.interface.marge, 0)
-        rect = self.interface.rect_carte(niveau, decalage)
+        rect = self.interface.rect_carte(niveau.nombre_cases_largeur, niveau.nombre_cases_hauteur, decalage)
         return Carte(rect, niveau)
 
     def blocs_selectionnables(self, x, y, largeur, hauteur):
@@ -302,17 +312,14 @@ class Jeu(object):
         self.mode = MODES.EDITEUR
         carte = self.carte_vide(34, 20)
         self.carte_editeur = carte
-        x = 0
-        y = 0
         # Les blocs selectionnables sont les blocs sur lesquels on peut cliquer pour choisir le type de blocs a ajouter
         # sur la carte
-        blocs_selectionnables = self.blocs_selectionnables(x, y, carte.largeur_case, carte.hauteur_case)
+        blocs_selectionnables = self.blocs_selectionnables(0, 0, carte.largeur_case, carte.hauteur_case)
         bloc_selectionne = blocs_selectionnables[0]
         position_souris = pygame.mouse.get_pos()
         bloc_pointeur = bloc_selectionne.__class__(pygame.Rect(position_souris, bloc_selectionne.rect.size))
         clic_gauche = clic_droit = False
         case = self.objet_survole(position_souris, *carte.tuple_cases)
-        del x, y
 
         # Affichage première image
         if case is not None and not clic_droit:  # Si la souris survole la carte et qu'il n'y a pas de clic droit
@@ -334,6 +341,11 @@ class Jeu(object):
                             self.sauvegarder(carte)
                         if evenement.key == K_F1:
                             self.redimensionner_carte(carte)
+                            taille_bloc = (carte.largeur_case, carte.hauteur_case)
+                            blocs = self.blocs_selectionnables(0, 0, *taille_bloc)
+                            for i, bloc in enumerate(blocs_selectionnables):
+                                bloc.rect, bloc.image = blocs[i].rect, blocs[i].image
+                            bloc_pointeur.taille = taille_bloc
                     if evenement.type in (MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION):
                         boutons_presses = pygame.mouse.get_pressed()
                         clic_gauche = boutons_presses[CLIC.GAUCHE] and not boutons_presses[CLIC.DROIT]
@@ -438,23 +450,39 @@ class Jeu(object):
                     self.personnage.mouvement_en_cours = ORIENTATIONS.DROITE
 
     def gerer_collisions(self):
+        doit_actualiser = False
         for case in self.carte.tuple_cases:
+            blocs = None
             if len(case.blocs) == 2:
                 for bloc in case.blocs:
                     if isinstance(bloc, BlocTombant):
                         if self.personnage in case.blocs:
                             self.personnage.tuer()
-                            case.blocs = Explosion(case.rect)
+                            blocs = [Explosion(case.rect)]
                             x = case.index.x
                             y = case.index.y
-                            for i in range(-1,2):
+                            for i in range(-1, 2):
                                 for j in range(-1, 2):
-                                    case_ = self.carte.case_a(x+i, y+j)
-                                    case_.blocs = Explosion(case_.rect)
-
-
+                                    x_ = x + i
+                                    y_ = y + j
+                                    if (0 <= x_ < self.carte.nombre_cases_largeur and
+                                        0 <= y_ < self.carte.nombre_cases_hauteur):
+                                        case_ = self.carte.case_a(x_, y_)
+                                        case_.blocs = Explosion(case_.rect)
+                            doit_actualiser = True
+                            SONS.TUER.play()
                         else:
                             raise RuntimeError("Seul le personnage peut etre sur la meme case qu'un autre bloc.")
+            if blocs is not None:
+                case.blocs = blocs
+                doit_actualiser = True
+
+            if doit_actualiser:
+                personnage = self.personnage
+                sortie = self.carte.sortie
+                self.carte.actualiser_blocs()
+                self.carte.personnage = personnage
+                self.carte.sortie = sortie
 
     def terminer_mouvements(self):
         self.carte.supprimer_morts()
@@ -534,8 +562,6 @@ class Jeu(object):
                     self.pos = self.personnage.get_rect()
                     self.personnage.tuer()
                     bloc_collisionne.a_tue = True
-                    boum = Explosion(self.pos)
-                    SONS.TUER.play()
         return reussite
 
     def peut_bouger(self, bloc, direction):
@@ -627,7 +653,4 @@ class Jeu(object):
                            # if isinstance(bloc, Diamant): # TODO sons différents pour plusieurs diamants ?
                                # nbdiamants += 1
 
-
-        # self.bouger_personnage()
-
-        self.terminer_mouvements()  # TODO: regler l'ordre de resolution des mouvements
+        self.terminer_mouvements()

@@ -28,7 +28,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
     def __init__(self, rect):
         pygame.sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
         image = IMAGES[self.__class__.__name__]
-        self.image = pygame.transform.scale(image, (rect.width, rect.height))
+        self.image = pygame.transform.scale(image, rect.size)
         self.rect = self.image.get_rect()
         self.rect.x = rect.x
         self.rect.y = rect.y
@@ -37,6 +37,15 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
         self.orientation = ORIENTATIONS.DROITE
         self.est_mort = False
         self.doit_bouger = False
+
+    @property
+    def taille(self):
+        return self.rect.size
+
+    @taille.setter
+    def taille(self, nouvelle):
+        self.rect.size = nouvelle
+        self.image = pygame.transform.scale(self.image, nouvelle)
 
     @property
     def rect_hashable(self):
@@ -250,6 +259,7 @@ class Sortie(Bloc):
         :return: "None"
         """
         self.est_activee = False
+
 
 class Explosion(Bloc):
     """

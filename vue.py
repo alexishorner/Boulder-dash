@@ -162,10 +162,8 @@ class InterfaceGraphique:
 
         return pygame.Rect(x_0, y_0, largeur, hauteur)
 
-    def rect_carte(self, niveau, decalage=None):
+    def rect_carte(self, nombre_cases_largeur, nombre_cases_hauteur, decalage=None):
         rect = self.rect(decalage)
-        nombre_cases_largeur = niveau.nombre_cases_largeur
-        nombre_cases_hauteur = niveau.nombre_cases_hauteur
         cote_case = int(round(min(rect.width / float(nombre_cases_largeur), rect.height / float(nombre_cases_hauteur))))
         largeur = cote_case * nombre_cases_largeur
         hauteur = cote_case * nombre_cases_hauteur
