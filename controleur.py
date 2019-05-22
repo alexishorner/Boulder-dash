@@ -15,7 +15,7 @@ class Jeu(object):
     """
     Classe gerant l'ensemble du jeu.
     """
-    TEMPS_MAX = 120
+    TEMPS_MAX = 240
     VIES_MAX = 3
 
     def __init__(self):
