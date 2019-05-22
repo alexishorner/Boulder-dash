@@ -5,13 +5,9 @@ Module gerant la logique du jeu.
 from modele import *
 from vue import *
 import random
-# from Tkinter import Tk
-# from tkFileDialog import askopenfilename
-#
-# Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-# filename = askopenfilename()  # show an "Open" dialog box and return the path to the selected file
-# print(filename)
-
+from Tkinter import Tk
+from tkFileDialog import askopenfilename, asksaveasfilename
+Tk().withdraw()  # On empêche Tk de créer une interface complète
 
 class Jeu(object):
     """
@@ -36,7 +32,7 @@ class Jeu(object):
         self.carte_editeur = None
         self._ancien_mode = None
         self._mode = MODES.JEU
-        self.recommencer_partie()
+        self.nouvelle_partie()
 
     @property
     def personnage(self):
@@ -89,7 +85,7 @@ class Jeu(object):
         minutes = int(temps // 60)
         secondes = int(temps % 60)
         if secondes < 10: secondes = "0{0}".format(secondes)
-        self.interface.label_temps.texte = "{0}:{1}".format(minutes, secondes)  # TODO : formatter le temps
+        self.interface.label_temps.texte = "{0}:{1}".format(minutes, secondes)
 
     def comptabiliser_score(self):
         """
@@ -127,13 +123,30 @@ class Jeu(object):
         self.mode = self.ancien_mode
 
     def charger_niveau(self):
-        pass
+        nom_fichier = askopenfilename()  # show an "Open" dialog box and return the path to the selected file
+        niveau = Niveau.charger(nom_fichier)
+        erreurs = Carte(self.carte.rect, niveau).valider()
+        if len(erreurs) > 0:
+            self.gerer_erreurs(erreurs)
+        else:
+            self.niveau = niveau
+            self.doit_recommencer_partie = True
+
+    def sauvegarder(self, carte):
+        erreurs = carte.valider()
+        if len(erreurs) > 0:
+            self.gerer_erreurs(erreurs)
+        else:
+            nom_fichier = asksaveasfilename()
+            if nom_fichier:
+                niveau = Niveau.depuis_carte(carte)
+                niveau.sauvegarder(nom_fichier)
 
     def definir_menu(self):
         rect = self.interface.rect()
         h = rect.height
-        labels = [Label((rect.centerx, 0.3*h), "Menu", 80)]
-        boutons = [Bouton((rect.centerx, labels[0].centre.y + 0.1 * h), Action(self.reprendre),
+        labels = [Label((rect.centerx, 0.25*h), "Menu", 80)]
+        boutons = [Bouton((rect.centerx, labels[0].centre.y + 0.15 * h), Action(self.reprendre),
                           texte="Reprendre"),
                    Bouton((rect.centerx, 0), Action(self.recommencer_niveau), texte="Recommencer"),
                    Bouton((rect.centerx, 0), Action(self.recommencer_partie), texte="Recommencer partie"),
@@ -144,7 +157,7 @@ class Jeu(object):
         for i, bouton in enumerate(boutons):
             if i > 0:
                 y_prec = boutons[i - 1].centre.y
-                bouton.centre = (bouton.centre.x, y_prec + 0.05 * h)
+                bouton.centre = (bouton.centre.x, y_prec + 0.06 * h)
         self.interface.labels_menu = labels
         self.interface.boutons_menu = boutons
 
@@ -162,7 +175,8 @@ class Jeu(object):
         self.doit_commencer_niveau = False
 
     def recommencer_niveau(self):
-        self.vies -= 1
+        if self.vies > 0:
+            self.vies -= 1
         if self.vies <= 0:
             self.sur_perdu()
         else:
@@ -173,9 +187,6 @@ class Jeu(object):
     def recommencer_partie(self, niveau=None):
         if niveau is not None:
             self.niveau = niveau
-        if self.niveau.numero is not None:
-            if self.niveau.numero != 1:
-                self.niveau = Niveau.niveau(1)
         self.vies = self.VIES_MAX
         self.commencer_niveau()
         self.doit_recommencer_partie = False
@@ -294,13 +305,16 @@ class Jeu(object):
         else:
             self.interface.afficher_carte(carte)
 
-        minuteur = Minuteur(1/60.0, 0.005)
+        minuteur = Minuteur(1/60.0, 0.01)
         while self.mode == MODES.EDITEUR:
             minuteur.passage()
             while minuteur.tics_restants() > 1:
                 evenements = pygame.event.get()
                 self.gerer_evenements_interface(evenements)
                 for evenement in evenements:
+                    if evenement.type == KEYDOWN:
+                        if evenement.key == K_s and evenement.mod & KMOD_CTRL:
+                            self.sauvegarder(carte)
                     if evenement.type in (MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION):
                         boutons_presses = pygame.mouse.get_pressed()
                         clic_gauche = boutons_presses[CLIC.GAUCHE] and not boutons_presses[CLIC.DROIT]
@@ -386,7 +400,7 @@ class Jeu(object):
         :return: Booleen informant si une touche a provoque une action dans le jeu
         """
         # On regarde si plus de la moitie de la periode est ecoulee (sert a ameliorer l'experience utilisateur)
-        moitie_periode_est_depassee = self.minuteur.temps_ecoule_periode_actuelle() > self.minuteur.periode / 2.0
+        moitie_periode_est_depassee = self.minuteur.temps_ecoule_periode_actuelle() > self.minuteur.periode * 3.0 / 4.
 
         if not self.personnage.etait_en_mouvement or moitie_periode_est_depassee:   # Si le personnage est deja en train
                                                                                     # de bouger ou que plus de la moitie

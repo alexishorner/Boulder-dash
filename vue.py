@@ -133,9 +133,7 @@ class Bouton(Label):
 class InterfaceGraphique:
     def __init__(self, ecran):
         self.ecran = ecran
-        self._mode = None
-        self.passer_en_fenetre()
-        self.arriere_plan = pygame.Surface(RESOLUTION)
+        self.arriere_plan = pygame.Surface(self.ecran.get_size())
         self.arriere_plan.fill((0, 0, 0))
         self.marge = int(self.ecran.get_width() * 0.02)
         pygame.key.set_repeat(1, 1)
@@ -195,18 +193,6 @@ class InterfaceGraphique:
         pygame.quit()
         sys.exit(0)  # TODO : ajouter confirmation
 
-    def passer_en_plein_ecran(self):
-        if not self._mode == FULLSCREEN:
-            resolution = self.ecran.get_size()
-            self.ecran = pygame.display.set_mode(resolution, FULLSCREEN)
-            self._mode = FULLSCREEN
-
-    def passer_en_fenetre(self):
-        if not self._mode == RESIZABLE:
-            resolution = self.ecran.get_size()
-            self.ecran = pygame.display.set_mode(resolution, RESIZABLE)
-            self._mode = RESIZABLE
-
     def gerer_evenements(self, evenements):
         self.gestionnaire_touches.actualiser_touches(pygame.key.get_pressed())
         for evenement in evenements:
@@ -223,15 +209,7 @@ class InterfaceGraphique:
                 if evenement.key == K_q:
                     self.quitter()
                 elif evenement.key == K_ESCAPE:
-                    mods = pygame.key.get_mods()
-
-                    # On regarde si la touche Maj est pressee et qu'aucun autre modificateur ne l'est, on utilise pour
-                    # ce faire des operateurs bit a bit
-                    if not mods & (KMOD_ALT | KMOD_CTRL):
-                        if mods & KMOD_SHIFT:
-                            self.passer_en_plein_ecran()
-                        else:
-                            self.passer_en_fenetre()
+                    return EVENEMENTS.MENU
                 elif evenement.key == K_F12:
                     return EVENEMENTS.EDITEUR
             return None
@@ -256,9 +234,12 @@ class InterfaceGraphique:
         bouton_selectionne = boutons[0]
         bouton_selectionne.selectionner()
         numero_bouton = 0
-        minuteur = Minuteur(0.15, 0.005)
+        touche_pressee = None
+        minuteur = Minuteur(0.15, 0.01)
         while 1:
             minuteur.passage()
+            etait_pressee = touche_pressee is not None
+            touche_pressee = None
             while minuteur.tics_restants() > 1:
                 evenements = pygame.event.get()
                 retour = self.gerer_evenements(evenements)
@@ -268,15 +249,16 @@ class InterfaceGraphique:
                     if evenement.type == KEYUP:
                         if evenement.key == K_RETURN:
                             return bouton_selectionne.cliquer()
+                if touche_pressee is None:
+                    if not etait_pressee or minuteur.temps_ecoule_periode_actuelle() > minuteur.periode * 3.0 / 4.0:
+                        touche_pressee = self.gestionnaire_touches.derniere_touche()
                 if minuteur.tics_restants() > 1:
                     minuteur.attendre_un_tic()
 
-            touche_pressee = self.gestionnaire_touches.derniere_touche()
-
-            if touche_pressee in (K_UP, K_DOWN):
-                if touche_pressee == K_UP:
+            if touche_pressee in TOUCHES.HAUT or touche_pressee in TOUCHES.BAS:
+                if touche_pressee in TOUCHES.HAUT:
                     numero_bouton -= 1
-                elif touche_pressee == K_DOWN:
+                elif touche_pressee in TOUCHES.BAS:
                     numero_bouton += 1
                 numero_bouton %= len(boutons)
                 bouton_selectionne.deselectionner()
