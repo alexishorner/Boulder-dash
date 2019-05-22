@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
@@ -27,7 +28,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
     def __init__(self, rect):
         pygame.sprite.Sprite.__init__(self)  # On appelle le constructeur de la classe mere
         image = IMAGES[self.__class__.__name__]
-        self.image = pygame.transform.scale(image, (rect.width, rect.height))
+        self.image = pygame.transform.scale(image, rect.size)
         self.rect = self.image.get_rect()
         self.rect.x = rect.x
         self.rect.y = rect.y
@@ -38,6 +39,15 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
         self.doit_bouger = False
 
     @property
+    def taille(self):
+        return self.rect.size
+
+    @taille.setter
+    def taille(self, nouvelle):
+        self.rect.size = nouvelle
+        self.image = pygame.transform.scale(self.image, nouvelle)
+
+    @property
     def rect_hashable(self):
         """
         Permet d'utiliser le rectangle comme cle de dictionnaire.
@@ -46,19 +56,12 @@ class Bloc(pygame.sprite.Sprite):  # Pas besoin d'heriter d'"object", car "pygam
         """
         return Rectangle(self.rect)
 
-    @rect_hashable.setter
-    def rect_hashable(self, nouveau):
-        raise AttributeError("Le rectangle hashable n'est pas modifiable, utiliser l'attribut \"rect\" a la place.")
-
-    @rect_hashable.deleter
-    def rect_hashable(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
-
-    def actualiser(self):
-        pass
-    # TODO : gerer les autres actions (comme tomber)
-
     def terminer_cycle(self):
+        """
+        Méthode appelée à chaque fin de boucle de jeu.
+
+        :return: "None"
+        """
         self.a_deja_bouge = not self.PEUT_SE_DEPLACER  # Les blocs ne pouvant pas se deplacer ont deja un mouvement traite
 
     def bouger(self, direction):
@@ -256,6 +259,7 @@ class Sortie(Bloc):
         :return: "None"
         """
         self.est_activee = False
+
 
 class Explosion(Bloc):
     """

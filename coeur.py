@@ -90,10 +90,6 @@ class Coordonnees(list):
     def x(self, valeur):
         self[0] = valeur
 
-    @x.deleter
-    def x(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
-
     @property
     def y(self):
         return self[1]
@@ -101,10 +97,6 @@ class Coordonnees(list):
     @y.setter
     def y(self, valeur):
         self[1] = valeur
-
-    @y.deleter
-    def y(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
 
     def __mul__(self, autre):
         return Coordonnees(self.x * autre, self.y * autre)
@@ -264,11 +256,6 @@ class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style a une
     def periode(self, nouvelle):
         self._periode = nouvelle
         self.reinitialiser()
-
-    @periode.deleter
-    def periode(self):
-        raise AttributeError("La classe \"{0}\" ne peut pas fonctionner "
-                             "sans l'attribut \"_periode\"".format(self.__class__.__name__))
 
     def temps_ecoule(self):
         """

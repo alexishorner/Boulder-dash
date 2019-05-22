@@ -96,10 +96,6 @@ class Case(object):
             blocs = [nouveaux]
         self._blocs = trier(blocs)
 
-    @blocs.deleter
-    def blocs(self):
-        raise AttributeError("L'attribut ne peut pas etre supprime.")
-
     @property
     def rect(self):
         return self._rect
@@ -223,6 +219,19 @@ class Niveau(object):
         f.writelines(self.ascii)
         f.close()
 
+    @classmethod
+    def vide(cls, largeur, hauteur):
+        ascii = ""
+        for y in range(hauteur):
+            ligne = ""
+            for x in range(largeur):
+                if x in (0, largeur - 1) or y in (0, hauteur - 1):
+                    ligne += cls.BLOC_VERS_ASCII[Mur]
+                else:
+                    ligne += cls.BLOC_VERS_ASCII[None]
+            ascii += ligne
+        return cls(ascii)
+
 
 NIVEAUX = [Niveau.charger("niveaux/niveau{0}".format(i)) for i in range(1, 5)]
 
@@ -234,6 +243,8 @@ class Carte(object):
     def __init__(self, rect, niveau):
         self.blocs_tries = []
         self.blocs_uniques = dict()
+        self.personnage = None
+        self.sortie = None
         self.cailloux = dict()
         self.nombre_diamants = 0
         self.nombre_diamants_pour_sortir = 4
@@ -257,10 +268,6 @@ class Carte(object):
         self._niveau = valeur
         self.sur_changement_niveau()
 
-    @niveau.deleter
-    def niveau(self):
-        raise AttributeError("La propriete ne peut pas etre supprimee.")
-
     @property
     def tuple_cases(self):
         return self._tuple_cases
@@ -281,10 +288,6 @@ class Carte(object):
         self._cases = valeur
         self._tuple_cases = tuple(valeur.itervalues())
         self.actualiser_blocs()  # FIXME : attention on n'actualise pas le nombre de cases dans la largeur et la hauteur
-
-    @cases.deleter
-    def cases(self):
-        raise AttributeError("La propriete ne peut pas etre supprimee.")
 
     @property
     def rect(self):
@@ -312,7 +315,7 @@ class Carte(object):
     def actualiser_rects_cases(self):
         cases = dict()
         for case in self.tuple_cases:
-            rect = case.rect.copy()  # On modifie une copie du rectangle pour que la case soit au courant du changement
+            rect = Rectangle(case.rect)  # On modifie une copie du rectangle pour que la case soit au courant du changement
             rect.x, rect.y = self.index_vers_coordonnees(*case.index)
             rect.width, rect.height = self.largeur_case, self.hauteur_case
             case.rect = rect  # La case sait qu'on change de rectangle
@@ -363,6 +366,27 @@ class Carte(object):
     def supprimer(self, bloc):
         self.cases[bloc.rect_hashable].enlever(bloc)
         self.actualiser_blocs()
+
+    def changer_taille(self, largeur=None, hauteur=None):
+        cases = dict()
+        largeur_ = largeur
+        hauteur_ = hauteur
+        if largeur is None:
+            largeur_ = self.nombre_cases_largeur
+        if hauteur is None:
+            hauteur_ = hauteur
+        self.nombre_cases_largeur = largeur_
+        self.nombre_cases_hauteur = hauteur_
+        for x in range(largeur_):
+            for y in range(hauteur_):
+                index = (x, y)
+                rect = self.rect_a(x, y)
+                blocs = None
+                if x in (0, largeur_ - 1) or y in (0, hauteur_ - 1):
+                    blocs = (Mur(rect),)
+                case = Case(rect, index, blocs)
+                cases.update({rect: case})
+        self.cases = cases
 
     def ajouter_ligne(self, y):
         cases = self.cases.copy()
