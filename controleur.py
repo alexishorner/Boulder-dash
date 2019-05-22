@@ -146,13 +146,18 @@ class Jeu(object):
 
     def charger_niveau(self):
         nom_fichier = askopenfilename()  # show an "Open" dialog box and return the path to the selected file
-        niveau = Niveau.charger(nom_fichier)
-        erreurs = Carte(self.carte.rect, niveau).valider()
-        if len(erreurs) > 0:
-            self.gerer_erreurs(erreurs)
-        else:
-            self.niveau = niveau
-            self.doit_recommencer_partie = True
+        if nom_fichier is not None:
+            niveau = Niveau.charger(nom_fichier)
+            erreurs = Carte(self.carte.rect, niveau).valider()
+            if len(erreurs) > 0:
+                self.gerer_erreurs(erreurs)
+            else:
+                self.niveau = niveau
+                self.doit_recommencer_partie = True
+
+    def charger_dans_editeur(self):
+        if self.ancien_mode == MODES.JEU:
+            self.editeur_niveau(self.carte)
 
     def sauvegarder(self, carte):
         erreurs = carte.valider()
@@ -187,6 +192,7 @@ class Jeu(object):
                    Bouton((rect.centerx, 0), Action(self.recommencer_niveau), texte="Recommencer niveau"),
                    Bouton((rect.centerx, 0), Action(self.nouvelle_partie), texte="Nouvelle partie"),
                    Bouton((rect.centerx, 0), Action(self.charger_niveau), texte="Charger niveau"),
+                   Bouton((rect.centerx, 0), Action(self.charger_dans_editeur), texte="Modifier dans l editeur"),
                    Bouton((rect.centerx, 0), Action(self.editeur_niveau), texte="Creer niveau"),
                    Bouton((rect.centerx, 0), Action(self.interface.quitter), texte="Quitter")]
         for i, bouton in enumerate(boutons):
@@ -323,9 +329,12 @@ class Jeu(object):
     def selectionner(self, bloc):
         self.interface.selectionner(bloc)
 
-    def editeur_niveau(self):
+    def editeur_niveau(self, carte_chargee=None):
         self.mode = MODES.EDITEUR
-        carte = self.carte_vide(34, 20)
+        if carte_chargee is None:
+            carte = self.carte_vide(34, 20)
+        else:
+            carte = carte_chargee
         self.carte_editeur = carte
         # Les blocs selectionnables sont les blocs sur lesquels on peut cliquer pour choisir le type de blocs a ajouter
         # sur la carte

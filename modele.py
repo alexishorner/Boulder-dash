@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Module stockant les donnees du jeu.
 """
@@ -64,6 +65,12 @@ def enlever_extremites(chaine, caracteres_a_enlever=("\n", " ")):
 
 
 def trier(blocs):
+    """
+    Fonction permettant de nettoyer une liste de blocs et de la trier par ordre croissant de position z.
+
+    :param blocs: liste de blocs à trier
+    :return: nouvelle liste contenant les blocs par ordre croissant de coordonnée z
+    """
     if len(blocs) == 0:
         return [None]
 
@@ -86,18 +93,28 @@ class Case(object):
 
     @property
     def blocs(self):
+        """
+        Propriété permettant de gérer l'accès aux blocs de la case.
+
+        :return: liste de blocs se trouvant sur la case
+        """
         return self._blocs
 
     @blocs.setter
     def blocs(self, nouveaux):
         try:
             blocs = list(nouveaux)
-        except TypeError:
+        except TypeError:  # Si "blocs" n'est pas itérable
             blocs = [nouveaux]
-        self._blocs = trier(blocs)
+        self._blocs = trier(blocs)  # On ordonne les blocs pour pouvoir les dessiner en respectant leur coordonnée z
 
     @property
     def rect(self):
+        """
+        Propriété permettant de gérer l'accès au rectangle décrivant les dimensions et la position de la case.
+
+        :return: instance de "pygame.Rect"
+        """
         return self._rect
 
     @rect.setter

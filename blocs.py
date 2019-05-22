@@ -32,7 +32,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas d'héritage d'"object", "pygame.sprite.
         self.rect = self.image.get_rect()
         self.rect.x = rect.x
         self.rect.y = rect.y
-        self.z = 0
+        self.z = 0  # La coordonnée z définit quel bloc apparaît devant sur l'écran en cas de superposition de blocs.
         self.a_deja_bouge = not self.PEUT_SE_DEPLACER
         self.orientation = ORIENTATIONS.DROITE
         self.est_mort = False
@@ -218,9 +218,6 @@ class Caillou(BlocTombant):
         self.coups_avant_etre_pousse = self.INERTIE
         self.est_pousse = False
 
-    def bouger(self, direction):
-        super(Caillou, self).bouger(direction)
-
     def tomber(self):
         super(Caillou, self).tomber()
         if self.tombe and not self.est_tombe and not self.a_tue:
@@ -234,9 +231,19 @@ class Caillou(BlocTombant):
             SONS.POUSSER_CAILLOU.play()
 
     def taper_objet(self):
+        """
+        Méthode appelée lorsque le caillou tape un objet en tombant.
+
+        :return: "None"
+        """
         SONS.CAILLOU_TOMBE.play()
 
     def terminer_cycle(self):
+        """
+        Réimplémentation de la méthode "terminer_cycle" de la classe "BlocTombant".
+
+        :return: "None"
+        """
         super(Caillou, self).terminer_cycle()
         if not self.est_pousse:
             self.coups_avant_etre_pousse = self.INERTIE
@@ -252,11 +259,21 @@ class Diamant(BlocTombant):
         self.ramasse = False
 
     def tomber(self):
+        """
+        Réimplémentation de la méthode "tomber" de la classe "BlocTombant"
+
+        :return: "None"
+        """
         super(Diamant, self).tomber()
         if not self.ramasse and (not self.est_tombe and not self.a_tue) : #comme ca on a pas le bruit du diamant qui tombe lorsqu'on le ramasse
             SONS.DIAMANT_TOMBE1.play()
 
     def taper_objet(self):
+        """
+        Méthode appelée lorsque le diamant tape un objet en tombant.
+
+        :return: "None"
+        """
         SONS.DIAMANT_TOMBE1.play()
 
 
