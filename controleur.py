@@ -15,8 +15,7 @@ class Jeu(object):
     """
     Classe gerant l'ensemble du jeu.
     """
-    TEMPS_MAX = 240
-    VIES_MAX = 3
+    VIES_INITIALES = 3
 
     def __init__(self):
         pygame.init()
@@ -113,7 +112,12 @@ class Jeu(object):
 
     @property
     def temps_restant(self):
-        return self.TEMPS_MAX - self.minuteur.temps_ecoule()
+        """
+        Propriété permettant de savoir le temps restant pour finir le niveau.
+
+        :return: temps restant
+        """
+        return self.carte.temps_maximal - self.minuteur.temps_ecoule()
 
     def actualiser_temps(self):
         """
@@ -181,8 +185,15 @@ class Jeu(object):
         self.mode = self.ancien_mode  # TODO pause
 
     def charger_niveau(self):
-        nom_fichier = askopenfilename()  # show an "Open" dialog box and return the path to the selected file
-        if nom_fichier is not None:
+        """
+        Méthode chargeant un niveau après avoir demandé à l'utilisateur le niveau à charger.
+
+        :return: "None"
+        """
+        # demande à l'utilisateur un fichier à ouvrir
+        nom_fichier = askopenfilename(title="Selectionner un fichier", initialdir="niveaux/personnalises/",
+                                      filetypes=[("fichiers JSON", "*.json")])
+        if nom_fichier:
             niveau = Niveau.charger(nom_fichier)
             erreurs = Carte(self.carte.rect, niveau).valider()
             if len(erreurs) > 0:
@@ -211,7 +222,8 @@ class Jeu(object):
         if len(erreurs) > 0:
             self.gerer_erreurs(erreurs)
         else:
-            nom_fichier = asksaveasfilename()
+            nom_fichier = asksaveasfilename(title="Selectionner un fichier", initialdir="niveaux/personnalises/",
+                                            filetypes=[("fichiers JSON","*.json")])
             if nom_fichier:
                 niveau = Niveau.depuis_carte(carte)
                 niveau.sauvegarder(nom_fichier)
@@ -254,13 +266,13 @@ class Jeu(object):
                    Bouton((rect.centerx, 0), Action(self.recommencer_partie), texte="Recommencer partie"),
                    Bouton((rect.centerx, 0), Action(self.nouvelle_partie), texte="Nouvelle partie"),
                    Bouton((rect.centerx, 0), Action(self.charger_niveau), texte="Charger niveau"),
-                   Bouton((rect.centerx, 0), Action(self.charger_dans_editeur), texte="Modifier dans l editeur"),
+                   Bouton((rect.centerx, 0), Action(self.charger_dans_editeur), texte="Modifier dans l'editeur"),
                    Bouton((rect.centerx, 0), Action(self.editeur_niveau), texte="Creer niveau"),
                    Bouton((rect.centerx, 0), Action(self.interface.quitter), texte="Quitter")]
         for i, bouton in enumerate(boutons):
             if i > 0:
                 y_prec = boutons[i - 1].centre.y
-                bouton.centre = (bouton.centre.x, y_prec + 0.06 * h)
+                bouton.centre = (bouton.centre.x, y_prec + 0.05 * h)
         self.interface.labels_menu = labels
         self.interface.boutons_menu = boutons
 
@@ -487,6 +499,22 @@ class Jeu(object):
     def selectionner(self, bloc):
         self.interface.selectionner(bloc)
 
+    @staticmethod
+    def changer_nombre_diamants_pour_sortir(carte, bouton):
+        diamants_pour_sortir = askinteger("Nombre de diamants requis pour sortir", "Entrez la nouvelle valeur",
+                                          minvalue=4, maxvalue=100)
+        if diamants_pour_sortir is not None:
+            carte.nombre_diamants_pour_sortir = diamants_pour_sortir
+            bouton.texte = "Diamants requis: {0}".format(diamants_pour_sortir)
+
+    @staticmethod
+    def changer_temps_maximal(carte, bouton):
+        temps_maximal = askinteger("Nombre de diamants requis pour sortir", "Entrez la nouvelle valeur",
+                                          minvalue=1, maxvalue=3600)
+        if temps_maximal is not None:
+            carte.temps_maximal = temps_maximal
+            bouton.texte = "Temps limite: {0}".format(temps_maximal)
+
     def editeur_niveau(self, carte_chargee=None):
         self.mode = MODES.EDITEUR
         if carte_chargee is None:
@@ -548,6 +576,10 @@ class Jeu(object):
                                         rect = pygame.Rect(position_souris, taille_bloc)
                                         creer_bloc = bloc_selectionne.__class__
                                         bloc_pointeur = creer_bloc(rect)
+                                    else:
+                                        bouton_clique = self.objet_survole(position_souris, *boutons)
+                                        if bouton_clique is not None:
+                                            bouton_clique.cliquer()
                                 else:  # Si une case de la carte a ete cliquee
 
                                     # Si le nouveau bloc est d'un autre type que l'ancien ou que la case contient
@@ -562,10 +594,11 @@ class Jeu(object):
                             carte.actualiser_blocs()
                         if minuteur.tics_restants() > 1:
                             minuteur.attendre_un_tic()
-            objets_a_afficher = list(blocs_selectionnables)
+            objets_a_afficher = blocs_selectionnables + boutons
             if case is not None and not clic_droit:  # Si la souris survole la carte et qu'il n'y a pas de clic droit
                 bloc_pointeur.rect = case.rect
                 objets_a_afficher.append(bloc_pointeur)
+            objets_a_afficher.extend(boutons)
             self.interface.afficher_carte(carte, *objets_a_afficher)
             minuteur.attendre_fin()
 
