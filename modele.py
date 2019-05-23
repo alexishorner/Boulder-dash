@@ -263,7 +263,6 @@ class Carte(object):
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, rect, niveau):
-        self.temps_maximal = 240
         self.blocs_tries = []
         self.blocs_uniques = dict()
         self.personnage = None

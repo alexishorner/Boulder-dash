@@ -444,6 +444,14 @@ class Jeu(object):
         return blocs_selectionnables
 
     def boutons_editeur(self, carte):
+        """
+        Méthode créant les boutons à utiliser dans l'éditeur.
+
+        Le bouton pour les dimensions
+
+        :param carte:
+        :return:
+        """
         texte_dimensions = "{0}:{1}".format(carte.nombre_cases_hauteur, carte.nombre_cases_hauteur)
         self.bouton_dimensions = Bouton((0, 0), texte=texte_dimensions, taille=20)
         action_dimensions = Action(self.redimensionner_carte, carte)
