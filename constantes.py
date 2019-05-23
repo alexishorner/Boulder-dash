@@ -59,11 +59,7 @@ class SONS:
     PERDU = pygame.mixer.Sound("sounds/game_over.ogg")
     APPARAITRE = pygame.mixer.Sound("sounds/crack.ogg")
     DIAMANT_TOMBE1 = pygame.mixer.Sound("sounds/diamond1.ogg")
-    DIAMANT_TOMBE2 = pygame.mixer.Sound("sounds/diamond2.ogg")
-    DIAMANT_TOMBE3 = pygame.mixer.Sound("sounds/diamond3.ogg")
-    DIAMANT_TOMBE4 = pygame.mixer.Sound("sounds/diamond4.ogg")
-    DIAMANT_TOMBE5 = pygame.mixer.Sound("sounds/diamond5.ogg")
-    DIAMANT_TOMBE6 = pygame.mixer.Sound("sounds/diamond6.ogg")
+    VIE_BONUS = pygame.mixer.Sound(("sounds/bonus_life.ogg"))
 
 
 @unique

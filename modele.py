@@ -255,7 +255,7 @@ class Niveau(object):
         return cls(ascii)
 
 
-NIVEAUX = [Niveau.charger("niveaux/niveau_{0}".format(i)) for i in range(1, 5)]
+NIVEAUX = [Niveau.charger("niveaux/predefinis/niveau_{0}.json".format(i)) for i in range(1,6)]
 
 
 class Carte(object):
@@ -263,6 +263,7 @@ class Carte(object):
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, rect, niveau):
+        self.temps_maximal = 240
         self.blocs_tries = []
         self.blocs_uniques = dict()
         self.personnage = None
@@ -378,8 +379,8 @@ class Carte(object):
 
         :return: "None"
         """
-        self.nombre_diamants_pour_sortir = self.niveau.nombre_diamants_pour_sortir
-        self.temps_maximal = self.niveau.temps_maximal
+        self.nombre_diamants_pour_sortir = self.nombre_diamants_pour_sortir
+        self.temps_maximal = self.temps_maximal
         self.nombre_cases_hauteur = self.niveau.nombre_cases_hauteur
         self.nombre_cases_largeur = self.niveau.nombre_cases_largeur
         lignes_ascii = self.niveau.ascii.split("\n")

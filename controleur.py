@@ -31,7 +31,8 @@ class Jeu(object):
         self._vies = 0
         self.vies = self.VIES_INITIALES
         self._score = 0
-        self.score = 0
+        self.score = self.score
+        self.score_niveau = 0
         self.carte = None
         self.carte_editeur = None
         self._ancien_mode = None
@@ -284,6 +285,10 @@ class Jeu(object):
         rect = self.interface.rect_carte(self.niveau.nombre_cases_largeur, self.niveau.nombre_cases_hauteur)
         self.carte = Carte(rect, self.niveau)
         self.minuteur.reinitialiser()
+        if self.niveau == Niveau.niveau(1):
+            self.score = 0
+        else:
+            self.score = self.score_niveau[self.niveau.numero-1]
         self.doit_commencer_niveau = False
 
     def recommencer_niveau(self):
@@ -312,6 +317,7 @@ class Jeu(object):
             self.niveau = Niveau.niveau(1)
         self.vies = self.VIES_INITIALES
         self.commencer_niveau()
+        self.score = 0
         self.doit_recommencer_partie = False
 
     def nouvelle_partie(self):
@@ -351,6 +357,7 @@ class Jeu(object):
         if i is not None:
             if i < len(NIVEAUX):
                 self.niveau = Niveau.niveau(i + 1)
+                self.score = self.score_niveau[self.niveau.numero - 1]
                 self.doit_commencer_niveau = True
                 return True
         return False
@@ -363,6 +370,7 @@ class Jeu(object):
         """
         self.ajouter_temps_score()
         SONS.FINI.play()
+        self.score_niveau = {self.niveau.numero: self.score}
         self.interface.afficher_jeu(self.carte)
         time.sleep(5)
         if not self.niveau_suivant():
