@@ -150,7 +150,7 @@ class Jeu(object):
         """
         Ajoute une vie.
         """
-        # TODO : ajouter son
+        SONS.VIE_BONUS.play()
         self.vies += vies
 
     def ajouter_temps_score(self):
