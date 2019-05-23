@@ -443,11 +443,11 @@ class Jeu(object):
         """
         Méthode créant les blocs pouvant être sélectionnés dans l'éditeur de niveau.
 
-        :param x:
-        :param y:
-        :param largeur:
-        :param hauteur:
-        :return:
+        :param x: position x du premier bloc
+        :param y: position y du premier bloc
+        :param largeur: largeur des blocs
+        :param hauteur: hauteur des blocs
+        :return: liste des blocs sélectionnables
         """
         blocs_selectionnables = [Terre, Mur, Caillou, Diamant, Personnage, Sortie]
         for i, bloc in enumerate(blocs_selectionnables):
@@ -526,6 +526,9 @@ class Jeu(object):
         # sur la carte
         blocs_selectionnables = self.blocs_selectionnables(0, 0, carte.largeur_case, carte.hauteur_case)
         bloc_selectionne = blocs_selectionnables[0]
+
+        boutons = self.boutons_editeur(carte)
+
         position_souris = pygame.mouse.get_pos()
         bloc_pointeur = bloc_selectionne.__class__(pygame.Rect(position_souris, bloc_selectionne.rect.size))
         clic_gauche = clic_droit = False
