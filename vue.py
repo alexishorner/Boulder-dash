@@ -127,8 +127,8 @@ class Label(object):
         Propriété permettant de gérer l'accès au rectangle du label.
 
         Aucun mutateur n'est définit pour éviter la modification complète du rectangle. Il peut néanmoins toujours être
-        changé par la modification de ses attributs, mais cela est déconseillé pour les attributs autres que "center",
-        "centerx", "centery", "size", "width" et "height".
+        changé par la modification de ses attributs, mais c'est déconseillé pour les attributs changeant la taille du
+        rectangle.
 
         :return: rectangle du label
         """
@@ -178,8 +178,8 @@ class Bouton(Label):
     """
     Classe permettant de définir des boutons cliquables.
     """
-    def __init__(self, position_centre, action_sur_clic=Action(), image=None, texte="", taille=40,
-                 police=POLICES.ARCADECLASSIC):
+    def __init__(self, position_centre, action_sur_clic=Action(), image=None, texte="", taille=24,
+                 police=POLICES.PRESS_START_K):
         super(Bouton, self).__init__(position_centre, texte, taille, police)
         if image is not None:
             self.image = image

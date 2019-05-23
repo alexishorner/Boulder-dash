@@ -3,8 +3,7 @@
 Module stockant les donnees du jeu.
 """
 from blocs import *
-import itertools
-from numpy import matrix
+import json
 from os import listdir
 from os.path import isfile, join
 
@@ -144,7 +143,9 @@ class Case(object):
         :param bloc: bloc à enlever
         :return: "None"
         """
-        self._blocs.remove(bloc)  # Pas besoin de trier les blocs à nouveau, car on enlève un bloc
+        self._blocs.remove(bloc)
+        if len(self._blocs) == 0:
+            self._blocs = [None]
 
 
 class Niveau(object):
@@ -176,6 +177,8 @@ class Niveau(object):
         self.nombre_cases_largeur = 0
         self.nombre_cases_hauteur = 0
         self.ascii = ascii  # Representation du niveau avec des caracteres ascii
+        self.nombre_diamants_pour_sortir = 4
+        self.temps_maximal = 120
 
     @property
     def ascii(self):
@@ -214,20 +217,26 @@ class Niveau(object):
         for y in range(carte.nombre_cases_hauteur):
             for x in range(carte.nombre_cases_largeur):
                 blocs = carte.blocs_a(x, y)
-                if len(blocs) != 1:
-                    raise RuntimeError("Pour convertir une carte vers un niveau il ne faut pas plus d'un bloc par case.")
+                if len(blocs) > 1:
+                    bloc = None
+                    for bloc_ in blocs:
+                        if isinstance(bloc_, Personnage):
+                            bloc = bloc_
                 else:
                     bloc = blocs[0]
-                    if bloc is not None:
-                        caractere = cls.BLOC_VERS_ASCII[bloc.__class__]
-                        blocs_ascii[x][y] = caractere
+                if bloc is not None:
+                    caractere = cls.BLOC_VERS_ASCII[bloc.__class__]
+                    blocs_ascii[x][y] = caractere
 
-        niveau = ""
+        ascii = ""
         for y in range(carte.nombre_cases_hauteur):
             for x in range(carte.nombre_cases_largeur):
-                niveau += blocs_ascii[x][y]
-            niveau += "\n"
-        return cls(niveau)
+                ascii += blocs_ascii[x][y]
+            ascii += "\n"
+        niveau = cls(ascii)
+        niveau.nombre_diamants_pour_sortir = carte.nombre_diamants_pour_sortir
+        niveau.temps_maximal = carte.temps_maximal
+        return niveau
 
     @classmethod
     def niveau(cls, numero):
@@ -247,16 +256,26 @@ class Niveau(object):
         Charge un niveau
         """
         with open(chemin, "r") as f:
-            ascii = "".join(f.readlines())
+            try:
+                niveau_json = json.loads(f.read())
+            except ValueError:
+                return None
+            ascii = niveau_json["ascii"]
+            nombre_diamants_pour_sortir = niveau_json["nombre diamants pour sortir"]
+            temps_maximal = niveau_json["temps maximal"]
             niveau = cls(ascii)
+            niveau.nombre_diamants_pour_sortir = nombre_diamants_pour_sortir
+            niveau.temps_maximal = temps_maximal
             return niveau
 
     def sauvegarder(self, chemin):
         """
         Sauvegarde un niveau personnalise.
         """
+        niveau_json = json.dumps({"ascii": self.ascii, "nombre diamants pour sortir": self.nombre_diamants_pour_sortir,
+                                  "temps maximal": self.temps_maximal})
         with open(chemin, "w") as f:
-            f.writelines(self.ascii)
+            f.write(niveau_json)
 
     @classmethod
     def vide(cls, largeur, hauteur):
@@ -279,16 +298,16 @@ class Niveau(object):
         return cls(ascii)
 
 
-
 # On précharge tous les niveaux prédéfinis pour éviter de devoir le faire à chaque partie
-NIVEAUX = [Niveau.charger("niveaux/niveau{0}".format(i)) for i in range(1, 5)]
-
+NIVEAUX = [Niveau.charger("niveaux/niveau{0}.json".format(i)) for i in range(1, 5)]
 
 class Carte(object):
     """
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, rect, niveau):
+        self.temps_maximal = 240
+        self.nombre_diamants_pour_sortir = 4
         self.blocs_tries = []
         self.blocs_uniques = dict()
         self.personnage = None
@@ -296,7 +315,6 @@ class Carte(object):
         self.cailloux = dict()
         self.nombre_diamants = 0
         self.nombre_diamantsmax = 0
-        self.nombre_diamants_pour_sortir = 4
         self.nombre_cases_hauteur = 0
         self.nombre_cases_largeur = 0
         self._tuple_cases = tuple()
