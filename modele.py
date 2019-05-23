@@ -307,7 +307,7 @@ class Carte(object):
             raise ValueError("Les cases doivent etre un dictionnaire.")
         self._cases = valeur
         self._tuple_cases = tuple(valeur.itervalues())
-        self.actualiser_blocs()  # FIXME : attention on n'actualise pas le nombre de cases dans la largeur et la hauteur
+        self.actualiser_blocs()
         self.nombre_diamants_max = self.nombre_diamants
 
     @property

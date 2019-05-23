@@ -79,7 +79,7 @@ class Bloc(pygame.sprite.Sprite):  # Pas d'héritage d'"object", "pygame.sprite.
 
         :return: "None"
         """
-        self.est_mort = True  # TODO : ajouter une animation pour chaque type de bloc
+        self.est_mort = True
 
 
 class Personnage(Bloc):

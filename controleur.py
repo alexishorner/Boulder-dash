@@ -26,7 +26,7 @@ class Jeu(object):
         self.minuteur = Minuteur(0.15, 0.01)
 
         self.doit_recommencer_partie = False
-        self.doit_recommencer_niveau = False
+        self.doit_recommencer_partie = False
         self.doit_commencer_niveau = False
         self._vies = 0
         self.vies = self.VIES_MAX
@@ -190,7 +190,7 @@ class Jeu(object):
         boutons = [Bouton((rect.centerx, labels[0].centre.y + 0.15 * h), Action(self.reprendre),
                           texte="Reprendre"),
                    Bouton((rect.centerx, 0), Action(self.se_suicider), texte="Se suicider"),
-                   Bouton((rect.centerx, 0), Action(self.recommencer_niveau), texte="Recommencer niveau"),
+                   Bouton((rect.centerx, 0), Action(self.recommencer_partie), texte="Recommencer partie"),
                    Bouton((rect.centerx, 0), Action(self.nouvelle_partie), texte="Nouvelle partie"),
                    Bouton((rect.centerx, 0), Action(self.charger_niveau), texte="Charger niveau"),
                    Bouton((rect.centerx, 0), Action(self.charger_dans_editeur), texte="Modifier dans l editeur"),
@@ -224,18 +224,17 @@ class Jeu(object):
             self.sur_perdu()
         else:
             self.commencer_niveau()
-        self.doit_recommencer_niveau = False
-        print("vies restantes : {0}".format(self.vies))
+        self.doit_recommencer_partie = False
 
-    def recommencer_niveau(self, niveau=None):
-        if niveau is not None:
-            self.niveau = niveau
+    def recommencer_partie(self, aller_au_niveau_1=False):
+        if self.niveau.numero is not None or aller_au_niveau_1:
+            self.niveau = Niveau.niveau(1)
         self.vies = self.VIES_MAX
         self.commencer_niveau()
         self.doit_recommencer_partie = False
 
     def nouvelle_partie(self):
-        self.recommencer_niveau(Niveau.niveau(1))
+        self.recommencer_partie(Niveau.niveau(1))
 
     def sur_perdu(self):
         self.menu()
@@ -244,7 +243,7 @@ class Jeu(object):
         if self.personnage.est_mort or self.temps_restant < 0:
             self.interface.afficher_jeu(self.carte)
             time.sleep(0.5)
-            self.doit_recommencer_niveau = True
+            self.doit_recommencer_partie = True
 
     def niveau_suivant(self):
         i = self.niveau.numero
@@ -276,7 +275,6 @@ class Jeu(object):
         self.minuteur.reinitialiser()
         while 1:
             self.minuteur.passage()
-            debut = time.time()
             while self.minuteur.tics_restants() > 1:    # Verifie les evenements a intervalles regulier pour eviter de
                                                         # rater des evenements
                 self.gerer_evenements()
@@ -290,10 +288,10 @@ class Jeu(object):
 
             if self.doit_commencer_niveau:
                 self.commencer_niveau()
-            if self.doit_recommencer_niveau:
+            if self.doit_recommencer_partie:
                 self.se_suicider()
             if self.doit_recommencer_partie:
-                self.recommencer_niveau()
+                self.recommencer_partie()
             else:
                 self.minuteur.attendre_fin()
 
@@ -302,12 +300,10 @@ class Jeu(object):
             self.afficher_nbdiamants()
             self.interface.afficher_jeu(self.carte)
 
-            print(time.time() - debut)
-
     def carte_vide(self, largeur, hauteur):
         derniere_ligne = "#" * largeur
         premiere_ligne = derniere_ligne + "\n"
-        ligne_millieu = "#" + "~" * (largeur - 2) + "#\n"
+        ligne_millieu = "#" + "*" * (largeur - 2) + "#\n"
         niveau_ascii = premiere_ligne + ligne_millieu * (hauteur - 2) + derniere_ligne
         niveau = Niveau(niveau_ascii)
         decalage = None
@@ -699,7 +695,5 @@ class Jeu(object):
                             if bloc.tombe or bloc.coups_avant_tomber == 0:
                                 essai = False
                             faire_tomber(bloc, essai)
-                           # if isinstance(bloc, Diamant): # TODO sons différents pour plusieurs diamants ?
-                               # nbdiamants += 1
 
         self.terminer_mouvements()

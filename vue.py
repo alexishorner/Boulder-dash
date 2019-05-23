@@ -190,7 +190,7 @@ class InterfaceGraphique:
         :return: "None"
         """
         pygame.quit()
-        sys.exit(0)  # TODO : ajouter confirmation
+        sys.exit(0)
 
     def gerer_evenements(self, evenements):
         self.gestionnaire_touches.actualiser_touches(pygame.key.get_pressed())
