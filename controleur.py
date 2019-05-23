@@ -25,11 +25,11 @@ class Jeu(object):
         self.niveau = Niveau.niveau(1)
         self.minuteur = Minuteur(0.15, 0.01)
 
-        self.doit_recommencer_partie = False
+        self.doit_recommencer_niveau = False
         self.doit_recommencer_partie = False
         self.doit_commencer_niveau = False
         self._vies = 0
-        self.vies = self.VIES_MAX
+        self.vies = self.VIES_INITIALES
         self._score = 0
         self.score = 0
         self.carte = None
@@ -68,6 +68,12 @@ class Jeu(object):
 
     @property
     def mode(self):
+        """
+        Propriété permettant de gérer l'accès au mode, le mode est une valeur de l'énumération "MODES" et sert à décrire
+        le type de contenu affiché.
+
+        :return: valeur de l'énumération "MODES" décrivant le mode actuel
+        """
         return self._mode
 
     @mode.setter
@@ -77,6 +83,11 @@ class Jeu(object):
 
     @property
     def vies(self):
+        """
+        Propriété gérant l'accès au nombre de vies restantes.
+
+        :return: nombre de vies restantes
+        """
         return self._vies
 
     @vies.setter
@@ -86,6 +97,11 @@ class Jeu(object):
 
     @property
     def score(self):
+        """
+        Propriété gérant l'accès au score.
+
+        :return: score
+        """
         return self._score
 
     @score.setter
@@ -98,6 +114,11 @@ class Jeu(object):
         return self.TEMPS_MAX - self.minuteur.temps_ecoule()
 
     def actualiser_temps(self):
+        """
+        Fonction permettant de changer la valeur du label affichant le temps restant.
+
+        :return: "None"
+        """
         temps = self.temps_restant
         secondes = int(temps)
         if secondes < 10: secondes = "0{0}".format(secondes)
@@ -130,12 +151,19 @@ class Jeu(object):
 
     def ajouter_temps_score(self):
         """
-        ajoute le temps au score à la fin du niveau
+        Ajoute le temps au score à la fin du niveau
+
+        :return: "None"
         """
         self.score += int(self.temps_restant)
 
     def afficher_nbdiamants(self):
-        """affiche le nombre de diamants totaux ainsi que """
+        """
+        Change la valeur du label affichant le nombre total de diamant, le nombre de diamants minimum pour finir le
+        niveau et le nombre de diamants ramassés.
+
+        :return: "None"
+        """
         nombre_diamants = self.carte.nombre_diamants_max
         nombre_diamants_pour_sortir = self.carte.nombre_diamants_pour_sortir
         diamants_ramasses = self.personnage.diamants_ramasses
@@ -143,7 +171,12 @@ class Jeu(object):
         self.interface.label_diamants.texte = texte
 
     def reprendre(self):
-        self.mode = self.ancien_mode
+        """
+        Méthode permettant de revenir au mode précédent après avoir été dans le menu.
+
+        :return: "None"
+        """
+        self.mode = self.ancien_mode  # TODO pause
 
     def charger_niveau(self):
         nom_fichier = askopenfilename()  # show an "Open" dialog box and return the path to the selected file
@@ -157,11 +190,22 @@ class Jeu(object):
                 self.doit_recommencer_partie = True
 
     def charger_dans_editeur(self):
+        """
+        Méthode permettant de charger le niveau actuel dans l'éditeur pour pouvoir l'éditer.
+
+        :return: "None"
+        """
         if self.ancien_mode == MODES.JEU:
             self.editeur_niveau(self.carte)
 
     def sauvegarder(self, carte):
-        erreurs = carte.valider()
+        """
+        Méthode demandant à l'utilisateur un fichier où sauvegarder le niveau créé dans l'éditeur.
+
+        :param carte: carte de l'éditeur à convertir en niveau et à sauvegarder
+        :return: "None"
+        """
+        erreurs = carte.valider()  # On vérifie si la carte peut être utilisée comme niveau
         if len(erreurs) > 0:
             self.gerer_erreurs(erreurs)
         else:
@@ -170,26 +214,41 @@ class Jeu(object):
                 niveau = Niveau.depuis_carte(carte)
                 niveau.sauvegarder(nom_fichier)
 
-    def redimensionner_carte(self, carte):
+    def redimensionner_carte(self, carte, bouton):
+        """
+        Méthode demandant à l'utilisateur les dimensions qu'il désire pour la carte et change la taille de celle-ci.
+
+        :param carte: carte à redimensionner
+        :return: "None"
+        """
         largeur = askinteger("Largeur", "Entrez la largeur de la carte", minvalue=3, maxvalue=100)
         hauteur = askinteger("Hauteur", "Entrez la hauteur de la carte", minvalue=3, maxvalue=100)
         largeur_ = largeur
         hauteur_ = hauteur
+        if largeur is None and hauteur is None:
+            return
         if largeur is None:
-            largeur_ = carte.largeur_case
+            largeur_ = carte.nombre_cases_largeur
         if hauteur_ is None:
-            hauteur_ = carte.hauteur_case
+            hauteur_ = carte.nombre_cases_hauteur
+        texte = "{0}:{1}".format(carte.nombre_cases_hauteur, carte.nombre_cases_hauteur)
+        bouton.texte = texte
         decalage = (self.carte.largeur_case + self.interface.marge, 0)
         carte.rect = self.interface.rect_carte(largeur_, hauteur_, decalage)
         carte.changer_taille(largeur_, hauteur_)
 
     def definir_menu(self):
+        """
+        Méthode créant tous les éléments du menu.
+
+        :return: "None"
+        """
         rect = self.interface.rect()
         h = rect.height
         labels = [Label((rect.centerx, 0.25*h), "Menu", 80)]
         boutons = [Bouton((rect.centerx, labels[0].centre.y + 0.15 * h), Action(self.reprendre),
                           texte="Reprendre"),
-                   Bouton((rect.centerx, 0), Action(self.se_suicider), texte="Se suicider"),
+                   Bouton((rect.centerx, 0), Action(self.recommencer_niveau), texte="Se suicider"),
                    Bouton((rect.centerx, 0), Action(self.recommencer_partie), texte="Recommencer partie"),
                    Bouton((rect.centerx, 0), Action(self.nouvelle_partie), texte="Nouvelle partie"),
                    Bouton((rect.centerx, 0), Action(self.charger_niveau), texte="Charger niveau"),
@@ -204,11 +263,22 @@ class Jeu(object):
         self.interface.boutons_menu = boutons
 
     def menu(self):
+        """
+        Méthode ouvrant le menu et gérant le retour de celui-ci.
+
+        :return: "None"
+        """
         self.mode = MODES.MENU
         retour = self.interface.menu()
         self.gerer_retour_interface(retour)
 
     def commencer_niveau(self):
+        """
+        Méthode permettant de réinitialiser différentes valeurs avant le commencement d'un niveau. Cette méthode ne
+        modifie pas le nombre de vies.
+
+        :return: "None"
+        """
         self.mode = MODES.JEU
         self.interface.supprimer_erreurs()
         rect = self.interface.rect_carte(self.niveau.nombre_cases_largeur, self.niveau.nombre_cases_hauteur)
@@ -216,7 +286,12 @@ class Jeu(object):
         self.minuteur.reinitialiser()
         self.doit_commencer_niveau = False
 
-    def se_suicider(self):
+    def recommencer_niveau(self):
+        """
+        Recommence le niveau en enlevant une vie au personnage.
+
+        :return: "None"
+        """
         if self.vies > 0:
             self.vies -= 1
         self.score = 0
@@ -224,28 +299,54 @@ class Jeu(object):
             self.sur_perdu()
         else:
             self.commencer_niveau()
-        self.doit_recommencer_partie = False
+        self.doit_recommencer_niveau = False
 
     def recommencer_partie(self, aller_au_niveau_1=False):
+        """
+        Méthode permettant de recommencer une partie.
+
+        :param aller_au_niveau_1: booléen déterinant s'il faut revenir au premier niveau ou non.
+        :return: "None"
+        """
         if self.niveau.numero is not None or aller_au_niveau_1:
             self.niveau = Niveau.niveau(1)
-        self.vies = self.VIES_MAX
+        self.vies = self.VIES_INITIALES
         self.commencer_niveau()
         self.doit_recommencer_partie = False
 
     def nouvelle_partie(self):
-        self.recommencer_partie(Niveau.niveau(1))
+        """
+        Méthode permettant de commencer une nouvelle partie en commençant au premier niveau.
+
+        :return: "None"
+        """
+        self.recommencer_partie(aller_au_niveau_1=True)
 
     def sur_perdu(self):
+        """
+        Méthode appelée lorsque le joueur a perdu.
+
+        :return: "None"
+        """
         self.menu()
 
     def verifier_perdu_niveau(self):
+        """
+        Méthode vérifiant si le joueur a perdu et gérant les actions à effectuer dans le cas échéant.
+
+        :return: "None"
+        """
         if self.personnage.est_mort or self.temps_restant < 0:
             self.interface.afficher_jeu(self.carte)
             time.sleep(0.5)
             self.doit_recommencer_partie = True
 
     def niveau_suivant(self):
+        """
+        Méthode permettant de passer au niveau prédéfinit suivant.
+
+        :return: "None"
+        """
         i = self.niveau.numero
         if i is not None:
             if i < len(NIVEAUX):
@@ -254,20 +355,22 @@ class Jeu(object):
                 return True
         return False
 
-    def felicitations(self):
-        print("Felicitations, vous avez termine tous les niveaux.")  # TODO : remplacer par texte dans pygame
-
     def gagne(self):
+        """
+        Méthode appelée lorsque le joueur a gagné.
+
+        :return: "None"
+        """
         self.ajouter_temps_score()
         SONS.FINI.play()
         self.interface.afficher_jeu(self.carte)
         time.sleep(5)
         if not self.niveau_suivant():
-            self.felicitations()
+            self.menu()
 
     def boucle(self):
         """
-        Fait fonctionner le jeu jusqu'a la fermeture du programme.
+        Méthode faisant fonctionner le jeu jusqu'a la fermeture du programme.
 
         :return: "None"
         """
@@ -288,8 +391,8 @@ class Jeu(object):
 
             if self.doit_commencer_niveau:
                 self.commencer_niveau()
-            if self.doit_recommencer_partie:
-                self.se_suicider()
+            if self.doit_recommencer_niveau:
+                self.recommencer_niveau()
             if self.doit_recommencer_partie:
                 self.recommencer_partie()
             else:
@@ -301,11 +404,14 @@ class Jeu(object):
             self.interface.afficher_jeu(self.carte)
 
     def carte_vide(self, largeur, hauteur):
-        derniere_ligne = "#" * largeur
-        premiere_ligne = derniere_ligne + "\n"
-        ligne_millieu = "#" + "*" * (largeur - 2) + "#\n"
-        niveau_ascii = premiere_ligne + ligne_millieu * (hauteur - 2) + derniere_ligne
-        niveau = Niveau(niveau_ascii)
+        """
+        Méthode permettant de créer une carte ne contenant que de la terre et une bordure de mur.
+
+        :param largeur: nombre de cases dans la largeur de la carte
+        :param hauteur: nombre de cases dans la longueur de la carte
+        :return: instance de "Carte" ayant les dimensions voulues
+        """
+        niveau = Niveau.vide(largeur, hauteur)
         decalage = None
         if self.mode == MODES.EDITEUR:
             decalage = (self.carte.largeur_case + self.interface.marge, 0)
@@ -313,6 +419,15 @@ class Jeu(object):
         return Carte(rect, niveau)
 
     def blocs_selectionnables(self, x, y, largeur, hauteur):
+        """
+        Méthode
+
+        :param x:
+        :param y:
+        :param largeur:
+        :param hauteur:
+        :return:
+        """
         blocs_selectionnables = [Terre, Mur, Caillou, Diamant, Personnage, Sortie]
         for i, bloc in enumerate(blocs_selectionnables):
             rect = pygame.Rect(x, y + i * hauteur, largeur, hauteur)
@@ -320,6 +435,11 @@ class Jeu(object):
         return blocs_selectionnables
 
     def boutons_editeur(self, carte):
+        texte_dimensions = "{0}:{1}".format(carte.nombre_cases_hauteur, carte.nombre_cases_hauteur)
+        bouton_dimensions = Bouton((0, 0), texte=texte_dimensions, taille=20)
+        action_dimensions = Action(self.redimensionner_carte, carte, bouton_dimensions)
+        bouton_dimensions.action_sur_clic = action_dimensions
+
         texte_diamants = "Diamants requis: {0}".format(carte.nombre_diamants_pour_sortir)
         bouton_diamants = Bouton((0, 0), texte=texte_diamants, taille=20)
         action_diamants = Action(self.changer_nombre_diamants_pour_sortir, carte, bouton_diamants)
@@ -442,7 +562,7 @@ class Jeu(object):
     def gerer_retour_interface(self, retour):
         if retour == EVENEMENTS.MENU:
             if self.mode == MODES.MENU:
-                self.mode = self.ancien_mode
+                self.reprendre()
             else:
                 self.menu()
         elif retour == EVENEMENTS.EDITEUR:
@@ -455,7 +575,7 @@ class Jeu(object):
                 else:
                     self.interface.supprimer_erreurs()
                     self.niveau = Niveau.depuis_carte(self.carte_editeur)
-                    self.vies = self.VIES_MAX
+                    self.vies = self.VIES_INITIALES
                     self.doit_commencer_niveau = True
                     self.mode = MODES.JEU
 
