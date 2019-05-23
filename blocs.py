@@ -300,7 +300,10 @@ class Sortie(Bloc):
         desactivation = self._est_activee and not activee
         self._est_activee = activee
         if activation:
-            pass
+            taille = self.rect.size
+            imageactive = pygame.image.load("img/porte_fin.png").convert_alpha()
+            self.image = pygame.transform.scale(imageactive, taille)
+
         elif desactivation:
             pass
         # TODO : ajouter animation de changement d'etat

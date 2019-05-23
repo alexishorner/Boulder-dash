@@ -39,7 +39,7 @@ def charger(image):
 CHEMIN_IMAGES = "img/"
 IMAGES = {"Bloc": "mono-unknown.png", "Personnage": "personnage.png",
           "Diamant": "diamant.png", "Terre": "terre.PNG", "Mur": "mur.png",
-          "Caillou": "caillou.png", "Sortie": "porte.png", "Explosion": "explosion.png"}
+          "Caillou": "caillou.png", "Sortie": "porte.png", "Explosion": "explosion.png", "Portefin": "porte_fin.png"}
 
 for _classe, _chemin in IMAGES.iteritems():
     IMAGES[_classe] = charger(CHEMIN_IMAGES + _chemin)  # on charge les images
