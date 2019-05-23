@@ -334,6 +334,20 @@ class Jeu(object):
         action_temps = Action(self.changer_temps_maximal, carte, bouton_temps)
         bouton_temps.action_sur_clic = action_temps
 
+        boutons = [bouton_diamants, bouton_temps]
+
+        rect_interface = self.interface.rect()
+        dernier_bouton = boutons[-1]
+        dernier_bouton.rect.bottomright = rect_interface.topright
+        dernier_bouton.rect.bottom -= 5
+        inverses = list(reversed(boutons))
+        for i, bouton in enumerate(inverses):
+            if i > 0:
+                bouton.rect.bottomright = inverses[i - 1].rect.bottomleft
+                bouton.rect.x -= 80
+
+        return boutons
+
     def objet_survole(self, pos, *objets):
         return self.interface.objet_survole(pos, *objets)
 

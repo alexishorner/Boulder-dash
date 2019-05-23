@@ -3,12 +3,6 @@
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
 # TODO :
-#   - bouton recommencer
-#   - score
-#   - diamants totaux + diamants requis
-#   - niveaux predefinis
-#   - editeur de niveaux :
-#       - ajouter/enlever lignes/colonnes
 #   Facultatif :
 #       - ameliorer ajouts blocs par glissement (intersection segment/rectangles)
 #       - generateur de niveaux automatique
