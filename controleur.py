@@ -495,8 +495,8 @@ class Jeu(object):
                     self.personnage.mouvement_en_cours = ORIENTATIONS.DROITE
 
     def gerer_collisions(self):
-        doit_actualiser = False
         for case in self.carte.tuple_cases:
+            doit_actualiser = False
             blocs = None
             if len(case.blocs) == 2:
                 for bloc in case.blocs:
