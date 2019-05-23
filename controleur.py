@@ -323,6 +323,17 @@ class Jeu(object):
             blocs_selectionnables[i] = bloc(rect)
         return blocs_selectionnables
 
+    def boutons_editeur(self, carte):
+        texte_diamants = "Diamants requis: {0}".format(carte.nombre_diamants_pour_sortir)
+        bouton_diamants = Bouton((0, 0), texte=texte_diamants, taille=20)
+        action_diamants = Action(self.changer_nombre_diamants_pour_sortir, carte, bouton_diamants)
+        bouton_diamants.action_sur_clic = action_diamants
+
+        texte_temps = "Temps limite: {0}".format(carte.temps_maximal)
+        bouton_temps = Bouton((0, 0), texte=texte_temps, taille=20)
+        action_temps = Action(self.changer_temps_maximal, carte, bouton_temps)
+        bouton_temps.action_sur_clic = action_temps
+
     def objet_survole(self, pos, *objets):
         return self.interface.objet_survole(pos, *objets)
 
