@@ -19,6 +19,7 @@ if os.name == "nt" and sys.getwindowsversion()[0] >= 6:
     ctypes.windll.user32.SetProcessDPIAware()
 
 pygame.init()  # obligatoire pour utiliser une grande partie de pygame
+pygame.key.set_repeat(1, 1)
 _info = pygame.display.Info()
 RESOLUTION = _info.current_w, _info.current_h
 ECRAN = pygame.display.set_mode((1600, 900))  # obligatoire pour pouvoir charger des images
