@@ -214,7 +214,7 @@ class Jeu(object):
                 niveau = Niveau.depuis_carte(carte)
                 niveau.sauvegarder(nom_fichier)
 
-    def redimensionner_carte(self, carte, bouton):
+    def redimensionner_carte(self, carte):
         """
         Méthode demandant à l'utilisateur les dimensions qu'il désire pour la carte et change la taille de celle-ci.
 
@@ -232,7 +232,7 @@ class Jeu(object):
         if hauteur_ is None:
             hauteur_ = carte.nombre_cases_hauteur
         texte = "{0}:{1}".format(carte.nombre_cases_hauteur, carte.nombre_cases_hauteur)
-        bouton.texte = texte
+        self.bouton_dimensions.texte = texte
         decalage = (self.carte.largeur_case + self.interface.marge, 0)
         carte.rect = self.interface.rect_carte(largeur_, hauteur_, decalage)
         carte.changer_taille(largeur_, hauteur_)
