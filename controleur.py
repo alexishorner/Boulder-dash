@@ -351,6 +351,8 @@ class Jeu(object):
         :return: "None"
         """
         if self.personnage.est_mort or self.temps_restant < 0:
+            if self.temps_restant<0:
+                SONS.TIMEOUT.play()
             self.interface.afficher_jeu(self.carte)
             time.sleep(0.5)
             self.doit_recommencer_niveau = True
