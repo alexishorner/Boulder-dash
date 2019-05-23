@@ -250,7 +250,7 @@ class Niveau(object):
         return cls(ascii)
 
 
-NIVEAUX = [Niveau.charger("niveaux/niveau{0}".format(i)) for i in range(1, 5)]
+NIVEAUX = [Niveau.charger("niveaux/niveau_{0}".format(i)) for i in range(1, 5)]
 
 
 class Carte(object):
