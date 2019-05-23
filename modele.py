@@ -230,6 +230,8 @@ class Niveau(object):
     def sauvegarder(self, chemin):
         """
         Sauvegarde un niveau personnalise.
+
+        :param chemin: chemin où enregistrer le fichier
         """
         nomchemin = chemin
         f = open(nomchemin, "w")
@@ -245,8 +247,11 @@ class Niveau(object):
                 if x in (0, largeur - 1) or y in (0, hauteur - 1):
                     ligne += cls.BLOC_VERS_ASCII[Mur]
                 else:
-                    ligne += cls.BLOC_VERS_ASCII[None]
+                    ligne += cls.BLOC_VERS_ASCII[Terre]
             ascii += ligne
+            if y < hauteur - 1:
+                ascii += "\n"
+
         return cls(ascii)
 
 
@@ -258,8 +263,6 @@ class Carte(object):
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, rect, niveau):
-        self.nombre_diamants_pour_sortir = 4
-        self.temps_maximal = 240
         self.blocs_tries = []
         self.blocs_uniques = dict()
         self.personnage = None
@@ -273,6 +276,32 @@ class Carte(object):
         self._tuple_cases = tuple()
         self._rect = rect
         self.niveau = niveau
+
+    @property
+    def temps_maximal(self):
+        """
+        Propriété permettant d'associer le temps maximal du niveau à celui de la carte.
+
+        :return: temps maximal pour terminer le niveau
+        """
+        return self.niveau.temps_maximal
+
+    @temps_maximal.setter
+    def temps_maximal(self, nouveau):
+        self.niveau.temps_maximal = nouveau
+
+    @property
+    def nombre_diamants_pour_sortir(self):
+        """
+        Propriété permettant d'associer le nombre de diamants pour sortir du niveau à celui de la carte.
+
+        :return: nombre de diamants requis pour sortir
+        """
+        return self.niveau.nombre_diamants_pour_sortir
+
+    @nombre_diamants_pour_sortir.setter
+    def nombre_diamants_pour_sortir(self, nouveau):
+        self.niveau.nombre_diamants_pour_sortir = nouveau
 
     @property
     def niveau(self):
@@ -307,7 +336,7 @@ class Carte(object):
             raise ValueError("Les cases doivent etre un dictionnaire.")
         self._cases = valeur
         self._tuple_cases = tuple(valeur.itervalues())
-        self.actualiser_blocs()  # FIXME : attention on n'actualise pas le nombre de cases dans la largeur et la hauteur
+        self.actualiser_blocs()
         self.nombre_diamants_max = self.nombre_diamants
 
     @property

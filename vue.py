@@ -94,8 +94,9 @@ class Label(object):
     @image.setter
     def image(self, nouvelle):
         self._image = nouvelle
-        self._texte = None
-        self.rendu()
+        if nouvelle is not None:
+            self._texte = None
+        self.rendu()  # On refait le rendu pour rendre les changements visibles
 
     def rendu(self):
         if self._texte is not None and self._image is None:
@@ -116,9 +117,8 @@ class Bouton(Label):
     def __init__(self, position_centre, action_sur_clic=Action(), image=None, texte="", taille=40,
                  police=POLICES.ARCADECLASSIC):
         super(Bouton, self).__init__(position_centre, texte, taille, police)
-        if image is not None:
-            self.image = image
-        self.action_sur_clic = action_sur_clic
+        self.image = image
+        self.action_sur_clic = action_sur_clic  # permet d'associer une action au clic du bouton
 
     def selectionner(self):
         self.texte = "- " + self.texte
@@ -190,7 +190,7 @@ class InterfaceGraphique:
         :return: "None"
         """
         pygame.quit()
-        sys.exit(0)  # TODO : ajouter confirmation
+        sys.exit(0)
 
     def gerer_evenements(self, evenements):
         self.gestionnaire_touches.actualiser_touches(pygame.key.get_pressed())
