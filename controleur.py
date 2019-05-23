@@ -29,9 +29,8 @@ class Jeu(object):
         self.doit_commencer_niveau = False
         self._vies = 0
         self.vies = self.VIES_INITIALES
+        self.score_debut_niveau = 0
         self._score = 0
-        self.score = self.score
-        self.score_niveau = 0
         self.carte = None
         self.carte_editeur = None
         self._ancien_mode = None
@@ -136,13 +135,12 @@ class Jeu(object):
         """
         return self.personnage.diamants_ramasses * 10
 
-    def actualiser_score(self):
+    def actualiser_score(self, score):
         """
         Calcule le score.
         """
-
-        self.score = self.comptabiliser_score()
         nombre_vies_ajoutees = self.score // 500
+        self.score = score
         ajout_score_depuis_derniere_vie = self.score - nombre_vies_ajoutees * 500
         vies_a_ajouter = ajout_score_depuis_derniere_vie // 500
         if vies_a_ajouter > 0:
@@ -161,7 +159,7 @@ class Jeu(object):
 
         :return: "None"
         """
-        self.score += int(self.temps_restant)
+        self.actualiser_score(self.score + int(self.temps_restant))
 
     def afficher_nbdiamants(self):
         """
@@ -298,10 +296,7 @@ class Jeu(object):
         rect = self.interface.rect_carte(self.niveau.nombre_cases_largeur, self.niveau.nombre_cases_hauteur)
         self.carte = Carte(rect, self.niveau)
         self.minuteur.reinitialiser()
-        if self.niveau == Niveau.niveau(1):
-            self.score = 0
-        else:
-            self.score = self.score_niveau[self.niveau.numero-1]
+        self.actualiser_score(self.score_debut_niveau)
         self.doit_commencer_niveau = False
 
     def recommencer_niveau(self):
@@ -312,7 +307,6 @@ class Jeu(object):
         """
         if self.vies > 0:
             self.vies -= 1
-        self.score = 0
         if self.vies <= 0:
             self.sur_perdu()
         else:
@@ -330,7 +324,8 @@ class Jeu(object):
             self.niveau = Niveau.niveau(1)
         self.vies = self.VIES_INITIALES
         self.commencer_niveau()
-        self.score = 0
+        self.score_debut_niveau = 0
+        self.actualiser_score(0)
         self.doit_recommencer_partie = False
 
     def nouvelle_partie(self):
@@ -358,7 +353,7 @@ class Jeu(object):
         if self.personnage.est_mort or self.temps_restant < 0:
             self.interface.afficher_jeu(self.carte)
             time.sleep(0.5)
-            self.doit_recommencer_partie = True
+            self.doit_recommencer_niveau = True
 
     def niveau_suivant(self):
         """
@@ -370,7 +365,7 @@ class Jeu(object):
         if i is not None:
             if i < len(NIVEAUX):
                 self.niveau = Niveau.niveau(i + 1)
-                self.score = self.score_niveau[self.niveau.numero - 1]
+                self.score_debut_niveau = self.score
                 self.doit_commencer_niveau = True
                 return True
         return False
@@ -383,7 +378,6 @@ class Jeu(object):
         """
         self.ajouter_temps_score()
         SONS.FINI.play()
-        self.score_niveau = {self.niveau.numero: self.score}
         self.interface.afficher_jeu(self.carte)
         time.sleep(5)
         if not self.niveau_suivant():
@@ -420,7 +414,6 @@ class Jeu(object):
                 self.minuteur.attendre_fin()
 
             self.actualiser_temps()
-            self.actualiser_score()
             self.afficher_nbdiamants()
             self.interface.afficher_jeu(self.carte)
 
@@ -459,7 +452,7 @@ class Jeu(object):
         """
         Méthode créant les boutons à utiliser dans l'éditeur.
 
-        Le bouton pour les dimensions
+        Le bouton des dimensions est un attribut, car sa valeur peut être modifiée à plusieurs endroits de la classe.
 
         :param carte:
         :return:
@@ -494,6 +487,13 @@ class Jeu(object):
         return boutons
 
     def objet_survole(self, pos, *objets):
+        """
+        Regarde si le curseur se trouve au dessus d'objets affichés et retourne le premier objet survolé
+
+        :param pos: position du curseur
+        :param objets: objets à tester pour voir s'ils sont survolés
+        :return: objet survolé ou "None" si aucun objet n'est survolé
+        """
         return self.interface.objet_survole(pos, *objets)
 
     def selectionner(self, bloc):
@@ -748,6 +748,7 @@ class Jeu(object):
         if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) or not diamant.tombe:
             if not essai:
                 actions.append(Action(personnage.ramasser_diamant, diamant))
+                self.actualiser_score(self.score + 10)
             reussite = True
         return reussite, actions
 
