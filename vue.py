@@ -232,6 +232,12 @@ class InterfaceGraphique:
         self.ajuster_position_labels()
 
     def rect(self, decalage=None):
+        """
+        Calcule le rectangle dessinable de l'interface en prenant en compte la marge.
+
+        :param decalage: position désirée de l'angle supérieur gauche du rectangle
+        :return:
+        """
         if decalage is None:
             x_0 = y_0 = self.marge
         else:
@@ -247,28 +253,31 @@ class InterfaceGraphique:
         return pygame.Rect(x_0, y_0, largeur, hauteur)
 
     def rect_carte(self, nombre_cases_largeur, nombre_cases_hauteur, decalage=None):
+        """
+        Calcule le rectangle que la carte doit avoir en fonction de ses dimensions.
+
+        :param nombre_cases_largeur: nombre de cases dans la hauteur de la carte
+        :param nombre_cases_hauteur: nombre de cases dans la largeur de la carte
+        :param decalage: position désirée de l'angle supérieur gauche du rectangle
+        :return: rectangle que la carte doit avoir
+        """
         rect = self.rect(decalage)
-        cote_case = int(round(min(rect.width / float(nombre_cases_largeur), rect.height / float(nombre_cases_hauteur))))
+
+        largeur_case_max = rect.width / float(nombre_cases_largeur)
+        hauteur_case_max = rect.height / float(nombre_cases_hauteur)
+        cote_case = min(largeur_case_max, hauteur_case_max)
+        cote_case = int(round(cote_case))
+
         largeur = cote_case * nombre_cases_largeur
         hauteur = cote_case * nombre_cases_hauteur
-        x = rect.x + int(round((rect.width - largeur) / 2.0))
-        y = rect.y + int(round((rect.height - hauteur) / 2.0))
-        return pygame.Rect(x, y, largeur, hauteur)
 
-    @staticmethod
-    def appliquer_translation(translation, x=None, y=None, rect=None):
-        if rect is not None:
-            retour = rect.copy()
-            retour.x, retour.y = translation(rect.x, rect.y)
-        elif None not in (x, y):
-            retour = translation(x, y)
-        else:
-            raise TypeError("Les arguments de la methode ne peuvent pas tous etre None.")
-        return retour
+        rect_carte = pygame.Rect(0, 0, largeur, hauteur)
+        rect_carte.center = rect.center
+        return rect_carte
 
     def quitter(self):
         """
-        Quitte le jeu apres confirmation de l'utilisateur.
+        Quitte le jeu après confirmation de l'utilisateur.
 
         :return: "None"
         """
@@ -276,15 +285,17 @@ class InterfaceGraphique:
         sys.exit(0)  # TODO : ajouter confirmation
 
     def gerer_evenements(self, evenements):
+        """
+        S'occuppe des évènements de touches et de quitter.
+
+        :param evenements: évènements à gérer
+        :return: valeur de l'énumération "EVENEMENTS" indiquant quel type d'évènement a été détecté sans pouvoir être
+        traité
+        """
         self.gestionnaire_touches.actualiser_touches(pygame.key.get_pressed())
         for evenement in evenements:
             if evenement.type == QUIT:
                 self.quitter()
-            if evenement.type == VIDEORESIZE:  # FIXME : pygame ne signale pas de changement de taille
-                print(evenement.size)
-                print(self.ecran.get_size())
-                self.ecran = pygame.display.set_mode(evenement.size)
-                print(self.ecran.get_size())
             if evenement.type == KEYUP:
                 if evenement.key == K_m:
                     return EVENEMENTS.MENU
@@ -296,7 +307,17 @@ class InterfaceGraphique:
                     return EVENEMENTS.EDITEUR
             return None
 
-    def objet_survole(self, pos, *objets):
+    @staticmethod
+    def objet_survole(pos, *objets):
+        """
+        Indique le premier objet dont le rectangle collisionne le point pos.
+
+        Cela sert à détecter si le curseur de la souris se trouve au dessus d'un objet.
+
+        :param pos: point contre lequel tester les collisions
+        :param objets:
+        :return:
+        """
         if len(objets) == 0:
                 raise RuntimeError("Nombre d'arguments insuffisant.")
         for objet in objets:
@@ -308,6 +329,11 @@ class InterfaceGraphique:
         pass
 
     def menu(self):
+        """
+        Affiche le menu.
+
+        :return: valeur de l'énumération "EVENEMENTS" indiquant les évènements détectés mais non traités
+        """
         labels = self.labels_menu
         boutons = self.boutons_menu
         for bouton in boutons:
@@ -352,6 +378,14 @@ class InterfaceGraphique:
 
     @staticmethod
     def message_erreur(erreurs):
+        """
+        Crée un message d'erreur en fonction d'une liste d'erreurs.
+
+        Cette fonction ne prend en compte que l'erreur la plus importante de la liste et ignore les autres.
+
+        :param erreurs: liste d'erreurs s'étant produites
+        :return: chaîne de caractères représentant le message d'erreur
+        """
         message_erreur = ""
         erreurs_ = erreurs
         try:
@@ -370,9 +404,19 @@ class InterfaceGraphique:
         return message_erreur
 
     def supprimer_erreurs(self):
+        """
+        Efface les erreurs affichées.
+
+        :return: "None"
+        """
         self.label_erreur.texte = ""
 
     def ajuster_position_labels(self):
+        """
+        Donne une position a chaque label.
+
+        :return: "None"
+        """
         rect = self.rect()
 
         # Erreur en bas au centre
@@ -386,24 +430,50 @@ class InterfaceGraphique:
         for i, label in enumerate(labels):
             if i > 0:
                 label_precedent = labels[i - 1]
-                label.rect.left, label.rect.top = label_precedent.rect.right + self.distance_labels, label_precedent.rect.top
+                label.rect.topleft = label_precedent.rect.right + self.distance_labels, label_precedent.rect.top
 
     def changer_erreur(self, erreurs):
+        """
+        Méthode modifiant l'erreur affichée en fonction des erreurs s'étant produites.
+
+        :param erreurs:
+        :return:
+        """
         message = self.message_erreur(erreurs)
         self.label_erreur.texte = message
 
     def afficher(self, *objets):
+        """
+        Affiche des objets à l'écran. Chaque objet doit posséder un attribut "image" et "rect".
+
+        :param objets: objets à afficher
+        :return: "None"
+        """
         self.ecran.blit(self.arriere_plan, (0, 0))  # Dessine l'arriere plan
         for objet in objets:
             self.ecran.blit(objet.image, objet.rect)
         pygame.display.flip()  # Actualise l'ecran
 
     def afficher_carte(self, carte, *autres_objets):
+        """
+        Méthode permettant d'afficher la carte seule sur l'écran
+
+        :param carte: carte à afficher
+        :param autres_objets: objets supplémentaires à afficher
+        :return: "None"
+        """
         labels = (self.label_erreur,)
         blocs = tuple(carte.blocs_tries)
         self.afficher(*(blocs + autres_objets + labels))
 
     def afficher_jeu(self, carte, *autres_objets):
+        """
+        Méthode permettant d'afficher le jeu.
+
+        :param carte: carte à afficher
+        :param autres_objets: objets supplémentaires à afficher
+        :return: "None"
+        """
         self.ajuster_position_labels()
         labels = (self.label_erreur, self.label_vies, self.label_temps, self.label_score, self.label_diamants)
         blocs = tuple(carte.blocs_tries)
