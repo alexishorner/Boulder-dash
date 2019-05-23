@@ -136,10 +136,11 @@ class Jeu(object):
 
     def afficher_nbdiamants(self):
         """affiche le nombre de diamants totaux ainsi que """
-        nombre_diamants = self.carte.nbdiamantsmax
+        nombre_diamants = self.carte.nombre_diamants_max
         nombre_diamants_pour_sortir = self.carte.nombre_diamants_pour_sortir
-        diamants = self.personnage.diamants_ramasses
-        self.interface.label_diamants.texte = "{0}${1} {2}".format(nombre_diamants, nombre_diamants_pour_sortir, diamants)
+        diamants_ramasses = self.personnage.diamants_ramasses
+        texte = "{0}${1} {2}".format(nombre_diamants, nombre_diamants_pour_sortir, diamants_ramasses)
+        self.interface.label_diamants.texte = texte
 
     def reprendre(self):
         self.mode = self.ancien_mode
