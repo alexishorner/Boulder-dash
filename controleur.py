@@ -429,7 +429,7 @@ class Jeu(object):
 
     def blocs_selectionnables(self, x, y, largeur, hauteur):
         """
-        Méthode
+        Méthode créant les blocs pouvant être sélectionnés dans l'éditeur de niveau.
 
         :param x:
         :param y:
