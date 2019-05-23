@@ -258,6 +258,8 @@ class Carte(object):
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, rect, niveau):
+        self.nombre_diamants_pour_sortir = 4
+        self.temps_maximal = 240
         self.blocs_tries = []
         self.blocs_uniques = dict()
         self.personnage = None
@@ -306,7 +308,7 @@ class Carte(object):
         self._cases = valeur
         self._tuple_cases = tuple(valeur.itervalues())
         self.actualiser_blocs()  # FIXME : attention on n'actualise pas le nombre de cases dans la largeur et la hauteur
-        self.nbdiamantsmax = self.nombre_diamants
+        self.nombre_diamants_max = self.nombre_diamants
 
     @property
     def rect(self):
@@ -347,6 +349,8 @@ class Carte(object):
 
         :return: "None"
         """
+        self.nombre_diamants_pour_sortir = self.niveau.nombre_diamants_pour_sortir
+        self.temps_maximal = self.niveau.temps_maximal
         self.nombre_cases_hauteur = self.niveau.nombre_cases_hauteur
         self.nombre_cases_largeur = self.niveau.nombre_cases_largeur
         lignes_ascii = self.niveau.ascii.split("\n")
