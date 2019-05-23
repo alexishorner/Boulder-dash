@@ -3,7 +3,8 @@
 Module stockant les donnees du jeu.
 """
 from blocs import *
-import json
+import itertools
+from numpy import matrix
 from os import listdir
 from os.path import isfile, join
 
@@ -112,40 +113,25 @@ class Case(object):
         """
         Propriété permettant de gérer l'accès au rectangle décrivant les dimensions et la position de la case.
 
-        :return: instance de "pygame.Rect" décrivant les dimensions et la position de la case.
+        :return: instance de "pygame.Rect"
         """
         return self._rect
 
     @rect.setter
     def rect(self, nouveau):
-        rect = pygame.Rect(nouveau)  # On crée une copie du nouveau rectangle
-
-        # On change le rectangle de chaque case
+        rect = pygame.Rect(nouveau)
         for bloc in self.blocs:
             if bloc is not None:
                 bloc.rect = rect
         self._rect = rect
 
     def ajouter(self, bloc):
-        """
-        Méthode permettant d'ajouter un bloc à la case.
-
-        :param bloc: bloc à ajouter
-        :return: "None"
-        """
         self._blocs.append(bloc)
-        self._blocs = trier(self._blocs)  # On trie les blocs à nouveau par ordre de position z
+        self._blocs = trier(self._blocs)
 
     def enlever(self, bloc):
-        """
-        Méthode permettant de retirer un bloc de la case.
-
-        :param bloc: bloc à enlever
-        :return: "None"
-        """
         self._blocs.remove(bloc)
-        if len(self._blocs) == 0:
-            self._blocs = [None]
+        self._blocs = trier(self._blocs)
 
 
 class Niveau(object):
@@ -156,11 +142,11 @@ class Niveau(object):
     Cette classe utilise une chaine de caractere pour stocker le niveau et offre la possibilite de specifier le numero
     du niveau.
     """
-    ASCII_VERS_BLOC = {"O": Caillou,            # Caractère ressemble a un caillou
-                       "#": Mur,                # Ressemble a une barrière -> mur
+    ASCII_VERS_BLOC = {"O": Caillou,            # Ressemble a un caillou
+                       "#": Mur,                # Ressemble a une barriere -> mur
                        "P": Personnage,         # "P" comme "Personnage"
                        "]": Sortie,             # Forme rectangulaire comme une porte. Crochet fermant -> sortie
-                       "*": Terre,              # Ressemble aux points dans Packman et est centré verticalement, contrairement au point "."
+                       "*": Terre,              # Ressemble aux points dans Packman et est centre verticalement, contrairement au point "."
                        "$": Diamant,            # Dollar fait penser a argent -> diamant
                        "~": lambda *foo: None}  # Vague -> fluide -> air -> vide
 
@@ -173,20 +159,13 @@ class Niveau(object):
                        None: "~"}
 
     def __init__(self, ascii, numero=None):
-        self.numero = numero  # Numéro du niveau
+        self.numero = numero  # Numero du niveau
         self.nombre_cases_largeur = 0
         self.nombre_cases_hauteur = 0
         self.ascii = ascii  # Representation du niveau avec des caracteres ascii
-        self.nombre_diamants_pour_sortir = 4
-        self.temps_maximal = 120
 
     @property
     def ascii(self):
-        """
-        Propriété permettant de gérer l'accès à la représentation du niveau en caractères ascii.
-
-        :return: représentation du niveau en caractères ascii
-        """
         return self._ascii
 
     @ascii.setter
@@ -204,12 +183,6 @@ class Niveau(object):
 
     @classmethod
     def depuis_carte(cls, carte):
-        """
-        Retourne une nouvelle instance de la classe "Niveau" créée à partir de la carte passée en argument.
-
-        :param carte: instance de "Carte" à convertir en niveau
-        :return: Instance de "Niveau" créée à partir de "carte"
-        """
         colonne_ascii = ["~",] * carte.nombre_cases_hauteur
         blocs_ascii = []
         for i in range(carte.nombre_cases_largeur):
@@ -217,26 +190,20 @@ class Niveau(object):
         for y in range(carte.nombre_cases_hauteur):
             for x in range(carte.nombre_cases_largeur):
                 blocs = carte.blocs_a(x, y)
-                if len(blocs) > 1:
-                    bloc = None
-                    for bloc_ in blocs:
-                        if isinstance(bloc_, Personnage):
-                            bloc = bloc_
+                if len(blocs) != 1:
+                    raise RuntimeError("Pour convertir une carte vers un niveau il ne faut pas plus d'un bloc par case.")
                 else:
                     bloc = blocs[0]
-                if bloc is not None:
-                    caractere = cls.BLOC_VERS_ASCII[bloc.__class__]
-                    blocs_ascii[x][y] = caractere
+                    if bloc is not None:
+                        caractere = cls.BLOC_VERS_ASCII[bloc.__class__]
+                        blocs_ascii[x][y] = caractere
 
-        ascii = ""
+        niveau = ""
         for y in range(carte.nombre_cases_hauteur):
             for x in range(carte.nombre_cases_largeur):
-                ascii += blocs_ascii[x][y]
-            ascii += "\n"
-        niveau = cls(ascii)
-        niveau.nombre_diamants_pour_sortir = carte.nombre_diamants_pour_sortir
-        niveau.temps_maximal = carte.temps_maximal
-        return niveau
+                niveau += blocs_ascii[x][y]
+            niveau += "\n"
+        return cls(niveau)
 
     @classmethod
     def niveau(cls, numero):
@@ -255,37 +222,22 @@ class Niveau(object):
         """
         Charge un niveau
         """
-        with open(chemin, "r") as f:
-            try:
-                niveau_json = json.loads(f.read())
-            except ValueError:
-                return None
-            ascii = niveau_json["ascii"]
-            nombre_diamants_pour_sortir = niveau_json["nombre diamants pour sortir"]
-            temps_maximal = niveau_json["temps maximal"]
-            niveau = cls(ascii)
-            niveau.nombre_diamants_pour_sortir = nombre_diamants_pour_sortir
-            niveau.temps_maximal = temps_maximal
-            return niveau
+        f = open(chemin, "r")
+        ascii = "".join(f.readlines())
+        niveau = cls(ascii)
+        return niveau
 
     def sauvegarder(self, chemin):
         """
         Sauvegarde un niveau personnalise.
         """
-        niveau_json = json.dumps({"ascii": self.ascii, "nombre diamants pour sortir": self.nombre_diamants_pour_sortir,
-                                  "temps maximal": self.temps_maximal})
-        with open(chemin, "w") as f:
-            f.write(niveau_json)
+        nomchemin = chemin
+        f = open(nomchemin, "w")
+        f.writelines(self.ascii)
+        f.close()
 
     @classmethod
     def vide(cls, largeur, hauteur):
-        """
-        Crée un niveau de la taille spécifiée ayant une simple bordure de murs et pas de blocs au milieu.
-
-        :param largeur: nombre de cases du niveau à créer dans la largeur
-        :param hauteur: nombre de cases du niveau à créer dans la hauteur
-        :return: Instance de "Niveau" de la taille spécifiée en argument
-        """
         ascii = ""
         for y in range(hauteur):
             ligne = ""
@@ -298,16 +250,14 @@ class Niveau(object):
         return cls(ascii)
 
 
-# On précharge tous les niveaux prédéfinis pour éviter de devoir le faire à chaque partie
-NIVEAUX = [Niveau.charger("niveaux/niveau{0}.json".format(i)) for i in range(1, 5)]
+NIVEAUX = [Niveau.charger("niveaux/niveau{0}".format(i)) for i in range(1, 5)]
+
 
 class Carte(object):
     """
     Classe permettant de representer une carte, c'est-a-dire l'ensemble des blocs presents sur l'ecran.
     """
     def __init__(self, rect, niveau):
-        self.temps_maximal = 240
-        self.nombre_diamants_pour_sortir = 4
         self.blocs_tries = []
         self.blocs_uniques = dict()
         self.personnage = None
@@ -315,6 +265,7 @@ class Carte(object):
         self.cailloux = dict()
         self.nombre_diamants = 0
         self.nombre_diamantsmax = 0
+        self.nombre_diamants_pour_sortir = 4
         self.nombre_cases_hauteur = 0
         self.nombre_cases_largeur = 0
         self._tuple_cases = tuple()
@@ -337,13 +288,6 @@ class Carte(object):
 
     @property
     def tuple_cases(self):
-        """
-        Propriété permettant de gérer l'accès au tuple stockant toutes les cases. Note : "tuple_cases" n'est présent
-        que par commodité, il permet d'itérer sur les cases rapidement au lieu de devoir itérer sur l'attribut "cases"
-        qui est un dictionnaire.
-
-        :return: tuple contenant toutes les cases de la carte
-        """
         return self._tuple_cases
 
     @property
@@ -351,7 +295,7 @@ class Carte(object):
         """
         Propriete permettant d'acceder aux cases.
 
-        :return: dictionnaire contenant toutes les cases avec leur rectangle comme clé
+        :return: cases
         """
         return self._cases
 
@@ -366,112 +310,66 @@ class Carte(object):
 
     @property
     def rect(self):
-        """
-        Propriété permettant de gérer l'accès au rectangle de la carte. Les éléments de la cartes sont redimensionnés
-        à chaque fois que la propriété est modifiée.
-
-        :return:
-        """
         return self._rect
 
     @rect.setter
     def rect(self, nouveau):
         self._rect = nouveau
-        self.actualiser_rects_cases()  # Modifie les rectangles des cases par rapport au nouveau rectangle de la carte.
+        self.actualiser_rects_cases()
 
     @property
     def largeur_case(self):
-        """
-        Propriété permettant de faire comme si la largeur des cases était un attribut
-
-        :return: largeur des cases de la carte en pixels
-        """
         return self.rect.width / self.nombre_cases_largeur
 
     @property
     def hauteur_case(self):
-        """
-        Propriété permettant de faire comme si la hauteur des cases était un attribut
-
-        :return: hauteur des cases de la carte en pixels
-        """
         return self.rect.height / self.nombre_cases_hauteur
 
     def index_vers_coordonnees(self, x, y):
-        """
-        Méthode permettant de convertir la place d'un objet sur la carte vers des coordonnées sur la fenêtre
-
-        :param x: Index x sur la carte
-        :param y: Index y sur la carte
-        :return: Coordonnées de l'objet sur la fenêtre
-        """
         return self.rect.x + x * self.largeur_case, self.rect.y + y * self.hauteur_case
 
     def coordonnees_vers_index(self, x, y):
-        """
-        Méthode permettant de convertir la position d'un objet sur la fenêtre en index sur la carte.
-
-        :param x: Coordonnées x sur la fenêtre
-        :param y: Coordonnées y sur la fenêtre
-        :return: Tuple contenant l'index x et y calculés à partir de la position sur la fenêtre.
-        """
         return (x - self.rect.x) / self.largeur_case, (y - self.rect.y) / self.hauteur_case
 
     def actualiser_rects_cases(self):
-        """
-        Modifie la taille de chaque case de la carte et remplace les clés du dictionnaire "self.cases" par les
-        nouveaux rectangles des cases.
-
-        :return: "None"
-        """
-        largeur, hauteur = self.largeur_case, self.hauteur_case
         cases = dict()
         for case in self.tuple_cases:
             rect = Rectangle(case.rect)  # On modifie une copie du rectangle pour que la case soit au courant du changement
             rect.x, rect.y = self.index_vers_coordonnees(*case.index)
-            rect.width, rect.height = largeur, hauteur
+            rect.width, rect.height = self.largeur_case, self.hauteur_case
             case.rect = rect  # La case sait qu'on change de rectangle
             cases.update({rect: case})
         self.cases = cases
 
     def sur_changement_niveau(self):
         """
-        Actualise la carte après un changement de niveau.
+        Actualise la carte apres un changement de niveau.
 
         :return: "None"
         """
         self.nombre_cases_hauteur = self.niveau.nombre_cases_hauteur
         self.nombre_cases_largeur = self.niveau.nombre_cases_largeur
-
-        # On crée les cases par rapport au niveau
         lignes_ascii = self.niveau.ascii.split("\n")
         cases = dict()
         for index_y, ligne_ascii in enumerate(lignes_ascii):
             for index_x, bloc_ascii in enumerate(ligne_ascii):
                 x, y = self.index_vers_coordonnees(index_x, index_y)
-
-                # On crée un rectangle hashable pour l'uriliser comme clé de dictionnaire
                 rect = Rectangle(x, y, self.largeur_case, self.hauteur_case)
                 case = Case(rect, (index_x, index_y))
 
-                # On convertit chaque caractère en bloc et leur attribue une position initiale
+                # On convertit chaque caractere en bloc et leur attribue une position initiale
                 bloc = self.niveau.ASCII_VERS_BLOC[bloc_ascii](rect)
                 case.ajouter(bloc)
-                cases.update({rect: case})  # On ajoute la case à "cases"
+                cases.update({rect: case})
         self.cases = cases
 
     def actualiser_blocs(self):
-        """
-        Méthode permettant d'actualiser les différents attributs relatifs aux blocs.
-
-        :return: "None"
-        """
         blocs = []
         for case in self.tuple_cases:
             blocs.extend(case.blocs)
         while None in blocs:
             blocs.remove(None)
-        self.blocs_tries = trier(blocs)  # On trie les blocs par coordonnée z pour faciliter l'affichage
+        self.blocs_tries = trier(blocs)
         self.blocs_uniques = self.trouver_blocs_uniques(self.blocs_tries)
         self.personnage = self.blocs_uniques[Personnage]
         self.sortie = self.blocs_uniques[Sortie]
@@ -479,97 +377,66 @@ class Carte(object):
         self.cailloux = self.trouver_cailloux(self.blocs_tries)
 
     def bouger(self, bloc, rect):
-        """
-        Méthode permettant de bouger un certain bloc vers la case ayant le rectangle "rect"
-
-        :param bloc: bloc à bouger
-        :param rect: rectangle indiquant vers quel endroit le bloc doit être bougé
-        :return: "None"
-        """
-        if rect != bloc.rect:  # Si on bouge réellement le bloc
-            self.cases[bloc.rect_hashable].enlever(bloc)  # On enlève le bloc de son ancienne case
-            self.cases[Rectangle(rect)].ajouter(bloc)  # On ajoute le bloc dans sa nouvelle case
-            bloc.rect.x, bloc.rect.y = rect.x, rect.y  # On modifie la position du bloc
+        if rect != bloc.rect:
+            self.cases[bloc.rect_hashable].enlever(bloc)
+            self.cases[Rectangle(rect)].ajouter(bloc)
+            bloc.rect.x, bloc.rect.y = rect.x, rect.y
 
     def supprimer(self, bloc):
-        """
-        Méthode permettant de supprimer un bloc de la carte.
-
-        :param bloc: bloc à supprimer
-        :return: "None"
-        """
         self.cases[bloc.rect_hashable].enlever(bloc)
         self.actualiser_blocs()
 
     def changer_taille(self, largeur=None, hauteur=None):
-        """
-        Méthode permettant de changer la taille en nombre de cases de la carte
-
-        :param largeur: nombre de cases dans la largeur
-        :param hauteur: nombre de cases dans la hauteur
-        :return: "None"
-        """
         cases = dict()
         largeur_ = largeur
         hauteur_ = hauteur
-
-        # Si aucune largeur n'est spécifiée, on ne change pas le nombre de cases dans la largeur
         if largeur is None:
             largeur_ = self.nombre_cases_largeur
-
-        # Si aucune hauteur n'est spécifiée, on ne change pas le nombre de cases dans la hauteur
         if hauteur is None:
-            hauteur_ = self.nombre_cases_hauteur
-
+            hauteur_ = hauteur
         self.nombre_cases_largeur = largeur_
         self.nombre_cases_hauteur = hauteur_
         for x in range(largeur_):
             for y in range(hauteur_):
+                index = (x, y)
                 rect = self.rect_a(x, y)
                 blocs = None
-
-                # Si la case est sur un bord, on met un mur
                 if x in (0, largeur_ - 1) or y in (0, hauteur_ - 1):
                     blocs = (Mur(rect),)
-
-                case = Case(rect, (x, y), blocs)
+                case = Case(rect, index, blocs)
                 cases.update({rect: case})
         self.cases = cases
 
-    def supprimer_morts(self):
-        """
-        Méthode permettant de supprimer tous les blocs morts.
+    def ajouter_ligne(self, y):
+        cases = self.cases.copy()
+        for x in range(self.nombre_cases_largeur):
+            index = (x, y)
+            rect = self.rect_a(*index)
+            blocs = (Mur(rect),)
+            case = Case(rect, index, blocs)
+            cases.update({rect: case})
+        self.cases = cases
 
-        :return: "None"
-        """
+    def ajouter_colonne(self, x):
+        cases = self.cases.copy()
+        for y in range(self.nombre_cases_hauteur):
+            index = (x, y)
+            rect = self.rect_a(*index)
+            blocs = (Mur(rect),)
+            case = Case(rect, index, blocs)
+            cases.update({rect: case})
+        self.cases = cases
+
+    def supprimer_morts(self):
         for bloc in self.blocs_tries:
             if bloc.est_mort:
-                # On ne supprime pas le personnage, car on veut pouvoir tester s'il est mort depuis l'extérieur de la
-                # classe
                 if not isinstance(bloc, Personnage):
                     self.supprimer(bloc)
 
     def blocs_a(self, x, y, index=True):
-        """
-        Méthode retournant les blocs se trouvant à une certaine position.
-
-        :param x: position x où chercher les blocs
-        :param y:  position y où chercher les blocs
-        :param index: booléen indiquant si x et y sont des indexes sur la carte ou des coordonnées sur la fenêtre
-        :return: tuple contenant les blocs à la position spécifiée
-        """
         return self.case_a(x, y, index).blocs
 
     def rect_a(self, x, y, index=True):
-        """
-        Méthode retournant le rectangle de la case se trouvant à une certaine position.
-
-        :param x: position x où se trouve le rectangle
-        :param y:  position y où se trouve le rectangle
-        :param index: booléen indiquant si x et y sont des indexes sur la carte ou des coordonnées sur la fenêtre
-        :return: instance de "Rectangle" ayant la position et les dimensions de la case se trouvant à la position
-        spécifiée
-        """
         if index:
             x_, y_ = self.index_vers_coordonnees(x, y)
         else:
@@ -631,21 +498,11 @@ class Carte(object):
         return nombre
 
     def activer_sortie(self):
-        """
-        Active la sortie si le personnage a ramassé assez de diamants.
-
-        :return: "None"
-        """
         if self.personnage is not None:
             if self.personnage.diamants_ramasses >= self.nombre_diamants_pour_sortir:
                 self.sortie.activer()
 
     def valider(self):
-        """
-        Vérifie si la carte est prête pour le jeu.
-
-        :return: liste des erreurs s'étant produites
-        """
         erreurs = []
         if self.personnage is None:
             erreurs.append(ERREURS.PERSONNAGE_MANQUANT)

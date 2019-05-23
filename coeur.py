@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Module definissant des classes utilisees dans l'ensemble du programme.
 """
@@ -10,12 +9,10 @@ from numpy import matrix
 
 def modulo(num, div):
     """
-    Fonction permettant de calculer le reste de la division de deux nombres sans avoir d'erreur due a l'arrondi des
-    ordinateurs.
+    Fonction permettant de calculer le reste de la division de deux nombres sans avoir d'erreur due a l'arrondi des ordinateurs.
 
     Cette fonction donne le meme resultat que l'operateur "%" pour les nombres entiers, mais donne des resultats
-    correspondants a la definition de modulo pour tous les nombres, y compris les nombres a virgule et les nombres
-    negatifs.
+    correspondants a la definition de modulo pour tous les nombres, y compris les nombres a virgule et les nombres negatifs.
 
     Exemple :
     7.5 % 0.05 donne 0.04999999999999992 (incorrect), alors que modulo(7.5, 0.05) donne 0.0 (correct)
@@ -36,14 +33,6 @@ def modulo(num, div):
 
 
 def vecteur(directions, e_x, e_y):
-    """
-    Fonction permettant de calculer un vecteur à partir d'une liste de directions.
-
-    :param directions: liste de valeurs de l'énumération "ORIENATIONS"
-    :param e_x: premier vecteur de la base d'arrivée
-    :param e_y: deuxième vecteur de la base d'arrivée
-    :return:
-    """
     try:
         len(directions)  # On verifie si "directions" est iterable
         directions_ = directions
@@ -73,9 +62,6 @@ def vecteur(directions, e_x, e_y):
 
 
 class Action(object):
-    """
-    Classe permettant de définir et d'effectuer des actions. Chaque action stocke une fonction munie de ses arguments.
-    """
     def __init__(self, fonction=None, *args, **kwargs):
         self.reinitialiser()
         if fonction is not None:
@@ -84,38 +70,20 @@ class Action(object):
         self.kwargs = kwargs
 
     def effectuer(self):
-        """
-        Effectue l'action.
-
-        :return: retour de la fonction associée à l'action
-        """
         return self.fonction(*self.args, **self.kwargs)
 
     def reinitialiser(self):
-        """
-        Remet les attributs de l'action à zéro.
-
-        :return: "None"
-        """
         self.fonction = lambda *_: None
         self.args = tuple()
         self.kwargs = dict()
 
 
 class Coordonnees(list):
-    """
-    Classe permettant de définir des coordonnées.
-    """
     def __init__(self, x, y):
         super(Coordonnees, self).__init__([x, y])
 
     @property
     def x(self):
-        """
-        Propriété permettant d'accéder à la coordonnée x.
-
-        :return: valeur de la coordonnée x
-        """
         return self[0]
 
     @x.setter
@@ -124,11 +92,6 @@ class Coordonnees(list):
 
     @property
     def y(self):
-        """
-        Propriété permettant d'accéder à la coordonnée y.
-
-        :return: valeur de la coordonnée y
-        """
         return self[1]
 
     @y.setter
@@ -144,7 +107,7 @@ class Coordonnees(list):
 
 class Rectangle(pygame.Rect):
     """
-    Classe permettant d'avoir des rectangles pouvant être utilises comme cle de dictionnaire.
+    Classe permettant d'avoir des rectangles pouvant etre utilises comme cle de dictionnaire.
     """
     def __init__(self, *args, **kwargs):
         arguments = []
@@ -170,6 +133,11 @@ class Rectangle(pygame.Rect):
         """
         arguments = (self.x, self.y, self.width, self.height)
         return hash(arguments)
+
+    @staticmethod
+    def rectangle_defaut(x, y):
+        largeur = 50
+        return Rectangle(x, y, largeur, largeur)
 
 
 class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe de nouveau style.
@@ -262,17 +230,17 @@ class GestionnaireTouches(object):  # On herite d'"object" pour avoir une classe
         return len(pygame.key.get_pressed())
 
 
-class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style permet d'utiliser des propriétés
+class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style a une vraie utilite, puisque cela permet d'utiliser des proprietes
     """
-    Classe permettant de simuler un minuteur. Le minuteur se remet a zero a intervalles fixes dont la durée est
-    déterminée par "self._periode". La remise a zero est une illusion externe qui n'a jamais réellement lieu en
-    interne ; au lieu de cela le temps écoulé est réduit modulo "self._periode".
+    Classe permettant de simuler un minuteur. Le minuteur se remet a zero a intervalles fixes dont la duree est
+    determinee par "self._periode". La remise a zero est une illusion externe qui n'a jamais rellement lieu en interne ;
+    au lieu de cela le temps ecoule est reduit modulo "self._periode".
     """
     def __init__(self, periode, tic):
         """
         Constructeur de la classe "Minuteur".
 
-        :param periode: durée entre chaque remise a zero du minuteur
+        :param periode: duree entre chaque remise a zero du minuteur
         :param tic: plus petite unite de temps du minuteur
         """
         self._periode = periode
@@ -282,11 +250,6 @@ class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style perme
 
     @property
     def periode(self):
-        """
-        Propriété permettant de gérer l'accès à la période. Si la période est modifiée, le minuteur est réinitialisé.
-
-        :return: période
-        """
         return self._periode
 
     @periode.setter
@@ -360,15 +323,10 @@ class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style perme
             time.sleep(self.temps_restant())  # On attend la fin de la periode numero "self.numero_periode"
 
     def temps_restant(self):
-        """
-        Retourne le temps restant avant la fin de la période.
-
-        :return: temps restant avant la fin de la période
-        """
         nombre_periodes_ecoulees = self.nombre_periodes_ecoulees()
 
-        # Dans l'eventualite ou le numéro de la période est supérieur au nombre de périodes écoulées (peut arriver si la
-        # méthode "self.passage" appelée deux fois de suite sans attendre)
+        # Dans l'eventualite ou le numero de la periode est superieur au nombre de periodes ecoulees (peut arriver si la
+        # methode "self.passage" appelee deux fois de suite sans attendre)
         if self.numero_periode is None:  # TODO : ameliorer commentaire
             ecart = 0
         else:
