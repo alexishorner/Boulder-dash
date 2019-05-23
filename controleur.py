@@ -37,6 +37,7 @@ class Jeu(object):
         self.carte_editeur = None
         self._ancien_mode = None
         self._mode = MODES.JEU
+        self.bouton_dimensions = Bouton((0, 0))
         self.nouvelle_partie()
 
     @property
@@ -444,9 +445,9 @@ class Jeu(object):
 
     def boutons_editeur(self, carte):
         texte_dimensions = "{0}:{1}".format(carte.nombre_cases_hauteur, carte.nombre_cases_hauteur)
-        bouton_dimensions = Bouton((0, 0), texte=texte_dimensions, taille=20)
-        action_dimensions = Action(self.redimensionner_carte, carte, bouton_dimensions)
-        bouton_dimensions.action_sur_clic = action_dimensions
+        self.bouton_dimensions = Bouton((0, 0), texte=texte_dimensions, taille=20)
+        action_dimensions = Action(self.redimensionner_carte, carte)
+        self.bouton_dimensions.action_sur_clic = action_dimensions
 
         texte_diamants = "Diamants requis: {0}".format(carte.nombre_diamants_pour_sortir)
         bouton_diamants = Bouton((0, 0), texte=texte_diamants, taille=20)
