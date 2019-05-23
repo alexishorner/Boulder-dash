@@ -304,7 +304,7 @@ class Niveau(object):
 
 
 # On précharge tous les niveaux prédéfinis pour éviter de devoir le faire à chaque partie
-NIVEAUX = [Niveau.charger("niveaux/predefinis/niveau_{0}.json".format(i)) for i in range(1, 6)]
+NIVEAUX = [Niveau.charger("niveaux/predefinis/niveau_{0}.json".format(i)) for i in range(1, 7)]
 
 
 class Carte(object):
