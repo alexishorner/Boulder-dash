@@ -4,8 +4,6 @@ Module stockant les donnees du jeu.
 """
 from blocs import *
 import json
-from os import listdir
-from os.path import isfile, join
 
 
 def _enlever_extremite(chaine, extremite=ORIENTATIONS.GAUCHE, caracteres_a_enlever=("\n", " ")):
@@ -143,9 +141,10 @@ class Case(object):
         :param bloc: bloc à enlever
         :return: "None"
         """
-        self._blocs.remove(bloc)
-        if len(self._blocs) == 0:
-            self._blocs = [None]
+        if bloc in self._blocs:
+            self._blocs.remove(bloc)
+            if len(self._blocs) == 0:
+                self._blocs = [None]
 
 
 class Niveau(object):
