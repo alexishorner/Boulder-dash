@@ -65,7 +65,7 @@ class Jeu(object):
         :return: Nombre représentant le mode précédent
         """
         return self._ancien_mode
-
+        pygame.mixer.stop()
     @property
     def mode(self):
         """
@@ -181,6 +181,7 @@ class Jeu(object):
         :return: "None"
         """
         self.mode = self.ancien_mode  # TODO pause
+        pygame.mixer.stop()
 
     def charger_niveau(self):
         """
@@ -199,6 +200,7 @@ class Jeu(object):
             else:
                 self.niveau = niveau
                 self.doit_recommencer_partie = True
+        pygame.mixer.stop()
 
     def charger_dans_editeur(self):
         """
@@ -207,6 +209,7 @@ class Jeu(object):
         :return: "None"
         """
         if self.ancien_mode == MODES.JEU:
+            pygame.mixer.stop()
             self.editeur_niveau(self.carte)
 
     def sauvegarder(self, carte):
@@ -225,6 +228,7 @@ class Jeu(object):
             if nom_fichier:
                 niveau = Niveau.depuis_carte(carte)
                 niveau.sauvegarder(nom_fichier)
+        pygame.mixer.stop()
 
     def redimensionner_carte(self, carte):
         """
@@ -281,8 +285,10 @@ class Jeu(object):
         :return: "None"
         """
         self.mode = MODES.MENU
+        SONS.GENERIC.play()
         retour = self.interface.menu()
         self.gerer_retour_interface(retour)
+
 
     def commencer_niveau(self):
         """
@@ -305,6 +311,7 @@ class Jeu(object):
 
         :return: "None"
         """
+        pygame.mixer.stop()
         if self.vies > 0:
             self.vies -= 1
         if self.vies <= 0:
@@ -317,7 +324,7 @@ class Jeu(object):
         """
         Méthode permettant de recommencer une partie.
 
-        :param aller_au_niveau_1: booléen déterinant s'il faut revenir au premier niveau ou non.
+        :param aller_au_niveau_1: booléen déterminant s'il faut revenir au premier niveau ou non.
         :return: "None"
         """
         if self.niveau.numero is not None or aller_au_niveau_1:
@@ -327,6 +334,7 @@ class Jeu(object):
         self.score_debut_niveau = 0
         self.actualiser_score(0)
         self.doit_recommencer_partie = False
+        pygame.mixer.stop()
 
     def nouvelle_partie(self):
         """
@@ -342,6 +350,7 @@ class Jeu(object):
 
         :return: "None"
         """
+        SONS.GAMEOVER.play()
         self.menu()
 
     def verifier_perdu_niveau(self):
@@ -519,6 +528,7 @@ class Jeu(object):
 
     def editeur_niveau(self, carte_chargee=None):
         self.mode = MODES.EDITEUR
+        pygame.mixer.stop()
         if carte_chargee is None:
             carte = self.carte_vide(34, 20)
         else:

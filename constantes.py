@@ -61,6 +61,8 @@ class SONS:
     DIAMANT_TOMBE1 = pygame.mixer.Sound("sounds/diamond1.ogg")
     VIE_BONUS = pygame.mixer.Sound(("sounds/bonus_life.ogg"))
     TIMEOUT = pygame.mixer.Sound(("sounds/timeout1.ogg"))
+    GAMEOVER = pygame.mixer.Sound(("sounds/game_over.ogg"))
+    GENERIC = pygame.mixer.Sound(("sounds/bdmusic.ogg"))
 
 
 @unique
