@@ -35,7 +35,6 @@ class Jeu(object):
         self.carte_editeur = None
         self._ancien_mode = None
         self._mode = MODES.JEU
-        self.bouton_dimensions = Bouton((0, 0))
         self.nouvelle_partie()
 
     @property
@@ -65,7 +64,7 @@ class Jeu(object):
         :return: Nombre représentant le mode précédent
         """
         return self._ancien_mode
-        pygame.mixer.stop()
+
     @property
     def mode(self):
         """
@@ -180,7 +179,7 @@ class Jeu(object):
 
         :return: "None"
         """
-        self.mode = self.ancien_mode  # TODO pause
+        self.mode = self.ancien_mode
         pygame.mixer.stop()
 
     def charger_niveau(self):
@@ -247,8 +246,6 @@ class Jeu(object):
             largeur_ = carte.nombre_cases_largeur
         if hauteur_ is None:
             hauteur_ = carte.nombre_cases_hauteur
-        texte = "{0}:{1}".format(carte.nombre_cases_hauteur, carte.nombre_cases_hauteur)
-        self.bouton_dimensions.texte = texte
         decalage = (self.carte.largeur_case + self.interface.marge, 0)
         carte.rect = self.interface.rect_carte(largeur_, hauteur_, decalage)
         carte.changer_taille(largeur_, hauteur_)
@@ -463,16 +460,9 @@ class Jeu(object):
         """
         Méthode créant les boutons à utiliser dans l'éditeur.
 
-        Le bouton des dimensions est un attribut, car sa valeur peut être modifiée à plusieurs endroits de la classe.
-
-        :param carte:
-        :return:
+        :param carte: carte de l'éditeur
+        :return: liste contenant les boutons de l'éditeur
         """
-        texte_dimensions = "{0}:{1}".format(carte.nombre_cases_hauteur, carte.nombre_cases_hauteur)
-        self.bouton_dimensions = Bouton((0, 0), texte=texte_dimensions, taille=20)
-        action_dimensions = Action(self.redimensionner_carte, carte)
-        self.bouton_dimensions.action_sur_clic = action_dimensions
-
         texte_diamants = "Diamants requis: {0}".format(carte.nombre_diamants_pour_sortir)
         bouton_diamants = Bouton((0, 0), texte=texte_diamants, taille=20)
         action_diamants = Action(self.changer_nombre_diamants_pour_sortir, carte, bouton_diamants)
@@ -507,11 +497,16 @@ class Jeu(object):
         """
         return self.interface.objet_survole(pos, *objets)
 
-    def selectionner(self, bloc):
-        self.interface.selectionner(bloc)
-
     @staticmethod
     def changer_nombre_diamants_pour_sortir(carte, bouton):
+        """
+        Méthode statique demandant à l'utilisateur le nombre de diamants qu'il veut pour sortir et modifiant le nombre
+        de diamants nécessaires pour sortir.
+
+        :param carte: carte pour laquelle actualiser le nombre de diamants nécessaires
+        :param bouton: bouton permettant d'appeler cette méthode
+        :return: "None"
+        """
         diamants_pour_sortir = askinteger("Nombre de diamants requis pour sortir", "Entrez la nouvelle valeur",
                                           minvalue=4, maxvalue=100)
         if diamants_pour_sortir is not None:
@@ -520,6 +515,14 @@ class Jeu(object):
 
     @staticmethod
     def changer_temps_maximal(carte, bouton):
+        """
+        Méthode statique demandant à l'utilisateur la valeur du temps maximal de la carte qu'il
+        de diamants nécessaires pour sortir.
+
+        :param carte: carte pour laquelle actualiser le temps maximal
+        :param bouton: bouton permettant d'appeler cette méthode
+        :return: "None"
+        """
         temps_maximal = askinteger("Nombre de diamants requis pour sortir", "Entrez la nouvelle valeur",
                                           minvalue=1, maxvalue=3600)
         if temps_maximal is not None:
@@ -527,6 +530,12 @@ class Jeu(object):
             bouton.texte = "Temps limite: {0}".format(temps_maximal)
 
     def editeur_niveau(self, carte_chargee=None):
+        """
+        Méthode faisant fonctionner l'éditeur de niveaux.
+
+        :param carte_chargee: carte à modifier si l'utilisateur décide de charger la partie en cours dans l'éditeur
+        :return: "None"
+        """
         self.mode = MODES.EDITEUR
         pygame.mixer.stop()
         if carte_chargee is None:
@@ -618,13 +627,31 @@ class Jeu(object):
             minuteur.attendre_fin()
 
     def gerer_erreurs(self, erreurs):
+        """
+        S'occupe des erreurs de l'utilisateur.
+
+        :param erreurs: liste de valeur de l'énumération "ERREURS" décrivant les erreurs à gérer
+        :return: "None"
+        """
         self.interface.changer_erreur(erreurs)
 
     def gerer_evenements_interface(self, evenements):
+        """
+        Donne a l'interface des évènements à gérer et s'occupe des évènements non traités par celle-ci.
+
+        :param evenements: évènements à traiter
+        :return: "None"
+        """
         retour = self.interface.gerer_evenements(evenements)
         self.gerer_retour_interface(retour)
 
     def gerer_retour_interface(self, retour):
+        """
+        S'occupe des évènements détectés par l'interface mais non traités
+
+        :param retour: retour de l'interface -> valeur de l'énumération "EVENEMENTS"
+        :return: "None"
+        """
         if retour == EVENEMENTS.MENU:
             if self.mode == MODES.MENU:
                 self.reprendre()
@@ -680,6 +707,14 @@ class Jeu(object):
                     self.personnage.mouvement_en_cours = ORIENTATIONS.DROITE
 
     def gerer_collisions(self):
+        """
+        S'occupe des collisions restantes à la fin d'un cycle.
+
+        La méthode regarde les blocs de chaque case et si plusieurs blocs se trouvent sur la même case elle s'occupe de
+        leur collision.
+
+        :return: "None"
+        """
         for case in self.carte.tuple_cases:
             doit_actualiser = False
             blocs = None
@@ -715,13 +750,26 @@ class Jeu(object):
                 self.carte.sortie = sortie
 
     def terminer_mouvements(self):
-        self.carte.supprimer_morts()
+        """
+        Méthode appelée à la fin d'un tour pour s'occuper des collisions restantes, supprimer les blocs morts et
+        terminer le cycle de chaque bloc.
+
+        :return: "None"
+        """
+        self.carte.supprimer_morts()  # On supprime les blocs déjà mort pour éviter qu'ils influencent les collisions
         self.gerer_collisions()
         self.carte.supprimer_morts()  # On supprime les morts lors de la collision
         for bloc in self.carte.blocs_tries:
             bloc.terminer_cycle()
 
     def bloc_collisionne(self, bloc, directions=tuple()):
+        """
+        Renvoie le bloc se trouvant à une certaine position par rapport au paramètre "bloc".
+
+        :param bloc: bloc de référence
+        :param directions: tuple informant la position relative où tester si un bloc se trouve
+        :return: bloc se trouvant à la position spécifiée relativement à "bloc"
+        """
         v = vecteur(directions, self.carte.largeur_case, self.carte.hauteur_case)
         rect = bloc.rect_hashable.move(v)
         try:
@@ -738,6 +786,15 @@ class Jeu(object):
         return bloc_collisionne
 
     def _collision_personnage_caillou(self, personnage, caillou, direction, essai=False):
+        """
+        S'occupe de la collision avec un caillou lors du mouvement du personnage.
+
+        :param personnage: personnage
+        :param caillou: caillou collisionné
+        :param direction: direction dans laquelle le personnage se déplace
+        :param essai: booléen indiquant si les mouvements doivent être effectués ou non
+        :return: booléen indiquant si le personnage a pu bouger et liste d'actions à effectuer à la fin du mouvement
+        """
         reussite = False
         actions = []
         if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE):
@@ -755,6 +812,15 @@ class Jeu(object):
         return reussite, actions
 
     def _collision_personnage_diamant(self, personnage, diamant, direction, essai=False):
+        """
+        S'occupe de la collision avec un diamant lors du mouvement du personnage.
+
+        :param personnage: personnage
+        :param diamant: diamant collisionné
+        :param direction: direction dans laquelle le personnage se déplace
+        :param essai: booléen indiquant si les mouvements doivent être effectués ou non
+        :return: booléen indiquant si le personnage a pu bouger et liste d'actions à effectuer à la fin du mouvement
+        """
         reussite = False
         actions = []
         if direction in (ORIENTATIONS.GAUCHE, ORIENTATIONS.DROITE) or not diamant.tombe:
@@ -764,7 +830,16 @@ class Jeu(object):
             reussite = True
         return reussite, actions
 
-    def _collision_personnage(self, personnage, bloc_collisionne, direction, essai=False):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
+    def _collision_personnage(self, personnage, bloc_collisionne, direction, essai=False):
+        """
+        S'occupe des collisions lors du mouvement du personnage.
+
+        :param personnage: personnage
+        :param bloc_collisionne: bloc contre lequel le personnage entre en collision
+        :param direction: direction dans laquelle le personnage se déplace
+        :param essai: booléen indiquant si les mouvements doivent être effectués ou non
+        :return: booléen indiquant si le personnage a pu bouger
+        """
         actions = []
         reussite = False
         if isinstance(bloc_collisionne, Caillou):
@@ -784,7 +859,15 @@ class Jeu(object):
                 action.effectuer()
         return reussite
 
-    def _collision_bloc_tombant(self, bloc, bloc_collisionne, direction):  # ATTENTION: methode faite pour etre utilisee dans "faire_bouger" uniquement
+    def _collision_bloc_tombant(self, bloc, bloc_collisionne, direction):
+        """
+        S'occupe de la collision lors du mouvement des blocs pouvant tomber (cailloux et diamants).
+
+        :param bloc: bloc déplacé
+        :param bloc_collisionne: bloc contre lequel le bloc entre en collision
+        :param direction: direction dans laquelle le personnage se déplace
+        :return: booléen indiquant si le bloc a pu bouger
+        """
         reussite = False
         if isinstance(bloc_collisionne, Personnage):
             if bloc.tombe and direction == ORIENTATIONS.BAS:
@@ -796,10 +879,25 @@ class Jeu(object):
         return reussite
 
     def peut_bouger(self, bloc, direction):
+        """
+        Indique si un certain bloc peut bouger dans une certaine direction,
+
+        :param bloc: bloc dont il faut tester s'il peut bouger
+        :param direction: direction dans laquelle le bloc veut bouger
+        :return: booléen indiquant si le bloc peut bouger
+        """
         reussite = self.faire_bouger(bloc, direction, essai=True)[0]
         return reussite
 
     def faire_bouger(self, bloc, direction, essai=False):
+        """
+        Méthode permettant de faire bouger un bloc dans une certaine direction.
+
+        :param bloc: bloc à faire bouger
+        :param direction: direction dans laquelle bouger le bloc
+        :param essai: booléen indiquant si les mouvements doivent être effectués ou non
+        :return: booléen indiquant si le bloc a pu bouger ainsi que bloc collisionné en cas d'échec du mouvement
+        """
         if bloc.a_deja_bouge:
             return False, None
         reussite = False
@@ -826,6 +924,13 @@ class Jeu(object):
         return reussite, bloc_collisionne  # Le bloc collisionne n'est juste que si reussite == False
 
     def faire_tomber_droit(self, bloc, essai=False):
+        """
+        Méthode permettant de faire tomber un bloc tout droit.
+
+        :param bloc: bloc à faire tomber
+        :param essai: booléen indiquant si les mouvements doivent être effectués ou non
+        :return: booléen indiquant si le mouvement a été effectué avec succès
+        """
         reussite = self.faire_bouger(bloc, ORIENTATIONS.BAS, essai)[0]
         if reussite:
             bloc.tomber()
@@ -835,6 +940,13 @@ class Jeu(object):
         return reussite
 
     def faire_tomber_cotes(self, bloc, essai=False):
+        """
+        Méthode permettant de faire tomber un bloc sur le coté.
+
+        :param bloc: bloc à faire tomber
+        :param essai: booléen indiquant si les mouvements doivent être effectués ou non
+        :return: booléen indiquant si le mouvement a été effectué avec succès
+        """
         reussite = False
         if not bloc.a_deja_bouge:
             bloc_collisionne = self.bloc_collisionne(bloc, ORIENTATIONS.BAS)
@@ -851,6 +963,11 @@ class Jeu(object):
         return reussite
 
     def bouger_personnage(self):
+        """
+        Méthode s'occupant de faire bouger le personnage.
+
+        :return: "None"
+        """
         if self.mouvement_detecte:
             self.faire_bouger(self.personnage, self.personnage.mouvement_en_cours)
             self.personnage.etait_en_mouvement = True

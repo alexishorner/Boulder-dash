@@ -368,8 +368,8 @@ class Minuteur(object):  # Ici le fait d'avoir une classe de nouveau style perme
         nombre_periodes_ecoulees = self.nombre_periodes_ecoulees()
 
         # Dans l'eventualite ou le numéro de la période est supérieur au nombre de périodes écoulées (peut arriver si la
-        # méthode "self.passage" appelée deux fois de suite sans attendre)
-        if self.numero_periode is None:  # TODO : ameliorer commentaire
+        # méthode "self.passage" appelée avant la fin de la période précédente)
+        if self.numero_periode is None:
             ecart = 0
         else:
             ecart = self.numero_periode - nombre_periodes_ecoulees

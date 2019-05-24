@@ -2,14 +2,6 @@
 """
 Module gerant les differentes sortes de blocs pouvant etre affiches a l'ecran
 """
-# TODO :
-#   Facultatif :
-#       - ameliorer ajouts blocs par glissement (intersection segment/rectangles)
-#       - generateur de niveaux automatique
-#       - animations
-#       - mechants
-
-
 from coeur import *
 
 
@@ -297,16 +289,11 @@ class Sortie(Bloc):
     @est_activee.setter
     def est_activee(self, activee):
         activation = not self._est_activee and activee
-        desactivation = self._est_activee and not activee
         self._est_activee = activee
         if activation:
             taille = self.rect.size
             imageactive = pygame.image.load("img/porte_fin.png").convert_alpha()
             self.image = pygame.transform.scale(imageactive, taille)
-
-        elif desactivation:
-            pass
-        # TODO : ajouter animation de changement d'etat
 
     def activer(self):
         """

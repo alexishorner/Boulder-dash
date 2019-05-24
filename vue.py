@@ -304,7 +304,7 @@ class InterfaceGraphique:
                     self.quitter()
                 elif evenement.key == K_ESCAPE:
                     return EVENEMENTS.MENU
-                elif evenement.key == K_F12:
+                elif evenement.key == K_e:
                     return EVENEMENTS.EDITEUR
             return None
 
@@ -325,9 +325,6 @@ class InterfaceGraphique:
             if objet.rect.collidepoint(pos):
                 return objet
         return None
-
-    def selectionner(self, bloc):
-        pass
 
     def menu(self):
         """
