@@ -63,7 +63,7 @@ class SONS:
     TIMEOUT = pygame.mixer.Sound(("sounds/timeout1.ogg"))
     GAMEOVER = pygame.mixer.Sound(("sounds/game_over.ogg"))
     GENERIC = pygame.mixer.Sound(("sounds/bdmusic.ogg"))
-
+    BOUTON = pygame.mixer.Sound(("sounds/diamond3.ogg"))
 
 @unique
 class ORIENTATIONS(IntEnum):

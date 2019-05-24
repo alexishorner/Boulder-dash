@@ -192,6 +192,7 @@ class Bouton(Label):
         :return: "None"
         """
         if self._texte is not None:
+            SONS.BOUTON.play()
             self.texte = "- " + self.texte
 
     def deselectionner(self):
