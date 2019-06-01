@@ -256,7 +256,7 @@ class Niveau(object):
         """
         with open(chemin, "r") as f:
             try:
-                niveau_json = json.loads(f.read())
+                niveau_json = json.loads (f.read())
             except ValueError:
                 return None
             ascii = niveau_json["ascii"]
